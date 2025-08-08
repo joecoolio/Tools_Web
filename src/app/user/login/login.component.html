@@ -16,7 +16,7 @@
                 <mat-label>User ID</mat-label>
                 <input matInput placeholder="" formControlName="userid" required>
                 @if(userid.invalid && (userid.dirty || userid.touched)) {
-                    <mat-error>Please enter a valid userid address.</mat-error>
+                    <mat-error>Please enter a valid userid.</mat-error>
                 }
             </mat-form-field>
 
@@ -44,11 +44,11 @@
 
 <!-- Forgot password button -->
 <button mat-raised-button>
-    <span [routerLink]="['', { outlets: { right: ['forgotpassword'] } }]"> Forgot Password? </span>
+    <span [routerLink]="'/forgotpassword'"> Forgot Password? </span>
 </button> 
 
 <div class="donthavea">
-    <span [routerLink]="['', { outlets: { right: ['register'] } }]">
+    <span [routerLink]="'/register'">
         Don't have an account?
     </span>
 </div>

@@ -1,0 +1,29 @@
+mat-card-title,
+mat-card-content {
+    display: flex;
+    justify-content: center;
+}
+
+mat-card {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+mat-form-field {
+    width: 100%;
+    min-width: 300px;
+    display: block;
+}
+
+.instructions {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.donthavea {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding-top: 50px;
+    color: indigo;
+}

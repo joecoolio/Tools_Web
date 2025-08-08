@@ -1,0 +1,76 @@
+<!-- Navigation message -->
+@if (routerMessage != null) {
+    <div>{{ routerMessage }}</div>
+}
+
+<!-- Registration Form -->
+<mat-card>
+    <mat-card-header>
+        <mat-card-title>Registration</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="instructions">
+        Enter your email address and a secure password to register.
+    </mat-card-content>
+    <mat-card-content>
+        <form id="register" [formGroup]="registerFormGroup" (ngSubmit)="register()">
+
+            <!-- User ID -->
+            <mat-form-field>
+                <mat-label>User ID</mat-label>
+                <input matInput placeholder="" formControlName="userid" required>
+                @if(userid.invalid && (userid.dirty || userid.touched)) {
+                    <mat-error>Please enter a valid userid.</mat-error>
+                }
+            </mat-form-field>
+
+            <!-- Name -->
+            <mat-form-field>
+                <mat-label>Name</mat-label>
+                <input matInput placeholder="" formControlName="name" required>
+                @if(name.invalid && (name.dirty || name.touched)) {
+                    <mat-error>Please enter a valid name.</mat-error>
+                }
+            </mat-form-field>
+
+            <!-- Email Address -->
+            <!-- <mat-form-field>
+                <mat-label>Email Address</mat-label>
+                <input matInput placeholder="your@email.here" type="email" formControlName="email" required>
+                <mat-error *ngIf="email.invalid && (email.dirty || email.touched)">Please enter a valid email address.</mat-error>
+            </mat-form-field> -->
+
+            <!-- Password -->
+            <mat-form-field>
+                <mat-label>Password</mat-label>
+                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required>
+            </mat-form-field>
+
+            <!-- Address -->
+            <mat-form-field>
+                <mat-label>Address</mat-label>
+                <input matInput placeholder="" formControlName="address" required>
+                @if(address.invalid && (address.dirty || address.touched)) {
+                    <mat-error>Please enter a valid address.</mat-error>
+                }
+            </mat-form-field>
+
+            <!-- Submission error message -->
+            <mat-error *ngIf="errorMessage.length > 0">
+                {{ errorMessage }}
+            </mat-error>
+
+        </form>
+    </mat-card-content>
+</mat-card>
+
+<!-- Register button -->
+<button mat-raised-button form="register" type="submit">
+    <span [ngClass]="{ 'spinner-border spinner-border-sm': loginRunning }"></span> Register 
+</button> 
+
+<div class="donthavea">
+    <span [routerLink]="'/login'">
+        Already have an account?
+    </span>
+</div>
+

@@ -5,6 +5,7 @@ import 'leaflet.markercluster';
 import { MarkerService, ToolResult } from '../services/marker.service';
 import { LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
 import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
+import { Neighbor, NeighborService } from '../services/neighbor.service';
 
 const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
 
@@ -34,7 +35,10 @@ L.Marker.prototype.options.icon = iconDefault;
   styleUrl: './map.component.scss',
 })
 export class MapComponent implements OnInit, AfterViewInit {
-  constructor(private markerService: MarkerService) { }
+  constructor(
+    private markerService: MarkerService,
+    private neighborService: NeighborService
+  ) { }
 
   private map!: L.Map;
 
@@ -47,8 +51,8 @@ export class MapComponent implements OnInit, AfterViewInit {
         attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       })
     ],
-    zoom: 5,
-    // center: L.latLng(46.879966, -121.726909)
+    zoom: 8,
+    center: L.latLng(35.225946, -80.852852) // Bank of America stadium
   };
 
   // Always on layers (if any, if not, delete this)
@@ -69,6 +73,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
+    console.log("Calling for tools");
     this.markerService.getAllTools().then(
       (tools: ToolResult[]) => {
         let markers: L.Marker[] = [];
@@ -94,12 +99,53 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           markers.push(marker);
         });
+        console.log("# of tools: " + markers.length);
 
         // Reset the tools cluster group
         this.toolsMarkerClusterData = markers;
 
         // Recenter the map based on the tools
-        this.map.fitBounds(L.featureGroup(markers).getBounds(), { padding: [40, 40] });
+        if (this.toolsMarkerClusterData.length > 0) {
+          this.map.fitBounds(L.featureGroup(markers).getBounds(), { padding: [40, 40] });
+        }
+      }
+    );
+
+    console.log("Calling for neighbors");
+    this.neighborService.listNeighbors().then(
+      (neighbors: Neighbor[]) => {
+        let markers: L.Marker[] = [];
+        neighbors.forEach(neighbor => {
+          const icon = L.ExtraMarkers.icon({
+            icon: 'fa-solid fa-user-tie',
+            markerColor: 'blue',
+            shape: 'square',
+            prefix: 'fa'
+          });
+          // const icon = L.icon({
+          //   iconUrl: 'assets/toolcategory/' + tool.category_icon, // path to your icon image
+          //   iconSize:     [40, 40],   // size of the icon
+          //   iconAnchor:   [16, 32],   // point of the icon which corresponds to marker location
+          //   popupAnchor:  [0, -32],   // point from which the popup should open relative to the iconAnchor
+          //   // shadowUrl: 'assets/icons/marker-shadow.png', // optional
+          //   shadowSize:   [41, 41],
+          //   shadowAnchor: [12, 41],
+          //   className: "leaflet_icon",
+          // })
+          const marker: L.Marker = L.marker([neighbor.latitude, neighbor.longitude], {icon: icon });
+          marker.bindPopup(this.makeNeighborPopup(neighbor));
+
+          markers.push(marker);
+        });
+        console.log("# of neighbors: " + markers.length);
+
+        // Reset the tools cluster group
+        this.neighborMarkerClusterData = markers;
+
+        // Recenter the map based on the tools
+        if (this.neighborMarkerClusterData.length > 0) {
+          this.map.fitBounds(L.featureGroup(markers).getBounds(), { padding: [40, 40] });
+        }
       }
     );
   }
@@ -109,11 +155,22 @@ export class MapComponent implements OnInit, AfterViewInit {
       `<div>Tool: ${ tool.name }</div>`;
   }
 
+  makeNeighborPopup(neighbor: Neighbor): string {
+    return `` +
+      `<div>Neighbor: ${ neighbor.name }</div>`;
+  }
+
   onMapReady(map: L.Map) {
+    console.log("Map is ready");
     this.map = map;
   }
   toolsMarkerClusterReady(group: L.MarkerClusterGroup) {
+    console.log("Tools marker cluster is ready");
     this.toolsMarkerClusterGroup = group;
+  }
+  neighborMarkerClusterReady(group: L.MarkerClusterGroup) {
+    console.log("Neighbor marker cluster is ready");
+    this.neighborMarkerClusterGroup = group;
   }
 
 }

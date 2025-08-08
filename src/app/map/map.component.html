@@ -4,6 +4,13 @@
     [leafletLayers]="layers"
     (leafletMapReady)="onMapReady($event)"
 >
+    <!-- Neighbor Layer -->
+    <div
+        [leafletMarkerCluster]="neighborMarkerClusterData"
+        [leafletMarkerClusterOptions]="markerClusterOptions"
+        (leafletMarkerClusterReady)="neighborMarkerClusterReady($event)"
+    ></div>
+
     <!-- Tools Layer -->
     <div
         [leafletMarkerCluster]="toolsMarkerClusterData"
