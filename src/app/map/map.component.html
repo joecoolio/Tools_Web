@@ -1,0 +1,13 @@
+<div id="map" class="map"
+    leaflet leafletMap
+    [leafletOptions]="options"
+    [leafletLayers]="layers"
+    (leafletMapReady)="onMapReady($event)"
+>
+    <!-- Tools Layer -->
+    <div
+        [leafletMarkerCluster]="toolsMarkerClusterData"
+        [leafletMarkerClusterOptions]="markerClusterOptions"
+        (leafletMarkerClusterReady)="toolsMarkerClusterReady($event)"
+    ></div>
+</div>

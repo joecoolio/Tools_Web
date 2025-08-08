@@ -1,0 +1,55 @@
+<!-- Navigation message -->
+@if (routerMessage != null) {
+    <div>{{ routerMessage }}</div>
+}
+
+<!-- Login Form -->
+<mat-card>
+    <mat-card-header>
+        <mat-card-title>Login</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+        <form id="login" [formGroup]="loginFormGroup" (ngSubmit)="login()">
+
+            <!-- UserID -->
+            <mat-form-field>
+                <mat-label>User ID</mat-label>
+                <input matInput placeholder="" formControlName="userid" required>
+                @if(userid.invalid && (userid.dirty || userid.touched)) {
+                    <mat-error>Please enter a valid userid address.</mat-error>
+                }
+            </mat-form-field>
+
+            <!-- Password -->
+            <mat-form-field>
+                <mat-label>Password</mat-label>
+                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required>
+            </mat-form-field>
+
+            <!-- Submission error message -->
+            @if (errorMessage.length > 0) {
+                <mat-error>
+                    {{ errorMessage }}
+                </mat-error>
+            }
+        </form>
+
+    </mat-card-content>
+</mat-card>
+
+<!-- Login button -->
+<button mat-raised-button class="first_button" [disabled]="!loginFormGroup.valid" form="login" type="submit">
+    <span [ngClass]="{ 'spinner-border spinner-border-sm': loginRunning }"></span> Login 
+</button> 
+
+<!-- Forgot password button -->
+<button mat-raised-button>
+    <span [routerLink]="['', { outlets: { right: ['forgotpassword'] } }]"> Forgot Password? </span>
+</button> 
+
+<div class="donthavea">
+    <span [routerLink]="['', { outlets: { right: ['register'] } }]">
+        Don't have an account?
+    </span>
+</div>
+
