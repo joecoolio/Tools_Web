@@ -1,12 +1,18 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Directive, inject, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit } from '@angular/core';
 import {
   Map, Marker, Layer, tileLayer, MapOptions, latLng, icon, marker,
   ExtraMarkers,
   featureGroup,
-  MarkerClusterGroup, MarkerClusterGroupOptions
+  MarkerClusterGroup, MarkerClusterGroupOptions, markerClusterGroup,
+  MarkerOptions,
+  LayerGroup,
+  layerGroup,
+Control
 } from 'leaflet';
+import * as L from 'leaflet';
 import 'leaflet-extra-markers';
 import 'leaflet.markercluster';
+import 'leaflet.markercluster.layersupport';
 import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
 import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
 import { Neighbor, DataService, Tool } from '../services/data.service';
@@ -57,6 +63,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     center: latLng(35.225946, -80.852852), // Bank of America stadium,
   };
 
+  // Layer control
+  layerControl!: Control.Layers;
+
   // Layer control config
   controlLayerConfig: LeafletControlLayersConfig = {
     baseLayers: {
@@ -72,26 +81,19 @@ export class MapComponent implements OnInit, AfterViewInit {
     collapsed: false, // Keeps the control panel open
   }
 
-  // Always on layers (if any, if not, delete this)
-  layers: Layer[] = [];
+  // The tools & neighbor layer groups
+  toolsLayerGroup: LayerGroup = layerGroup();
+  neighborsLayerGroup: LayerGroup = layerGroup();
 
-  // The tools cluster group
-  toolsMarkerClusterGroup!: MarkerClusterGroup;
-  toolsMarkerClusterData: Layer[] = [];
-
-  // The neighbor cluster group
-  neighborMarkerClusterGroup!: MarkerClusterGroup;
-  neighborMarkerClusterData: Layer[] = [];
+  // The tools + neighbors cluster group
+  markerClusterGroup!: MarkerClusterGroup.LayerSupport;
 
   // Shared cluster group options
   markerClusterOptions: MarkerClusterGroupOptions = {  };
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {  }
 
-  ngAfterViewInit(): void {
-
-  }
+  ngAfterViewInit(): void {  }
 
   makeToolPopup(tool: Tool): string {
     return `` +
@@ -106,20 +108,24 @@ export class MapComponent implements OnInit, AfterViewInit {
   onMapReady(map: Map) {
     console.log("Map is ready");
     this.map = map;
+    this.markerClusterGroup = markerClusterGroup.layerSupport();
+    this.markerClusterGroup.addTo(map);
+    this.markerClusterGroup.checkIn(this.toolsLayerGroup);
+    this.markerClusterGroup.checkIn(this.neighborsLayerGroup);
+    this.toolsLayerGroup.addTo(map);
+    this.neighborsLayerGroup.addTo(map);
+
+    this.refreshData();
   }
-
-  toolsMarkerClusterReady(group: MarkerClusterGroup) {
-    console.log("Tools marker cluster is ready");
-    this.toolsMarkerClusterGroup = group;
-
-    // Add the tools cluster to the layer control
-    this.controlLayerConfig.overlays["Tools"] = this.toolsMarkerClusterGroup;
-
+  
+  private refreshData() {
     // API call to get all the available tools
     console.log("Calling for tools");
     this.dataService.getAllTools().then(
       (tools: Tool[]) => {
-        let markers: Marker[] = [];
+        console.log("# of tools: " + tools.length);
+        this.toolsLayerGroup.clearLayers();
+
         tools.forEach(tool => {
           const icon = ExtraMarkers.icon({
             icon: 'fa-solid ' + tool.category_icon,
@@ -127,46 +133,21 @@ export class MapComponent implements OnInit, AfterViewInit {
             shape: 'square',
             prefix: 'fa'
           });
-          // const icon = icon({
-          //   iconUrl: 'assets/toolcategory/' + tool.category_icon, // path to your icon image
-          //   iconSize:     [40, 40],   // size of the icon
-          //   iconAnchor:   [16, 32],   // point of the icon which corresponds to marker location
-          //   popupAnchor:  [0, -32],   // point from which the popup should open relative to the iconAnchor
-          //   // shadowUrl: 'assets/icons/marker-shadow.png', // optional
-          //   shadowSize:   [41, 41],
-          //   shadowAnchor: [12, 41],
-          //   className: "leaflet_icon",
-          // })
           const m: Marker = marker([tool.latitude, tool.longitude], {icon: icon });
           m.bindPopup(this.makeToolPopup(tool))
 
-          markers.push(m);
+          this.toolsLayerGroup.addLayer(m);
         });
-        console.log("# of tools: " + markers.length);
-
-        // Reset the tools cluster group
-        this.toolsMarkerClusterData = markers;
-
-        // Recenter the map based on the tools
-        if (this.toolsMarkerClusterData.length > 0) {
-          this.map.fitBounds(featureGroup(markers).getBounds(), { padding: [40, 40] });
-        }
       }
     );
-  }
-
-  neighborMarkerClusterReady(group: MarkerClusterGroup) {
-    console.log("Neighbor marker cluster is ready");
-    this.neighborMarkerClusterGroup = group;
-
-    // Add the neighbors cluster to the layer control
-    this.controlLayerConfig.overlays["Neighbors"] = group;
 
     // API call to get all the neighbors
     console.log("Calling for neighbors");
     this.dataService.listNeighbors().then(
       (neighbors: Neighbor[]) => {
-        let markers: L.Marker[] = [];
+        console.log("# of neighbors: " + neighbors.length);
+        this.neighborsLayerGroup.clearLayers();
+
         neighbors.forEach(neighbor => {
           const icon = ExtraMarkers.icon({
             icon: 'fa-solid fa-user-tie',
@@ -174,32 +155,19 @@ export class MapComponent implements OnInit, AfterViewInit {
             shape: 'square',
             prefix: 'fa'
           });
-          // const icon = icon({
-          //   iconUrl: 'assets/toolcategory/' + tool.category_icon, // path to your icon image
-          //   iconSize:     [40, 40],   // size of the icon
-          //   iconAnchor:   [16, 32],   // point of the icon which corresponds to marker location
-          //   popupAnchor:  [0, -32],   // point from which the popup should open relative to the iconAnchor
-          //   // shadowUrl: 'assets/icons/marker-shadow.png', // optional
-          //   shadowSize:   [41, 41],
-          //   shadowAnchor: [12, 41],
-          //   className: "leaflet_icon",
-          // })
           const m: L.Marker = marker([neighbor.latitude, neighbor.longitude], {icon: icon });
           m.bindPopup(this.makeNeighborPopup(neighbor));
 
-          markers.push(m);
+          this.neighborsLayerGroup.addLayer(m);
         });
-        console.log("# of neighbors: " + markers.length);
-
-        // Reset the tools cluster group
-        this.neighborMarkerClusterData = markers;
-
-        // Recenter the map based on the tools
-        if (this.neighborMarkerClusterData.length > 0) {
-          this.map.fitBounds(featureGroup(markers).getBounds(), { padding: [40, 40] });
-        }
       }
     );
+  }
+
+  layerControlReady($event: Control.Layers) {
+    this.layerControl = $event;
+    this.controlLayerConfig.overlays['Neighbors'] = this.neighborsLayerGroup;
+    this.controlLayerConfig.overlays['Tools'] = this.toolsLayerGroup;
   }
 
 }

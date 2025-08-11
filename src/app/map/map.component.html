@@ -1,26 +1,15 @@
 <div id="map" class="map"
     leaflet leafletMap
     [leafletOptions]="options"
-    [leafletLayers]="layers"
     (leafletMapReady)="onMapReady($event)"
 >
-    <!-- Neighbor Layer -->
+    <!-- Marker Layer (tools & neighbors together) -->
     @if (true) {
         <div
-            [leafletMarkerCluster]="neighborMarkerClusterData"
-            [leafletMarkerClusterOptions]="markerClusterOptions"
-            (leafletMarkerClusterReady)="neighborMarkerClusterReady($event)"
             [leafletLayersControl]="controlLayerConfig"
             [leafletLayersControlOptions]="controlLayerOptions"
+            (leafletLayersControlReady)="layerControlReady($event)"
         ></div>
     }
 
-    <!-- Tools Layer -->
-    @if (true) {
-        <div
-            [leafletMarkerCluster]="toolsMarkerClusterData"
-            [leafletMarkerClusterOptions]="markerClusterOptions"
-            (leafletMarkerClusterReady)="toolsMarkerClusterReady($event)"
-        ></div>
-    }
 </div>
