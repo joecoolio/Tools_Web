@@ -5,16 +5,22 @@
     (leafletMapReady)="onMapReady($event)"
 >
     <!-- Neighbor Layer -->
-    <div
-        [leafletMarkerCluster]="neighborMarkerClusterData"
-        [leafletMarkerClusterOptions]="markerClusterOptions"
-        (leafletMarkerClusterReady)="neighborMarkerClusterReady($event)"
-    ></div>
+    @if (true) {
+        <div
+            [leafletMarkerCluster]="neighborMarkerClusterData"
+            [leafletMarkerClusterOptions]="markerClusterOptions"
+            (leafletMarkerClusterReady)="neighborMarkerClusterReady($event)"
+            [leafletLayersControl]="controlLayerConfig"
+            [leafletLayersControlOptions]="controlLayerOptions"
+        ></div>
+    }
 
     <!-- Tools Layer -->
-    <div
-        [leafletMarkerCluster]="toolsMarkerClusterData"
-        [leafletMarkerClusterOptions]="markerClusterOptions"
-        (leafletMarkerClusterReady)="toolsMarkerClusterReady($event)"
-    ></div>
+    @if (true) {
+        <div
+            [leafletMarkerCluster]="toolsMarkerClusterData"
+            [leafletMarkerClusterOptions]="markerClusterOptions"
+            (leafletMarkerClusterReady)="toolsMarkerClusterReady($event)"
+        ></div>
+    }
 </div>
