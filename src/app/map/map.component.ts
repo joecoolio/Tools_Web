@@ -1,5 +1,10 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Directive, inject, OnInit } from '@angular/core';
-import * as L from 'leaflet';
+import {
+  Map, Marker, Layer, tileLayer, MapOptions, latLng, icon, marker,
+  ExtraMarkers,
+  featureGroup,
+  MarkerClusterGroup, MarkerClusterGroupOptions
+} from 'leaflet';
 import 'leaflet-extra-markers';
 import 'leaflet.markercluster';
 import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
@@ -10,7 +15,7 @@ const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
 
 const iconUrl = 'leafassets/marker-icon.png';
 const shadowUrl = 'leafassets/marker-shadow.png';
-const iconDefault = L.icon({
+const iconDefault = icon({
   iconRetinaUrl,
   iconUrl,
   shadowUrl,
@@ -20,7 +25,7 @@ const iconDefault = L.icon({
   tooltipAnchor: [16, -28],
   shadowSize: [41, 41]
 });
-L.Marker.prototype.options.icon = iconDefault;
+Marker.prototype.options.icon = iconDefault;
 
 @Component({
   standalone: true,
@@ -38,18 +43,18 @@ export class MapComponent implements OnInit, AfterViewInit {
     private dataService: DataService
   ) { }
 
-  map!: L.Map;
+  public map!: Map;
 
   // All of the different map options available
-  private osmMap: L.Layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' });
-  private osmMapHot: L.Layer = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France' });
-  private otmMap: L.Layer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)' });
+  private osmMap: Layer = tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' });
+  private osmMapHot: Layer = tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France' });
+  private otmMap: Layer = tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)' });
 
   // Leaflet map options
-  options: L.MapOptions = {
-    layers: [ this.osmMapHot ],
+  options: MapOptions = {
+    layers: [ this.osmMap ],
     zoom: 8,
-    center: L.latLng(35.225946, -80.852852), // Bank of America stadium,
+    center: latLng(35.225946, -80.852852), // Bank of America stadium,
   };
 
   // Layer control config
@@ -68,18 +73,18 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   // Always on layers (if any, if not, delete this)
-  layers: L.Layer[] = [];
+  layers: Layer[] = [];
 
   // The tools cluster group
-  toolsMarkerClusterGroup!: L.MarkerClusterGroup;
-  toolsMarkerClusterData: L.Layer[] = [];
+  toolsMarkerClusterGroup!: MarkerClusterGroup;
+  toolsMarkerClusterData: Layer[] = [];
 
   // The neighbor cluster group
-  neighborMarkerClusterGroup!: L.MarkerClusterGroup;
-  neighborMarkerClusterData: L.Layer[] = [];
+  neighborMarkerClusterGroup!: MarkerClusterGroup;
+  neighborMarkerClusterData: Layer[] = [];
 
   // Shared cluster group options
-  markerClusterOptions: L.MarkerClusterGroupOptions = {  };
+  markerClusterOptions: MarkerClusterGroupOptions = {  };
 
   ngOnInit(): void {
   }
@@ -98,12 +103,12 @@ export class MapComponent implements OnInit, AfterViewInit {
       `<div>Neighbor: ${ neighbor.name }</div>`;
   }
 
-  onMapReady(map: L.Map) {
+  onMapReady(map: Map) {
     console.log("Map is ready");
     this.map = map;
   }
 
-  toolsMarkerClusterReady(group: L.MarkerClusterGroup) {
+  toolsMarkerClusterReady(group: MarkerClusterGroup) {
     console.log("Tools marker cluster is ready");
     this.toolsMarkerClusterGroup = group;
 
@@ -114,15 +119,15 @@ export class MapComponent implements OnInit, AfterViewInit {
     console.log("Calling for tools");
     this.dataService.getAllTools().then(
       (tools: Tool[]) => {
-        let markers: L.Marker[] = [];
+        let markers: Marker[] = [];
         tools.forEach(tool => {
-          const icon = L.ExtraMarkers.icon({
+          const icon = ExtraMarkers.icon({
             icon: 'fa-solid ' + tool.category_icon,
             markerColor: 'red',
             shape: 'square',
             prefix: 'fa'
           });
-          // const icon = L.icon({
+          // const icon = icon({
           //   iconUrl: 'assets/toolcategory/' + tool.category_icon, // path to your icon image
           //   iconSize:     [40, 40],   // size of the icon
           //   iconAnchor:   [16, 32],   // point of the icon which corresponds to marker location
@@ -132,10 +137,10 @@ export class MapComponent implements OnInit, AfterViewInit {
           //   shadowAnchor: [12, 41],
           //   className: "leaflet_icon",
           // })
-          const marker: L.Marker = L.marker([tool.latitude, tool.longitude], {icon: icon });
-          marker.bindPopup(this.makeToolPopup(tool))
+          const m: Marker = marker([tool.latitude, tool.longitude], {icon: icon });
+          m.bindPopup(this.makeToolPopup(tool))
 
-          markers.push(marker);
+          markers.push(m);
         });
         console.log("# of tools: " + markers.length);
 
@@ -144,13 +149,13 @@ export class MapComponent implements OnInit, AfterViewInit {
 
         // Recenter the map based on the tools
         if (this.toolsMarkerClusterData.length > 0) {
-          this.map.fitBounds(L.featureGroup(markers).getBounds(), { padding: [40, 40] });
+          this.map.fitBounds(featureGroup(markers).getBounds(), { padding: [40, 40] });
         }
       }
     );
   }
 
-  neighborMarkerClusterReady(group: L.MarkerClusterGroup) {
+  neighborMarkerClusterReady(group: MarkerClusterGroup) {
     console.log("Neighbor marker cluster is ready");
     this.neighborMarkerClusterGroup = group;
 
@@ -163,13 +168,13 @@ export class MapComponent implements OnInit, AfterViewInit {
       (neighbors: Neighbor[]) => {
         let markers: L.Marker[] = [];
         neighbors.forEach(neighbor => {
-          const icon = L.ExtraMarkers.icon({
+          const icon = ExtraMarkers.icon({
             icon: 'fa-solid fa-user-tie',
             markerColor: neighbor.is_friend ? 'green' : 'blue',
             shape: 'square',
             prefix: 'fa'
           });
-          // const icon = L.icon({
+          // const icon = icon({
           //   iconUrl: 'assets/toolcategory/' + tool.category_icon, // path to your icon image
           //   iconSize:     [40, 40],   // size of the icon
           //   iconAnchor:   [16, 32],   // point of the icon which corresponds to marker location
@@ -179,10 +184,10 @@ export class MapComponent implements OnInit, AfterViewInit {
           //   shadowAnchor: [12, 41],
           //   className: "leaflet_icon",
           // })
-          const marker: L.Marker = L.marker([neighbor.latitude, neighbor.longitude], {icon: icon });
-          marker.bindPopup(this.makeNeighborPopup(neighbor));
+          const m: L.Marker = marker([neighbor.latitude, neighbor.longitude], {icon: icon });
+          m.bindPopup(this.makeNeighborPopup(neighbor));
 
-          markers.push(marker);
+          markers.push(m);
         });
         console.log("# of neighbors: " + markers.length);
 
@@ -191,7 +196,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
         // Recenter the map based on the tools
         if (this.neighborMarkerClusterData.length > 0) {
-          this.map.fitBounds(L.featureGroup(markers).getBounds(), { padding: [40, 40] });
+          this.map.fitBounds(featureGroup(markers).getBounds(), { padding: [40, 40] });
         }
       }
     );
