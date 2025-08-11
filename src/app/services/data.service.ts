@@ -15,6 +15,13 @@ const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
 };
 
+// Data for the current user
+export interface MyInfo {
+    home_address: string,
+    latitude: number,
+    longitude: number,
+}
+
 // Data for a neighbor
 export interface Neighbor {
     id: number,
@@ -44,6 +51,17 @@ export interface Tool {
 })
 export class DataService {
     constructor(private http: HttpClient, private tokenStorage: TokenService) { }
+
+    // Get my info
+    async getMyInfo(): Promise<MyInfo> {
+        return await firstValueFrom(
+            this.http.post<MyInfo>(
+                API_URL + 'v1/myinfo',
+                {},
+                {},
+            )
+        );   
+    }
 
     // List neighbors
     async listNeighbors(): Promise<Neighbor[]> {

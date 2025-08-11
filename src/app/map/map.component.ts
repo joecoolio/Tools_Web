@@ -15,7 +15,7 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster.layersupport';
 import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
 import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
-import { Neighbor, DataService, Tool } from '../services/data.service';
+import { Neighbor, DataService, Tool, MyInfo } from '../services/data.service';
 
 const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
 
@@ -82,6 +82,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   // The tools & neighbor layer groups
+  meLayerGroup: LayerGroup = layerGroup(); // Holds one layer showing me
   toolsLayerGroup: LayerGroup = layerGroup();
   neighborsLayerGroup: LayerGroup = layerGroup();
 
@@ -110,14 +111,40 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.map = map;
     this.markerClusterGroup = markerClusterGroup.layerSupport();
     this.markerClusterGroup.addTo(map);
+
+    this.markerClusterGroup.checkIn(this.meLayerGroup);
     this.markerClusterGroup.checkIn(this.toolsLayerGroup);
     this.markerClusterGroup.checkIn(this.neighborsLayerGroup);
+
+    this.meLayerGroup.addTo(map);
     this.toolsLayerGroup.addTo(map);
     this.neighborsLayerGroup.addTo(map);
 
+    this.getMyInfo();
     this.refreshData();
   }
   
+  private getMyInfo() {
+    console.log("Calling for my info");
+    this.dataService.getMyInfo().then(
+      (myinfo: MyInfo) => {
+        this.meLayerGroup.clearLayers();
+        const icon = ExtraMarkers.icon({
+          icon: 'fa-solid fa-face-grin-wide',
+          markerColor: 'orange',
+          shape: 'square',
+          prefix: 'fa'
+        });
+        const m: Marker = marker([myinfo.latitude, myinfo.longitude], {icon: icon });
+
+        this.meLayerGroup.addLayer(m);
+
+        // Center & zoom the map on my location
+        this.map.setView([myinfo.latitude, myinfo.longitude], 15);
+      }
+    )
+  }
+
   private refreshData() {
     // API call to get all the available tools
     console.log("Calling for tools");
@@ -166,6 +193,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   layerControlReady($event: Control.Layers) {
     this.layerControl = $event;
+    this.controlLayerConfig.overlays['Me'] = this.meLayerGroup;
     this.controlLayerConfig.overlays['Neighbors'] = this.neighborsLayerGroup;
     this.controlLayerConfig.overlays['Tools'] = this.toolsLayerGroup;
   }
