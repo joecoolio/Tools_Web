@@ -2,6 +2,7 @@
     leaflet leafletMap
     [leafletOptions]="options"
     (leafletMapReady)="onMapReady($event)"
+    (leafletClick)="onMapClick($event)"
 >
     <!-- Marker Layer (tools & neighbors together) -->
     @if (true) {
@@ -13,3 +14,56 @@
     }
 
 </div>
+
+<div id="sidebar" class="leaflet-sidebar collapsed">
+    <!-- Nav tabs -->
+    <div class="leaflet-sidebar-tabs">
+        <ul role="tablist"> <!-- top aligned tabs -->
+            <li class="disabled"><a href="#selected_tool" role="tab"><i class="fa fa-hammer"></i></a></li>
+            <li class="disabled"><a href="#selected_neighbor" role="tab"><i class="fa fa-face-smile"></i></a></li>
+            <li><a href="#profile" role="tab"><i class="fa fa-user"></i></a></li>
+        </ul>
+
+        <ul role="tablist"> <!-- bottom aligned tabs -->
+            <li><a href="#settings" role="tab"><i class="fa fa-gear"></i></a></li>
+        </ul>
+    </div>
+
+    <!-- Tab panes -->
+    <div class="leaflet-sidebar-content">
+        <div class="leaflet-sidebar-pane" id="selected_tool">
+            <h1 class="leaflet-sidebar-header"> Tool <div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+            @if(selectedTool) {
+                <app-card
+                    [name]="'Charmander'"
+                    [type]="'fire'"
+                    [hp]="50"
+                    [attack]="'Ember'"
+                    [damage]="40"
+                    [description]="selectedTool.name"
+                    [imageUrl]="'https://assets.pokemon.com/assets/cms2/img/pokedex/full/004.png'"
+                ></app-card>
+            }
+        </div>
+
+        <div class="leaflet-sidebar-pane" id="selected_neighbor">
+            <h1 class="leaflet-sidebar-header">Neighbor<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+            @if(selectedNeighbor) {
+                <app-card
+                    [name]="selectedNeighbor.name"
+                    [type]="'fire'"
+                    [hp]="50"
+                    [attack]="'Ember'"
+                    [damage]="40"
+                    [description]="'Can kill you'"
+                    [imageUrl]="selectedNeighborImageUrl"
+                ></app-card>
+            }
+        </div>
+
+        <div class="leaflet-sidebar-pane" id="profile">
+            <h1 class="leaflet-sidebar-header">Profile<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        </div>
+    </div>
+</div>
+

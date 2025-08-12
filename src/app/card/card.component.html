@@ -1,0 +1,17 @@
+<div class="pokemon-card">
+  <div class="card-header">
+    <h2 class="pokemon-name">{{ name }}</h2>
+    <span class="pokemon-type" >{{ type }}</span>
+  </div>
+  <div class="card-image">
+    <img [src]="imageUrl" [alt]="name">
+  </div>
+  <div class="card-stats">
+    <div><strong>HP:</strong> {{ hp }}</div>
+    <div><strong>Attack:</strong> {{ attack }}</div>
+    <div><strong>Damage:</strong> {{ damage }}</div>
+  </div>
+  <div class="card-description">
+    {{ description }}
+  </div>
+</div>
