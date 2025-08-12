@@ -56,6 +56,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   ) { }
 
   public map!: Map;
+  mapIsReady: boolean = false;
 
   // All of the different map options available
   private osmMap: Layer = tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>' });
@@ -111,6 +112,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   selectedNeighbor !: Neighbor;
   selectedNeighborImageUrl !: SafeUrl;
 
+  // All Markers that are in the current view
+  visibleTools: Marker[] = [];
+  visibleNeighbors: Marker[] = [];
+
   ngOnInit(): void {  }
 
   ngAfterViewInit(): void {  }
@@ -128,6 +133,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   onMapReady(map: Map) {
     console.log("Map is ready");
     this.map = map;
+    this.mapIsReady = true;
+
+    // Visible marker stuff
+    this.map.on("overlayadd", (e) => this.refreshVisibleMarkers(e.name) );
+    this.map.on("overlayremove", (e) => this.refreshVisibleMarkers(e.name) );
 
     // Marker cluster setup
     this.markerClusterGroup = markerClusterGroup.layerSupport();
@@ -219,6 +229,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           this.toolsLayerGroup.addLayer(m);
         });
+
+        this.refreshVisibleMarkers("Tools");
       }
     );
 
@@ -243,6 +255,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           this.neighborsLayerGroup.addLayer(m);
         });
+
+        this.refreshVisibleMarkers("Neighbors");
       }
     );
   }
@@ -337,4 +351,49 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     );
   }
+
+  // Re-populate the list of visible markers
+  refreshVisibleMarkers(overlayName: string) {
+    if (this.mapIsReady) {
+      var bounds = this.map.getBounds();
+
+      if (overlayName == "Neighbors") {
+        this.visibleNeighbors = [];
+        
+        if (this.map.hasLayer(this.neighborsLayerGroup)) {
+          this.neighborsLayerGroup.eachLayer((layer: Layer) => {
+            if (layer instanceof Marker) {
+              let marker: Marker = (layer as Marker);
+              if(bounds.contains(marker.getLatLng())) {
+                this.visibleNeighbors.push(marker);
+              }
+            }
+          });
+        }
+      }
+
+      if (overlayName == "Tools") {
+        this.visibleTools = [];
+        
+        if (this.map.hasLayer(this.toolsLayerGroup)) {
+          this.toolsLayerGroup.eachLayer((layer: Layer) => {
+            if (layer instanceof Marker) {
+              let marker: Marker = (layer as Marker);
+              if(bounds.contains(marker.getLatLng())) {
+                this.visibleTools.push(marker);
+              }
+            }
+          });
+        }
+      }
+
+      console.log("Number of visible markers: Tools: " + this.visibleTools.length + " / Neighbors: " + this.visibleNeighbors.length);
+    }
+  }
+
+  refreshAllVisibleMarkers() {
+    this.refreshVisibleMarkers("Neighbors");
+    this.refreshVisibleMarkers("Tools");
+  }
+
 }
