@@ -18,7 +18,6 @@ import { MatDialog, MatDialogConfig, MatDialogModule } from '@angular/material/d
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { SortedArray } from '../services/sortedarray';
 
-
 const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
 
 const iconUrl = 'leafassets/marker-icon.png';
@@ -409,6 +408,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.refreshVisibleMarkers("Tools");
   }
 
+  // Convert a Marker to a Neighbor (via an API call)
   private markerToNeighbor(marker: Marker): Neighbor {
     const id = (marker as any).id;
     const neighbor: Neighbor = {
@@ -446,6 +446,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     return neighbor;
   }
 
+  // Convert a Marker to a Tool (via an API call)
   private markerToTool(marker: Marker): Tool {
     const id = (marker as any).id;
     const tool: Tool = {

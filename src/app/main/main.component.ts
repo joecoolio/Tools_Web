@@ -1,12 +1,6 @@
 import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { MatCardModule } from "@angular/material/card";
 import { MapComponent } from "../map/map.component";
-import {
-  Map, Marker, MarkerOptions, Layer, tileLayer, MapOptions, latLng, icon, marker, LayerGroup, layerGroup, // Default stuff
-  ExtraMarkers, // Fancy markers
-  MarkerClusterGroup, MarkerClusterGroupOptions, markerClusterGroup, // Cluster groups
-  Control
-} from 'leaflet';
 import { Neighbor, Tool } from '../services/data.service';
 import { SortedArray } from '../services/sortedarray';
 
