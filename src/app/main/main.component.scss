@@ -1,0 +1,20 @@
+.container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.left-section, .right-section {
+  flex: 1;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.left-section {
+  background-color: #f0f8ff;
+  border-right: 2px solid #ccc;
+}
+
+.right-section {
+  background-color: #fffaf0;
+}

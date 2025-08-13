@@ -101,7 +101,7 @@ export class RegisterComponent {
 
         // Redirect to the user settings page
         const navigationExtras: NavigationExtras = {state: {data: 'A registration email has been sent to you!'}};
-        this.router.navigate(['map']);
+        this.router.navigate(['main']);
       },
       (err) => {
         this.errorMessage = "Registration failed, user exists with a different password?"

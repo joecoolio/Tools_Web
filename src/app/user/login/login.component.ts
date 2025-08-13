@@ -86,7 +86,7 @@ export class LoginComponent {
 
         // Redirect to the user settings page
         const navigationExtras: NavigationExtras = {state: {data: 'Login Successful!'}};
-        this.router.navigate(['map']);
+        this.router.navigate(['main']);
       },
       // Failure
       (err) => {

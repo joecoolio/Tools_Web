@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, NgZone, OnInit, Output } from '@angular/core';
 import {
   Map, Marker, MarkerOptions, Layer, tileLayer, MapOptions, latLng, icon, marker, LayerGroup, layerGroup, // Default stuff
   ExtraMarkers, // Fancy markers
@@ -54,6 +54,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     private dialog: MatDialog,
     private sanitizer: DomSanitizer,
   ) { }
+
+  // Emitters for a parent component
+  @Output() visibleNeighborsCleared = new EventEmitter<void>();
+  @Output() visibleToolsCleared = new EventEmitter<void>();
 
   public map!: Map;
   mapIsReady: boolean = false;
@@ -113,8 +117,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   selectedNeighborImageUrl !: SafeUrl;
 
   // All Markers that are in the current view
-  visibleTools: Marker[] = [];
-  visibleNeighbors: Marker[] = [];
+  visibleTools: Tool[] = [];
+  visibleNeighbors: Neighbor[] = [];
 
   ngOnInit(): void {  }
 
@@ -358,14 +362,19 @@ export class MapComponent implements OnInit, AfterViewInit {
       var bounds = this.map.getBounds();
 
       if (overlayName == "Neighbors") {
-        this.visibleNeighbors = [];
+        this.zone.run(() => {
+          this.visibleNeighbors = [];
+          this.visibleNeighborsCleared.emit();
+        });
         
         if (this.map.hasLayer(this.neighborsLayerGroup)) {
           this.neighborsLayerGroup.eachLayer((layer: Layer) => {
             if (layer instanceof Marker) {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
-                this.visibleNeighbors.push(marker);
+                this.zone.run(() => {
+                  this.visibleNeighbors.push(this.markerToNeighbor(marker));
+                });
               }
             }
           });
@@ -373,14 +382,19 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
 
       if (overlayName == "Tools") {
-        this.visibleTools = [];
+        this.zone.run(() => {
+          this.visibleTools = [];
+          this.visibleToolsCleared.emit();
+        });
         
         if (this.map.hasLayer(this.toolsLayerGroup)) {
           this.toolsLayerGroup.eachLayer((layer: Layer) => {
             if (layer instanceof Marker) {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
-                this.visibleTools.push(marker);
+                this.zone.run(() => {
+                  this.visibleTools.push(this.markerToTool(marker));
+                });
               }
             }
           });
@@ -394,6 +408,51 @@ export class MapComponent implements OnInit, AfterViewInit {
   refreshAllVisibleMarkers() {
     this.refreshVisibleMarkers("Neighbors");
     this.refreshVisibleMarkers("Tools");
+  }
+
+  private markerToNeighbor(marker: Marker): Neighbor {
+    const id = (marker as any).id;
+    const neighbor: Neighbor = {
+      id: id,
+      name: '',
+      photo_link: '',
+      latitude: 0,
+      longitude: 0,
+      distance_m: 0,
+      is_friend: false
+    }
+
+    this.dataService.getNeighbor(id).then(
+      (n: Neighbor) => {
+        Object.assign(neighbor, n);
+      }
+    );
+
+    return neighbor;
+  }
+
+  private markerToTool(marker: Marker): Tool {
+    const id = (marker as any).id;
+    const tool: Tool = {
+      id: id,
+      owner_id: 0,
+      name: '',
+      product_url: '',
+      replacement_cost: 0,
+      category: '',
+      category_icon: '',
+      latitude: 0,
+      longitude: 0,
+      distance_m: 0
+    };
+ 
+    this.dataService.getTool(id).then(
+      (t: Tool) => {
+        Object.assign(tool, t);
+      }
+    );
+
+    return tool;
   }
 
 }

@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { API_URL } from '../app.component';
@@ -57,11 +57,16 @@ export interface Tool {
 export class DataService {
     constructor(private http: HttpClient, private tokenStorage: TokenService) { }
 
+    // Caches
+    private neighborCache: Map<number, Neighbor> = new Map();
+    private toolCache: Map<number, Tool> = new Map();
+    private photoCache: Map<string, Blob> = new Map();
+
     // Get my info
     async getMyInfo(): Promise<MyInfo> {
         return await firstValueFrom(
             this.http.post<MyInfo>(
-                API_URL + 'v1/myinfo',
+                URL_MY_INFO,
                 {},
                 {},
             )
@@ -81,33 +86,42 @@ export class DataService {
 
     // List neighbors
     async getNeighbor(id: number): Promise<Neighbor> {
-        const body = {
-            neighborId: id
-        };
-
-        return await firstValueFrom(
-            this.http.post<Neighbor>(
-                URL_GET_NEIGHBOR,
-                body,
-                {},
-            )
-        );
+        if (this.neighborCache.has(id)) {
+            return await firstValueFrom(of(this.neighborCache.get(id)!));
+        } else {
+            console.log("API - Getting neighbor: " + id);
+            const body = {
+                neighborId: id
+            };
+            return await firstValueFrom(
+                this.http.post<Neighbor>(
+                    URL_GET_NEIGHBOR,
+                    body,
+                    {},
+                )
+                .pipe(tap(data => this.neighborCache.set(id, data)))
+            );
+        }
     }
 
     // Get a neighbor's picture
     async getPicture(photo_id: string): Promise<Blob> {
-        console.log("Getting picture: " + photo_id);
-        const body = {
-            photo_id: photo_id
-        };
+        if (this.photoCache.has(photo_id)) {
+            return await firstValueFrom(of(this.photoCache.get(photo_id)!));
+        } else {
+            console.log("API - Getting picture: " + photo_id);
+            const body = {
+                photo_id: photo_id
+            };
 
-        return await firstValueFrom(
-            this.http.post(
-                URL_GET_PICTURE,
-                body,
-                { observe: 'body', responseType: "blob" },
-            )
-        );
+            return await firstValueFrom(
+                this.http.post(
+                    URL_GET_PICTURE,
+                    body,
+                    { observe: 'body', responseType: "blob" },
+                )
+            );
+        }
     }
 
     // Get all available tools
@@ -125,17 +139,22 @@ export class DataService {
 
     // Get details about single tool
     async getTool(id: number): Promise<Tool> {
-        const body = {
-            id: id
-        };
-
-        return await firstValueFrom(
-            this.http.post<Tool>(
-                URL_GET_TOOL,
-                body,
-                {}
-            )
-        );
+        if (this.toolCache.has(id)) {
+            return await firstValueFrom(of(this.toolCache.get(id)!));
+        } else {
+            console.log("API - Getting tool: " + id);
+            const body = {
+                id: id
+            };
+            return await firstValueFrom(
+                this.http.post<Tool>(
+                    URL_GET_TOOL,
+                    body,
+                    {}
+                )
+                .pipe(tap(data => this.toolCache.set(id, data)))
+            );
+        }
     };
 
 }
