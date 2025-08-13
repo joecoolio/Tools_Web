@@ -1,0 +1,76 @@
+// An array that keeps the proper sort order at all time.
+// Backed by a normal array.
+// Sort function is provided in the constructor.
+export class SortedArray<T> {
+    private items: T[] = [];
+    private compareFunction!: (o1: T, o2: T) => number;
+
+    constructor(compareFunction: (o1: T, o2: T) => number) {
+        this.compareFunction = compareFunction;
+    }
+
+    add(item: T): void {
+        const index = this.findInsertIndex(item);
+        this.items.splice(index, 0, item);
+    }
+
+    private findInsertIndex(item: T): number {
+        let low = 0;
+        let high = this.items.length;
+
+        while (low < high) {
+            const mid = Math.floor((low + high) / 2);
+            const cmp = this.compareFunction(item, this.items[mid]);
+
+            if (cmp < 0) {
+                high = mid;
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        return low;
+    }
+
+    getAll(): T[] {
+        return [...this.items];
+    }
+
+    get(index: number): T | undefined {
+        return this.items[index];
+    }
+
+    remove(index: number): T | undefined {
+        if (index >= 0 && index < this.items.length) {
+            return this.items.splice(index, 1)[0];
+        }
+        return undefined;
+    }
+
+    size(): number {
+        return this.items.length;
+    }
+
+    clear(): void {
+        this.items = [];
+    }
+
+    resort(): void {
+       this.items.sort(this.compareFunction);
+    }
+
+    [Symbol.iterator](): Iterator<T> {
+        let index = 0;
+        const data = this.items;
+
+        return {
+            next(): IteratorResult<T> {
+                if (index < data.length) {
+                    return { value: data[index++], done: false };
+                } else {
+                    return { value: undefined as any, done: true };
+                }
+            }
+        };
+    }
+}

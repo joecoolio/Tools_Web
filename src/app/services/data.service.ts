@@ -4,6 +4,7 @@ import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { API_URL } from '../app.component';
 import { BoundedMap } from './boundedmap';
+import { SafeUrl } from '@angular/platform-browser';
 
 // URLs
 const URL_MY_INFO = API_URL + 'v1/myinfo';
@@ -34,8 +35,10 @@ export interface Neighbor {
     photo_link: string,
     latitude: number,
     longitude: number,
+    home_address: string,
     distance_m: number,
     is_friend: boolean,
+    imageUrl: SafeUrl | undefined,
 }
 
 // Data for a tool
@@ -121,6 +124,7 @@ export class DataService {
                     body,
                     { observe: 'body', responseType: "blob" },
                 )
+                .pipe(tap(data => this.photoCache.set(photo_id, data)))
             );
         }
     }

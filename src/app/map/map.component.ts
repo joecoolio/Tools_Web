@@ -16,6 +16,7 @@ import { Neighbor, DataService, Tool, MyInfo } from '../services/data.service';
 import { CardComponent } from '../card/card.component';
 import { MatDialog, MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { SortedArray } from '../services/sortedarray';
 
 
 const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
@@ -117,8 +118,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   selectedNeighborImageUrl !: SafeUrl;
 
   // All Markers that are in the current view
-  visibleTools: Tool[] = [];
-  visibleNeighbors: Neighbor[] = [];
+  visibleTools: SortedArray<Tool> = new SortedArray((a:Tool, b:Tool) => { return a.distance_m - b.distance_m});
+  visibleNeighbors: SortedArray<Neighbor> = new SortedArray((a:Neighbor, b:Neighbor) => { return a.distance_m - b.distance_m});
 
   ngOnInit(): void {  }
 
@@ -363,7 +364,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       if (overlayName == "Neighbors") {
         this.zone.run(() => {
-          this.visibleNeighbors = [];
+          this.visibleNeighbors.clear();
           this.visibleNeighborsCleared.emit();
         });
         
@@ -373,7 +374,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
                 this.zone.run(() => {
-                  this.visibleNeighbors.push(this.markerToNeighbor(marker));
+                  this.visibleNeighbors.add(this.markerToNeighbor(marker));
                 });
               }
             }
@@ -383,7 +384,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       if (overlayName == "Tools") {
         this.zone.run(() => {
-          this.visibleTools = [];
+          this.visibleTools.clear();
           this.visibleToolsCleared.emit();
         });
         
@@ -393,15 +394,13 @@ export class MapComponent implements OnInit, AfterViewInit {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
                 this.zone.run(() => {
-                  this.visibleTools.push(this.markerToTool(marker));
+                  this.visibleTools.add(this.markerToTool(marker));
                 });
               }
             }
           });
         }
       }
-
-      console.log("Number of visible markers: Tools: " + this.visibleTools.length + " / Neighbors: " + this.visibleNeighbors.length);
     }
   }
 
@@ -418,13 +417,29 @@ export class MapComponent implements OnInit, AfterViewInit {
       photo_link: '',
       latitude: 0,
       longitude: 0,
-      distance_m: 0,
-      is_friend: false
+      home_address: '',
+      distance_m: 9999,
+      is_friend: false,
+      imageUrl: undefined
     }
 
     this.dataService.getNeighbor(id).then(
       (n: Neighbor) => {
         Object.assign(neighbor, n);
+        this.visibleNeighbors.resort(); // Need to resort after loading the neighbor's data
+
+        if (! n.imageUrl) {
+          // Request the image
+          if(! n.photo_link) {
+            n.photo_link = "default.svg";
+          }
+          this.dataService.getPicture(n.photo_link).then(
+            (blob: Blob) => {
+              const objectURL = URL.createObjectURL(blob);
+              neighbor.imageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
+            }
+          );
+        }
       }
     );
 

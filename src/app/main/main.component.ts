@@ -8,6 +8,7 @@ import {
   Control
 } from 'leaflet';
 import { Neighbor, Tool } from '../services/data.service';
+import { SortedArray } from '../services/sortedarray';
 
 @Component({
   selector: 'app-main',
@@ -19,8 +20,8 @@ export class MainComponent implements AfterViewInit {
   @ViewChild('mapRef') map!: MapComponent;
 
   // All Tools/Neighbors that are in the current view on the map
-  visibleTools!: Tool[];
-  visibleNeighbors!: Neighbor[];
+  visibleTools!: SortedArray<Tool>;
+  visibleNeighbors!: SortedArray<Neighbor>;
 
   ngAfterViewInit(): void {
     setTimeout(() => { // Avoid NG0100
@@ -29,8 +30,11 @@ export class MainComponent implements AfterViewInit {
     });
   }
 
-  onVisibleNeighborCleared() {
+  onVisibleNeighborsCleared() {
     this.visibleNeighbors = this.map.visibleNeighbors;
+  }
+  onVisibleToolsCleared() {
+    this.visibleTools = this.map.visibleTools;
   }
 
 }
