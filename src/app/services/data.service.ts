@@ -3,6 +3,7 @@ import { firstValueFrom, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { API_URL } from '../app.component';
+import { BoundedMap } from './boundedmap';
 
 // URLs
 const URL_MY_INFO = API_URL + 'v1/myinfo';
@@ -58,9 +59,9 @@ export class DataService {
     constructor(private http: HttpClient, private tokenStorage: TokenService) { }
 
     // Caches
-    private neighborCache: Map<number, Neighbor> = new Map();
-    private toolCache: Map<number, Tool> = new Map();
-    private photoCache: Map<string, Blob> = new Map();
+    private neighborCache: Map<number, Neighbor> = new BoundedMap(100);
+    private toolCache: Map<number, Tool> = new BoundedMap(100);
+    private photoCache: Map<string, Blob> = new BoundedMap(100);
 
     // Get my info
     async getMyInfo(): Promise<MyInfo> {
