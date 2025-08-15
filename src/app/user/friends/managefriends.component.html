@@ -1,0 +1,36 @@
+<div class="container">
+    <div class="left-section">
+        @if(visibleNeighbors) {
+            @for(neighbor of visibleNeighbors; track neighbor.id) {
+                <mat-card class="person-card">
+                    <mat-card-content>
+                        <h2 class="person-name">{{ neighbor.name }}</h2>
+                        <div class="person-body">
+                            <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image" />
+                            @if(neighbor.is_friend) {
+                                <span class="friend-tag">FRIEND</span>
+                            }
+                            <div class="person-info">
+                                <p class="person-address">{{ neighbor.home_address }} </p>
+                            </div>
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+            }
+        }
+    </div>
+
+    <div class="right-section">
+        @if(markerData) {
+            <app-map
+                #mapRef
+                [layerGroupNames]="layerGroupNames"
+                [markerData]="markerData"
+                [sortFunction]="sortFunction"
+                [convertIdToObject]="idToNeighbor"
+                (visibleLayersCleared)="onVisibleLayersCleared($event)"
+                (visibleLayersRefreshed)="onVisibleLayersRefreshed($event)"
+                (ready)="onReady($event)"
+            ></app-map>
+        }
+    </div>

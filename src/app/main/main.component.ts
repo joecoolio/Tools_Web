@@ -19,16 +19,16 @@ export class MainComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     setTimeout(() => { // Avoid NG0100
-      this.visibleTools = this.map.visibleTools;
-      this.visibleNeighbors = this.map.visibleNeighbors;
+      // this.visibleTools = this.map.visibleTools;
+      // this.visibleNeighbors = this.map.visibleNeighbors;
     });
   }
 
   onVisibleNeighborsCleared() {
-    this.visibleNeighbors = this.map.visibleNeighbors;
+    // this.visibleNeighbors = this.map.visibleNeighbors;
   }
   onVisibleToolsCleared() {
-    this.visibleTools = this.map.visibleTools;
+    // this.visibleTools = this.map.visibleTools;
   }
 
 }

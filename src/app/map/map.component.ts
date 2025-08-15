@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, NgZone, OnInit, Output } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import {
   Map, Marker, MarkerOptions, Layer, tileLayer, MapOptions, latLng, icon, marker, LayerGroup, layerGroup, // Default stuff
   ExtraMarkers, // Fancy markers
@@ -17,6 +17,26 @@ import { CardComponent } from '../card/card.component';
 import { MatDialog, MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { SortedArray } from '../services/sortedarray';
+import { IconOptions } from '@angular/material/icon';
+import { HEX } from 'leaflet-extra-markers';
+import { delay } from 'rxjs';
+
+// The data required to draw something on the map.
+// This will be converted to a marker when mapping.
+export interface MarkerData {
+    layerGroupName: string, // what label group to put this marker in
+    id: number, // unique id for this guy
+    latitude: number, // where to put it on the map
+    longitude: number,
+    icon: string, // e.g. 'fa-solid fa-hammer'
+    // color on the map: e.g. 'red'
+    /** Color of the marker (css class). Default value 'blue'. */
+    color?: "red" | "orange-dark" | "orange" | "yellow" | "blue" | "blue-dark" | "cyan" | "purple"
+                | "violet" | "pink" | "green-dark" | "green" | "green-light" | "black" | "white" | HEX,
+    popupText: string, // some html for mouse over: e.g. `<div>Tool: Hammer</div>`;
+    onclick: (id: number) => void
+}
+
 
 const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
 
@@ -41,7 +61,7 @@ Marker.prototype.options.icon = iconDefault;
     LeafletDirective,
     LeafletModule,
     LeafletMarkerClusterModule,
-    CardComponent,
+    // CardComponent,
   ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
@@ -55,9 +75,18 @@ export class MapComponent implements OnInit, AfterViewInit {
     private sanitizer: DomSanitizer,
   ) { }
 
+  // Inputs for map setup
+  @Input() layerGroupNames!: string[]; // List of layer groups
+  @Input() markerData!: MarkerData[]; // Data for markers
+  @Input() sortFunction!: (o1: any, o2: any) => number; // For sorted arrays
+  @Input() convertIdToObject!: (id: number) => any; // For sorted arrays
+
   // Emitters for a parent component
-  @Output() visibleNeighborsCleared = new EventEmitter<void>();
-  @Output() visibleToolsCleared = new EventEmitter<void>();
+  // @Output() visibleNeighborsCleared = new EventEmitter<void>();
+  // @Output() visibleToolsCleared = new EventEmitter<void>();
+  @Output() ready = new EventEmitter<globalThis.Map<string, SortedArray<any>>>();
+  @Output() visibleLayersCleared = new EventEmitter<string>();
+  @Output() visibleLayersRefreshed = new EventEmitter<string>();
 
   public map!: Map;
   mapIsReady: boolean = false;
@@ -93,9 +122,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   // The tools & neighbor layer groups
-  meLayerGroup: LayerGroup = layerGroup(); // Holds one layer showing me
-  toolsLayerGroup: LayerGroup = layerGroup();
-  neighborsLayerGroup: LayerGroup = layerGroup();
+  // meLayerGroup: LayerGroup = layerGroup(); // Holds one layer showing me
+  // toolsLayerGroup: LayerGroup = layerGroup();
+  // neighborsLayerGroup: LayerGroup = layerGroup();
+  layerGroups: globalThis.Map<string, LayerGroup> = new globalThis.Map();
 
   // The tools + neighbors cluster group
   markerClusterGroup!: MarkerClusterGroup.LayerSupport;
@@ -103,39 +133,41 @@ export class MapComponent implements OnInit, AfterViewInit {
   // Shared cluster group options
   markerClusterOptions: MarkerClusterGroupOptions = {  };
 
-  // Sidebar
-  sidebar = L.control.sidebar({
-    autopan: true,       // whether to maintain the centered map point when opening the sidebar
-    closeButton: true,    // whether t add a close button to the panes
-    container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
-    position: 'left',     // left or right
-  });
+  // // Sidebar
+  // sidebar = L.control.sidebar({
+  //   autopan: true,       // whether to maintain the centered map point when opening the sidebar
+  //   closeButton: true,    // whether t add a close button to the panes
+  //   container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
+  //   position: 'left',     // left or right
+  // });
 
-  // Selected tool & neighbor for the sidebar to use
-  selectedTool !: Tool;
-  selectedNeighbor !: Neighbor;
-  selectedNeighborImageUrl !: SafeUrl;
+  // // Selected tool & neighbor for the sidebar to use
+  // selectedTool !: Tool;
+  // selectedNeighbor !: Neighbor;
+  // selectedNeighborImageUrl !: SafeUrl;
 
   // All Markers that are in the current view
-  visibleTools: SortedArray<Tool> = new SortedArray((a:Tool, b:Tool) => { return a.distance_m - b.distance_m});
-  visibleNeighbors: SortedArray<Neighbor> = new SortedArray((a:Neighbor, b:Neighbor) => { return a.distance_m - b.distance_m});
+  // visibleTools: SortedArray<Tool> = new SortedArray((a:Tool, b:Tool) => { return a.distance_m - b.distance_m});
+  // visibleNeighbors: SortedArray<Neighbor> = new SortedArray((a:Neighbor, b:Neighbor) => { return a.distance_m - b.distance_m});
+  visibleLayers: globalThis.Map<string, SortedArray<any>> = new globalThis.Map();
 
   ngOnInit(): void {  }
 
   ngAfterViewInit(): void {  }
 
-  makeToolPopup(tool: Tool): string {
-    return `` +
-      `<div>Tool: ${ tool.name }</div>`;
-  }
+  // makeToolPopup(tool: Tool): string {
+  //   return `` +
+  //     `<div>Tool: ${ tool.name }</div>`;
+  // }
 
-  makeNeighborPopup(neighbor: Neighbor): string {
-    return `` +
-      `<div>Neighbor: ${ neighbor.name }</div>`;
-  }
+  // makeNeighborPopup(neighbor: Neighbor): string {
+  //   return `` +
+  //     `<div>Neighbor: ${ neighbor.name }</div>`;
+  // }
 
   onMapReady(map: Map) {
-    console.log("Map is ready");
+    console.log("Leaflet map is ready");
+
     this.map = map;
     this.mapIsReady = true;
 
@@ -147,328 +179,390 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.markerClusterGroup = markerClusterGroup.layerSupport();
     this.markerClusterGroup.addTo(map);
 
-    this.markerClusterGroup.checkIn(this.meLayerGroup);
-    this.markerClusterGroup.checkIn(this.toolsLayerGroup);
-    this.markerClusterGroup.checkIn(this.neighborsLayerGroup);
+    // Add all layer groups to the marker cluster group
+    // Then to the map
+    // this.markerClusterGroup.checkIn(this.meLayerGroup);
+    // this.markerClusterGroup.checkIn(this.toolsLayerGroup);
+    // this.markerClusterGroup.checkIn(this.neighborsLayerGroup);
+    this.layerGroupNames.forEach(lgName => {
+      let lg: LayerGroup = layerGroup();
+      this.layerGroups.set(lgName, lg);
+      this.markerClusterGroup.checkIn(lg);
+      lg.addTo(map);
 
-    this.meLayerGroup.addTo(map);
-    this.toolsLayerGroup.addTo(map);
-    this.neighborsLayerGroup.addTo(map);
+      this.visibleLayers.set(lgName, new SortedArray<any>(this.sortFunction));
+    })
 
-    // Sidebar setup
-    this.sidebar.addTo(map);
+    // this.meLayerGroup.addTo(map);
+    // this.toolsLayerGroup.addTo(map);
+    // this.neighborsLayerGroup.addTo(map);
 
-    // Disable the selection panels
-    this.sidebar.disablePanel("selected_tool");
+    // // Sidebar setup
+    // this.sidebar.addTo(map);
 
-    // let panelContent: Control.PanelOptions = {
-    //   id: 'userinfo',                     // UID, used to access the panel
-    //   tab: '<i class="fa fa-gear"></i>',  // content can be passed as HTML string,
-    //   title: 'Your Profile',              // an optional pane header
-    //   position: 'top'                  // optional vertical alignment, defaults to 'top'
-    // };
-    // this.sidebar.addPanel(panelContent);
-
-//     /* add an external link */
-// this.sidebar.addPanel({
-//     id: 'ghlink',
-//     tab: '<i class="fa fa-github"></i>',
-//     button: 'https://github.com/noerw/leaflet-sidebar-v2',
-// });
-
-// /* add a button with click listener */
-// this.sidebar.addPanel({
-//     id: 'click',
-//     tab: '<i class="fa fa-info"></i>',
-//     button: function (event) { console.log(event); }
-// });
+    // // Disable the selection panels
+    // this.sidebar.disablePanel("selected_tool");
 
     // API calls
-    this.getMyInfo();
-    this.refreshData();
+    // this.getMyInfo();
+    // this.refreshData();
+
+    console.log("Map is ready");
+    this.ready.emit(this.visibleLayers);
+
+    this.renderData();
   }
   
-  private getMyInfo() {
-    console.log("Calling for my info");
-    this.dataService.getMyInfo().then(
-      (myinfo: MyInfo) => {
-        this.meLayerGroup.clearLayers();
-        const icon = ExtraMarkers.icon({
-          icon: 'fa-solid fa-face-grin-wide',
-          markerColor: 'orange',
-          shape: 'square',
-          prefix: 'fa'
-        });
-        const m: Marker = marker([myinfo.latitude, myinfo.longitude], {icon: icon });
-        this.meLayerGroup.addLayer(m);
+  // private getMyInfo() {
+  //   console.log("Calling for my info");
+  //   this.dataService.getMyInfo().then(
+  //     (myinfo: MyInfo) => {
+  //       this.meLayerGroup.clearLayers();
+  //       const icon = ExtraMarkers.icon({
+  //         icon: 'fa-solid fa-face-grin-wide',
+  //         markerColor: 'orange',
+  //         shape: 'square',
+  //         prefix: 'fa'
+  //       });
+  //       const m: Marker = marker([myinfo.latitude, myinfo.longitude], {icon: icon });
+  //       this.meLayerGroup.addLayer(m);
 
-        // Center & zoom the map on my location
-        this.map.setView([myinfo.latitude, myinfo.longitude], 15);
+  //       // Center & zoom the map on my location
+  //       this.map.setView([myinfo.latitude, myinfo.longitude], 15);
+  //     }
+  //   )
+  // }
+
+  private renderData() {
+    this.markerData.forEach((md: MarkerData) => {
+      const icon = ExtraMarkers.icon({
+        icon: md.icon,
+        markerColor: md.color,
+        shape: 'square',
+        prefix: 'fa'
+      });
+      const m: Marker = marker([md.latitude, md.longitude], { icon: icon });
+      m.bindPopup(md.popupText);
+      (m as any).id = md.id;
+      m.on('click', event => md.onclick(md.id));
+      const layerGroup = this.layerGroups.get(md.layerGroupName);
+      if (layerGroup) {
+        layerGroup.addLayer(m);
+      } else {
+        console.log("Trying to add layer to non-existant layer group: " + md.layerGroupName);
       }
-    )
+    });
+
+    this.refreshAllVisibleMarkers();
   }
 
-  private refreshData() {
-    // API call to get all the available tools
-    console.log("Calling for tools");
-    this.dataService.getAllTools().then(
-      (tools: Tool[]) => {
-        console.log("# of tools: " + tools.length);
-        this.toolsLayerGroup.clearLayers();
+  // private refreshData() {
+  //   // API call to get all the available tools
+  //   console.log("Calling for tools");
+  //   this.dataService.getAllTools().then(
+  //     (tools: Tool[]) => {
+  //       console.log("# of tools: " + tools.length);
+  //       this.toolsLayerGroup.clearLayers();
 
-        tools.forEach(tool => {
-          const icon = ExtraMarkers.icon({
-            icon: 'fa-solid ' + tool.category_icon,
-            markerColor: 'red',
-            shape: 'square',
-            prefix: 'fa'
-          });
-          var x: MarkerOptions = {
+  //       tools.forEach(tool => {
+  //         const icon = ExtraMarkers.icon({
+  //           icon: 'fa-solid ' + tool.category_icon,
+  //           markerColor: 'red',
+  //           shape: 'square',
+  //           prefix: 'fa'
+  //         });
+  //         const m: Marker = marker([tool.latitude, tool.longitude], { icon: icon });
+  //         m.bindPopup(this.makeToolPopup(tool));
+  //         (m as any).id = tool.id; // Stick the ID of the tool on the object
+  //         m.on('click', event => this.toolOnClick(event));
 
-          }
-          const m: Marker = marker([tool.latitude, tool.longitude], { icon: icon });
-          m.bindPopup(this.makeToolPopup(tool));
-          (m as any).id = tool.id; // Stick the ID of the tool on the object
-          m.on('click', event => this.toolOnClick(event));
+  //         this.toolsLayerGroup.addLayer(m);
+  //       });
 
-          this.toolsLayerGroup.addLayer(m);
-        });
+  //       this.refreshVisibleMarkers("Tools");
+  //     }
+  //   );
 
-        this.refreshVisibleMarkers("Tools");
-      }
-    );
+  //   // API call to get all the neighbors
+  //   console.log("Calling for neighbors");
+  //   this.dataService.listNeighbors().then(
+  //     (neighbors: Neighbor[]) => {
+  //       console.log("# of neighbors: " + neighbors.length);
+  //       this.neighborsLayerGroup.clearLayers();
 
-    // API call to get all the neighbors
-    console.log("Calling for neighbors");
-    this.dataService.listNeighbors().then(
-      (neighbors: Neighbor[]) => {
-        console.log("# of neighbors: " + neighbors.length);
-        this.neighborsLayerGroup.clearLayers();
+  //       neighbors.forEach(neighbor => {
+  //         const icon = ExtraMarkers.icon({
+  //           icon: 'fa-solid fa-user-tie',
+  //           markerColor: neighbor.is_friend ? 'green' : 'blue',
+  //           shape: 'square',
+  //           prefix: 'fa'
+  //         });
+  //         const m: L.Marker = marker([neighbor.latitude, neighbor.longitude], {icon: icon });
+  //         m.bindPopup(this.makeNeighborPopup(neighbor));
+  //         (m as any).id = neighbor.id; // Stick the ID of the neighbor on the object
+  //         m.on('click', event => this.neighborOnClick(event));
 
-        neighbors.forEach(neighbor => {
-          const icon = ExtraMarkers.icon({
-            icon: 'fa-solid fa-user-tie',
-            markerColor: neighbor.is_friend ? 'green' : 'blue',
-            shape: 'square',
-            prefix: 'fa'
-          });
-          const m: L.Marker = marker([neighbor.latitude, neighbor.longitude], {icon: icon });
-          m.bindPopup(this.makeNeighborPopup(neighbor));
-          (m as any).id = neighbor.id; // Stick the ID of the neighbor on the object
-          m.on('click', event => this.neighborOnClick(event));
+  //         this.neighborsLayerGroup.addLayer(m);
+  //       });
 
-          this.neighborsLayerGroup.addLayer(m);
-        });
-
-        this.refreshVisibleMarkers("Neighbors");
-      }
-    );
-  }
+  //       this.refreshVisibleMarkers("Neighbors");
+  //     }
+  //   );
+  // }
 
   layerControlReady($event: Control.Layers) {
     this.layerControl = $event;
-    this.controlLayerConfig.overlays['Me'] = this.meLayerGroup;
-    this.controlLayerConfig.overlays['Neighbors'] = this.neighborsLayerGroup;
-    this.controlLayerConfig.overlays['Tools'] = this.toolsLayerGroup;
+    // this.controlLayerConfig.overlays['Me'] = this.meLayerGroup;
+    // this.controlLayerConfig.overlays['Neighbors'] = this.neighborsLayerGroup;
+    // this.controlLayerConfig.overlays['Tools'] = this.toolsLayerGroup;
+    this.layerGroupNames.forEach((name: string) => {
+      let layerGroup: LayerGroup | undefined = this.layerGroups.get(name);
+      if (layerGroup) {
+        this.controlLayerConfig.overlays[name] = layerGroup;
+      }
+    });
   }
 
   // This fires when you click on the map background.
   // I'm using it to un-select a tool/neighbor
   onMapClick($event: L.LeafletMouseEvent) {
-    console.log("User clicked on map: " + $event);
-    this.sidebar.close();
-    this.sidebar.disablePanel("selected_tool");
-    this.sidebar.disablePanel("selected_neighbor");
+    // console.log("User clicked on map: " + $event);
+    // this.sidebar.close();
+    // this.sidebar.disablePanel("selected_tool");
+    // this.sidebar.disablePanel("selected_neighbor");
   }
 
   // User clicked on a tool
-  toolOnClick($event: L.LeafletMouseEvent) {
-    let id: number = $event.target.id;
+  // toolOnClick($event: L.LeafletMouseEvent) {
+  //   let id: number = $event.target.id;
     
-  // [name]="'Charmander'"
-  // [type]="'fire'"
-  // [hp]="50"
-  // [attack]="'Ember'"
-  // [damage]="40"
-  // [description]="'Charmander’s tail flame shows its life force. It flares up in battle.'"
-  // [imageUrl]="'https://assets.pokemon.com/assets/cms2/img/pokedex/full/004.png'"
+  // // [name]="'Charmander'"
+  // // [type]="'fire'"
+  // // [hp]="50"
+  // // [attack]="'Ember'"
+  // // [damage]="40"
+  // // [description]="'Charmander’s tail flame shows its life force. It flares up in battle.'"
+  // // [imageUrl]="'https://assets.pokemon.com/assets/cms2/img/pokedex/full/004.png'"
 
-    console.log("User clicked on tool: " + id);
+  //   console.log("User clicked on tool: " + id);
 
-    // // Center the map on the clicked item
-    // console.log($event.target.getLatLng());
-    // console.log("before: " + this.map.latLngToContainerPoint($event.target.getLatLng()));
-    // this.map.setView($event.target.getLatLng(), 15);
-    // console.log("after: " + this.map.latLngToContainerPoint($event.target.getLatLng()));
+  //   // // Center the map on the clicked item
+  //   // console.log($event.target.getLatLng());
+  //   // console.log("before: " + this.map.latLngToContainerPoint($event.target.getLatLng()));
+  //   // this.map.setView($event.target.getLatLng(), 15);
+  //   // console.log("after: " + this.map.latLngToContainerPoint($event.target.getLatLng()));
 
-    // const dialogConfig = new MatDialogConfig();
-    // dialogConfig.autoFocus = true;
-    // dialogConfig.data = {
-    //   requestType: "tool",
-    //   id: id,
-    // }
+  //   // const dialogConfig = new MatDialogConfig();
+  //   // dialogConfig.autoFocus = true;
+  //   // dialogConfig.data = {
+  //   //   requestType: "tool",
+  //   //   id: id,
+  //   // }
 
-    // this.dialog.open(CardComponent, dialogConfig);
-    this.dataService.getTool(id).then(
-      (tool: Tool) => {
-        console.log("Retrieved tool: " + tool.id);
-        // this.zone.run(() => {
-          this.selectedTool = tool;
-        // });
-        this.changeDetector.detectChanges();
+  //   // this.dialog.open(CardComponent, dialogConfig);
+  //   this.dataService.getTool(id).then(
+  //     (tool: Tool) => {
+  //       console.log("Retrieved tool: " + tool.id);
+  //       // this.zone.run(() => {
+  //         this.selectedTool = tool;
+  //       // });
+  //       this.changeDetector.detectChanges();
 
-        this.sidebar.enablePanel("selected_tool");
-        this.sidebar.open("selected_tool");
-      }
-    );
-  }
+  //       this.sidebar.enablePanel("selected_tool");
+  //       this.sidebar.open("selected_tool");
+  //     }
+  //   );
+  // }
 
-  // User clicked on a neighbor
-  neighborOnClick($event: L.LeafletMouseEvent) {
-    let id: number = $event.target.id;
+  // // User clicked on a neighbor
+  // neighborOnClick($event: L.LeafletMouseEvent) {
+  //   let id: number = $event.target.id;
     
-    console.log("User clicked on neighbor: " + id);
+  //   console.log("User clicked on neighbor: " + id);
 
-    this.dataService.getNeighbor(id).then(
-      (neighbor: Neighbor) => {
-        console.log("Retrieved neighbor: " + neighbor.id);
-        this.selectedNeighbor = neighbor;
+  //   this.dataService.getNeighbor(id).then(
+  //     (neighbor: Neighbor) => {
+  //       console.log("Retrieved neighbor: " + neighbor.id);
+  //       this.selectedNeighbor = neighbor;
 
-        this.changeDetector.detectChanges();
+  //       this.changeDetector.detectChanges();
 
-        this.sidebar.enablePanel("selected_neighbor");
-        this.sidebar.open("selected_neighbor");
+  //       this.sidebar.enablePanel("selected_neighbor");
+  //       this.sidebar.open("selected_neighbor");
 
-        // Request the image
-        if(! this.selectedNeighbor.photo_link) {
-          this.selectedNeighbor.photo_link = "default.svg";
-        }
-        this.dataService.getPicture(this.selectedNeighbor.photo_link).then(
-          (blob: Blob) => {
-            const objectURL = URL.createObjectURL(blob);
-            this.selectedNeighborImageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
+  //       // Request the image
+  //       if(! this.selectedNeighbor.photo_link) {
+  //         this.selectedNeighbor.photo_link = "default.svg";
+  //       }
+  //       this.dataService.getPicture(this.selectedNeighbor.photo_link).then(
+  //         (blob: Blob) => {
+  //           const objectURL = URL.createObjectURL(blob);
+  //           this.selectedNeighborImageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
 
-            this.changeDetector.detectChanges();
-          }
-        );
+  //           this.changeDetector.detectChanges();
+  //         }
+  //       );
 
-      }
-    );
-  }
+  //     }
+  //   );
+  // }
 
-  // Re-populate the list of visible markers
+  // Re-populate the list of visible markers.
+  // Spin through every layer on the LayerGroup, check the
+  // lat & long of each, and add all the visible ones to
+  // the sortedArray.
   refreshVisibleMarkers(overlayName: string) {
     if (this.mapIsReady) {
       var bounds = this.map.getBounds();
 
-      if (overlayName == "Neighbors") {
-        this.zone.run(() => {
-          this.visibleNeighbors.clear();
-          this.visibleNeighborsCleared.emit();
-        });
-        
-        if (this.map.hasLayer(this.neighborsLayerGroup)) {
-          this.neighborsLayerGroup.eachLayer((layer: Layer) => {
-            if (layer instanceof Marker) {
-              let marker: Marker = (layer as Marker);
-              if(bounds.contains(marker.getLatLng())) {
-                this.zone.run(() => {
-                  this.visibleNeighbors.add(this.markerToNeighbor(marker));
-                });
-              }
-            }
-          });
-        }
-      }
+      const sortedArray: SortedArray<any> | undefined = this.visibleLayers.get(overlayName);
+      const layerGroup: LayerGroup | undefined = this.layerGroups.get(overlayName);
 
-      if (overlayName == "Tools") {
+      if (sortedArray && layerGroup) {
         this.zone.run(() => {
-          this.visibleTools.clear();
-          this.visibleToolsCleared.emit();
+          sortedArray.clear();
+          this.visibleLayersCleared.emit(overlayName);
         });
-        
-        if (this.map.hasLayer(this.toolsLayerGroup)) {
-          this.toolsLayerGroup.eachLayer((layer: Layer) => {
+
+        if (this.map.hasLayer(layerGroup)) {
+          layerGroup.eachLayer((layer: Layer) => {
             if (layer instanceof Marker) {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
                 this.zone.run(() => {
-                  this.visibleTools.add(this.markerToTool(marker));
+                  sortedArray.add(this.convertIdToObject((marker as any).id));
                 });
               }
             }
           });
+
+          // this.zone.run(() => {
+            this.visibleLayersRefreshed.emit(overlayName);
+          // });
         }
       }
     }
+
+
+
+    // if (this.mapIsReady) {
+    //   var bounds = this.map.getBounds();
+
+    //   if (overlayName == "Neighbors") {
+    //     this.zone.run(() => {
+    //       this.visibleNeighbors.clear();
+    //       this.visibleNeighborsCleared.emit();
+    //     });
+        
+    //     if (this.map.hasLayer(this.neighborsLayerGroup)) {
+    //       this.neighborsLayerGroup.eachLayer((layer: Layer) => {
+    //         if (layer instanceof Marker) {
+    //           let marker: Marker = (layer as Marker);
+    //           if(bounds.contains(marker.getLatLng())) {
+    //             this.zone.run(() => {
+    //               this.visibleNeighbors.add(this.markerToNeighbor(marker));
+    //             });
+    //           }
+    //         }
+    //       });
+    //     }
+    //   }
+
+    //   if (overlayName == "Tools") {
+    //     this.zone.run(() => {
+    //       this.visibleTools.clear();
+    //       this.visibleToolsCleared.emit();
+    //     });
+        
+    //     if (this.map.hasLayer(this.toolsLayerGroup)) {
+    //       this.toolsLayerGroup.eachLayer((layer: Layer) => {
+    //         if (layer instanceof Marker) {
+    //           let marker: Marker = (layer as Marker);
+    //           if(bounds.contains(marker.getLatLng())) {
+    //             this.zone.run(() => {
+    //               this.visibleTools.add(this.markerToTool(marker));
+    //             });
+    //           }
+    //         }
+    //       });
+    //     }
+    //   }
+    // }
   }
 
   refreshAllVisibleMarkers() {
-    this.refreshVisibleMarkers("Neighbors");
-    this.refreshVisibleMarkers("Tools");
-  }
-
-  // Convert a Marker to a Neighbor (via an API call)
-  private markerToNeighbor(marker: Marker): Neighbor {
-    const id = (marker as any).id;
-    const neighbor: Neighbor = {
-      id: id,
-      name: '',
-      photo_link: '',
-      latitude: 0,
-      longitude: 0,
-      home_address: '',
-      distance_m: 9999,
-      is_friend: false,
-      imageUrl: undefined
-    }
-
-    this.dataService.getNeighbor(id).then(
-      (n: Neighbor) => {
-        Object.assign(neighbor, n);
-        this.visibleNeighbors.resort(); // Need to resort after loading the neighbor's data
-
-        if (! n.imageUrl) {
-          // Request the image
-          if(! n.photo_link) {
-            n.photo_link = "default.svg";
-          }
-          this.dataService.getPicture(n.photo_link).then(
-            (blob: Blob) => {
-              const objectURL = URL.createObjectURL(blob);
-              neighbor.imageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
-            }
-          );
-        }
+    this.layerGroupNames.forEach((layerGroupName: string) => {
+      const layerGroup = this.layerGroups.get(layerGroupName);
+      if (layerGroup) {
+        console.log("Refresh visible: " + layerGroupName);
+        this.refreshVisibleMarkers(layerGroupName);
       }
-    );
-
-    return neighbor;
+    });
+    // this.refreshVisibleMarkers("Neighbors");
+    // this.refreshVisibleMarkers("Tools");
   }
+
+  // // Convert a Marker to a Neighbor (via an API call)
+  // private markerToNeighbor(marker: Marker): Neighbor {
+  //   const id = (marker as any).id;
+  //   const neighbor: Neighbor = {
+  //     id: id,
+  //     name: '',
+  //     photo_link: '',
+  //     latitude: 0,
+  //     longitude: 0,
+  //     home_address: '',
+  //     distance_m: 9999,
+  //     is_friend: false,
+  //     imageUrl: undefined
+  //   }
+
+  //   this.dataService.getNeighbor(id).then(
+  //     (n: Neighbor) => {
+  //       Object.assign(neighbor, n);
+  //       this.visibleNeighbors.resort(); // Need to resort after loading the neighbor's data
+
+  //       if (! n.imageUrl) {
+  //         // Request the image
+  //         if(! n.photo_link) {
+  //           n.photo_link = "default.svg";
+  //         }
+  //         this.dataService.getPicture(n.photo_link).then(
+  //           (blob: Blob) => {
+  //             const objectURL = URL.createObjectURL(blob);
+  //             neighbor.imageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
+  //           }
+  //         );
+  //       }
+  //     }
+  //   );
+
+  //   return neighbor;
+  // }
 
   // Convert a Marker to a Tool (via an API call)
-  private markerToTool(marker: Marker): Tool {
-    const id = (marker as any).id;
-    const tool: Tool = {
-      id: id,
-      owner_id: 0,
-      name: '',
-      product_url: '',
-      replacement_cost: 0,
-      category: '',
-      category_icon: '',
-      latitude: 0,
-      longitude: 0,
-      distance_m: 0
-    };
+  // private markerToTool(marker: Marker): Tool {
+  //   const id = (marker as any).id;
+  //   const tool: Tool = {
+  //     id: id,
+  //     owner_id: 0,
+  //     name: '',
+  //     product_url: '',
+  //     replacement_cost: 0,
+  //     category: '',
+  //     category_icon: '',
+  //     latitude: 0,
+  //     longitude: 0,
+  //     distance_m: 0
+  //   };
  
-    this.dataService.getTool(id).then(
-      (t: Tool) => {
-        Object.assign(tool, t);
-      }
-    );
+  //   this.dataService.getTool(id).then(
+  //     (t: Tool) => {
+  //       Object.assign(tool, t);
+  //     }
+  //   );
 
-    return tool;
-  }
+  //   return tool;
+  // }
 
 }

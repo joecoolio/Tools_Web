@@ -1,0 +1,76 @@
+.container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.left-section, .right-section {
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.left-section {
+  flex: 1;
+  background-color: #f0f8ff;
+  border-right: 2px solid #ccc;
+}
+
+.right-section {
+  flex: 3;
+  background-color: #fffaf0;
+}
+
+.person-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  max-width: 600px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.person-name {
+  font-size: 1.5rem;
+  margin-top: 0px;
+  margin-bottom: 12px;
+  color: #333;
+  text-align: left;
+}
+
+.person-body {
+  display: flex;
+  align-items: center;
+}
+
+.person-image {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.person-info {
+  flex: 1;
+}
+
+.person-address {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.friend-tag {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background-color: #007bff;
+  color: white;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 12px;
+  font-weight: bold;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}

@@ -1,0 +1,78 @@
+<header class="header">
+  <div class="logo"><img src="images/logo-300.png"></div>
+  <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-button">
+    <mat-icon>menu</mat-icon>
+    </button>
+
+    <mat-menu #menu="matMenu">
+    <button mat-menu-item routerLink="/home">
+        <mat-icon>home</mat-icon>
+        <span>Home</span>
+    </button>
+    <button mat-menu-item routerLink="/friends">
+        <mat-icon>people</mat-icon>
+        <span>Manage Friends</span>
+    </button>
+    <button mat-menu-item routerLink="/tools">
+        <mat-icon fontSet="fa" fontIcon="fa-toolbox"></mat-icon>
+        <span>Manage My Tools</span>
+    </button>
+    </mat-menu>
+
+</header>
+
+<main class="main-grid">
+  <div class="left-column">
+    <section class="search-tools">
+      <h2>Search for Tools</h2>
+      <input type="text" placeholder="Search tools..." />
+    </section>
+
+    <section class="search-neighbors">
+      <h2>Search for Neighbors</h2>
+      <input type="text" placeholder="Search neighbors..." />
+    </section>
+  </div>
+
+  <div class="right-column">
+    <section class="news">
+        <h2>Latest News</h2>
+        <div class="news-items">
+            <mat-card class="news-card">
+            <mat-card-header>
+                <mat-card-title>A New Neighbor</mat-card-title>
+                <mat-card-subtitle>Aug 14, 2025</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                <p>John Smith joined!</p>
+            </mat-card-content>
+            </mat-card>
+
+            <mat-card class="news-card">
+            <mat-card-header>
+                <mat-card-title>Brand New Tool!</mat-card-title>
+                <mat-card-subtitle>Aug 12, 2025</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                <p>Your friend Don Johnson listed his electric string trimmer!</p>
+            </mat-card-content>
+            </mat-card>
+
+            <mat-card class="news-card">
+            <mat-card-header>
+                <mat-card-title>Neighbor Spotlight</mat-card-title>
+                <mat-card-subtitle>Aug 10, 2025</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+                <p>Pete Townsend now has 25 tools listed!</p>
+            </mat-card-content>
+            </mat-card>
+        </div>
+        </section>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <p>&copy; 2025 CommunityHub</p>
+</footer>

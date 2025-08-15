@@ -8,6 +8,7 @@ import { SafeUrl } from '@angular/platform-browser';
 
 // URLs
 const URL_MY_INFO = API_URL + 'v1/myinfo';
+const URL_FRIENDS = API_URL + 'v1/friends';
 const URL_ALL_NEIGHBORS = API_URL + 'v1/getneighbors';
 const URL_GET_NEIGHBOR = API_URL + 'v1/getneighbor';
 const URL_ALL_TOOLS = API_URL + 'v1/getalltools';
@@ -77,6 +78,17 @@ export class DataService {
         );   
     }
 
+    // Get my direct friends
+    async getFriends(): Promise<Neighbor[]> {
+        return await firstValueFrom(
+            this.http.post<Neighbor[]>(
+                URL_FRIENDS,
+                {},
+                {},
+            )
+        );   
+    }
+
     // List neighbors
     async listNeighbors(): Promise<Neighbor[]> {
         return await firstValueFrom(
@@ -93,7 +105,7 @@ export class DataService {
         if (this.neighborCache.has(id)) {
             return await firstValueFrom(of(this.neighborCache.get(id)!));
         } else {
-            console.log("API - Getting neighbor: " + id);
+            // console.log("API - Getting neighbor: " + id);
             const body = {
                 neighborId: id
             };
