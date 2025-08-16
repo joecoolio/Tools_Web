@@ -5,11 +5,13 @@ import { MapComponent, MarkerData } from "../../map/map.component";
 import { SortedArray } from "../../services/sortedarray";
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatCardModule } from "@angular/material/card";
+import { RouterModule } from "@angular/router";
 
 @Component({
     standalone: true,
     selector: 'app-manage-friends',
     imports: [
+        RouterModule,
         MapComponent,
         MatCardModule,
     ],

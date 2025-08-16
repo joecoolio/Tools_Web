@@ -5,7 +5,6 @@ export const routes: Routes = [
 
     {path: 'home', loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent), title: "Home"},
     {path: 'friends', loadComponent: () => import('./user/friends/managefriends.component').then(m => m.ManageFriendsComponent), title: "Manage Friends"},
-    
 
 
     {path: 'register', loadComponent: () => import('./user/register/register.component').then(m => m.RegisterComponent), title: "Register"},
