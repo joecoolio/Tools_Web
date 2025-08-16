@@ -7,6 +7,10 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 
+interface MarkerDataWithDistance extends MarkerData {
+    distance_m: number,
+}
+
 @Component({
     standalone: true,
     selector: 'app-manage-friends',
@@ -19,7 +23,7 @@ import { RouterModule } from "@angular/router";
     styleUrl: './managefriends.component.scss',
 })
 // A component that uses the map to show all of your direct linked friends.
-export class ManageFriendsComponent implements OnInit, AfterViewInit {
+export class ManageFriendsComponent implements OnInit {
     @ViewChild('mapRef') map!: MapComponent;
 
     constructor(
@@ -28,42 +32,65 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     ) {}
 
     // Stuff for the map
-    layerGroupNames: string[] = [ "Friends" ];
+    layerGroupNames: string[] = [ "Friends", "Neighbors" ];
     markerData: MarkerData[] | undefined;
 
-    // List of all visible neighbors on the map
-    visibleNeighbors!: SortedArray<Neighbor>;
+    // List of all visible friends & neighbors on the map
+    private visibleNeighbors: globalThis.Map<string, SortedArray<Neighbor>> = new globalThis.Map();
+    allVisibleNeighbors: SortedArray<Neighbor> = new SortedArray<Neighbor>(this.sortFunction);
     
     ngOnInit(): void {
-        this.getFriends();
+        this.getFriendsAndNeighbors();
     }
     
-    ngAfterViewInit(): void {
-    }
-
     // Get a list of all my friends
-    private getFriends(): void {
-        this.dataService.listNeighbors().then(
-            (friends: Neighbor[]) => {
-                console.log("Retrieved friends: " + friends.length);
+    private getFriendsAndNeighbors(): void {
+        Promise.all([
+            this.dataService.getFriends(),
+            this.dataService.listNeighbors(),    
+        ])
+        .then(([friends, neighbors]) => {
+            let markerArray: MarkerData[] = [];
 
-                let friendArray: MarkerData[] = [];
-                friends.sort(this.sortFunction).forEach(friend => {
-                    let friendMarkerData: MarkerData = {
-                        layerGroupName: "Friends",
-                        id: friend.id,
-                        latitude: friend.latitude,
-                        longitude: friend.longitude,
-                        icon: "fa-solid fa-user-tie",
-                        color: "green",
-                        popupText: "<div>Neighbor: " + friend.name + "</div>",
-                        onclick: this.neighborOnClick
-                    }
-                    friendArray.push(friendMarkerData);
-                });
-                this.markerData = friendArray.sort(this.sortFunction);
-            }
-        )
+            // Process friends
+            console.log("Retrieved friends: " + friends.length);
+            friends.forEach(friend => {
+                let markerData: MarkerDataWithDistance = {
+                    layerGroupName: "Friends",
+                    id: friend.id,
+                    latitude: friend.latitude,
+                    longitude: friend.longitude,
+                    icon: "fa-solid fa-user-tie",
+                    color: "green",
+                    popupText: "<div>Neighbor: " + friend.name + "</div>",
+                    onclick: this.neighborOnClick,
+                    distance_m: friend.distance_m,
+                }
+                markerArray.push(markerData);
+            });
+
+            // Process neighbors
+            console.log("Retrieved neighbors: " + neighbors.length);
+            neighbors.forEach(neighbor => {
+                let markerData: MarkerDataWithDistance = {
+                    layerGroupName: "Neighbors",
+                    id: neighbor.id,
+                    latitude: neighbor.latitude,
+                    longitude: neighbor.longitude,
+                    icon: "fa-solid fa-user-tie",
+                    color: "blue",
+                    popupText: "<div>Neighbor: " + neighbor.name + "</div>",
+                    onclick: this.neighborOnClick,
+                    distance_m: neighbor.distance_m,
+                }
+                // Don't add neighbors if they're already friends
+                if (! markerArray.some(obj => obj.id === neighbor.id)) {
+                    markerArray.push(markerData);
+                }
+            });
+
+            this.markerData = markerArray.sort(this.sortFunction);
+        });
     }
 
     // Provided to map to sort visible marker lists
@@ -115,26 +142,71 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     // Called by the map when it's embedded leaflet map is ready
     public onReady(saMap: Map<string, SortedArray<any>>) {
         console.log("Ready!");
-        const sa: SortedArray<any> | undefined = saMap.get("Friends");
-        if (sa) {
-            setTimeout(() => {
-                this.visibleNeighbors = sa;
-                console.log("Visible neighbors assigned");
-            });
-        }
+        this.layerGroupNames.forEach(layerGroupName => {
+            const sa: SortedArray<any> | undefined = saMap.get(layerGroupName);
+            if (sa) {
+                setTimeout(() => {
+                    this.visibleNeighbors.set(layerGroupName, sa);
+                    this.refreshAllVisibleNeighbors();
+                });
+            }
+        });
     }
 
     // Called by the map whenever the visible layers are emptied
     public onVisibleLayersCleared(groupName: string) {
         console.log("Visible neighbors cleared: " + groupName);
+        setTimeout(() => {
+            // Resync the allVisibleNeighbors array
+            this.refreshAllVisibleNeighbors();
+        });
     }
 
     // Called by the map whenever the visible layers are reloaded
     public onVisibleLayersRefreshed(groupName: string) {
         console.log("Visible neighbors refreshed: " + groupName);
+        // Need to resort after loading new data
         setTimeout(() => {
-            this.visibleNeighbors.resort(); // Need to resort after loading the neighbor's data
+            this.visibleNeighbors.get(groupName)?.resort();
+            // Resync the allVisibleNeighbors array
+            this.refreshAllVisibleNeighbors();
         });
     }
 
+    // Called by the neighbor list when a neighbor is clicked
+    public onListNeighborClick(id: number): void {
+        console.log("Clicked on list: " + id);
+    }
+
+    // Keep the list of all items in sync with the layer groups.
+    // TODO: This feels janky...
+    // Instead of clear() and rebuild, try to add/remove only when necessary.
+    private refreshAllVisibleNeighbors(): void {
+        // Make sure everything in the layer groups are in the all list
+        this.layerGroupNames.forEach(layerGroupName => {
+            this.visibleNeighbors.get(layerGroupName)?.forEach(neighbor => {
+                if (! this.allVisibleNeighbors.contains(neighbor, obj => obj.id === neighbor.id)) {
+                    this.allVisibleNeighbors.add(neighbor);
+                }
+            });
+        });
+
+        // Make sure everything in the all list is in one of the layer groups
+        console.log("Size: " + this.allVisibleNeighbors.size());
+        for (let i = this.allVisibleNeighbors.size() - 1; i >= 0; i--) { // Iterate backwards to safely remove stuff
+            let neighbor: Neighbor | undefined = this.allVisibleNeighbors.get(i);
+            if (neighbor) {
+                let exists: boolean = this.layerGroupNames.some(
+                    layerGroupName => {
+                        return this.visibleNeighbors.get(layerGroupName)?.contains(neighbor, obj => obj.id === neighbor.id);
+                    }
+                );
+                console.log("Neighbor : " + neighbor.id + " exists: " + exists);
+            
+                if(! exists) {
+                    this.allVisibleNeighbors.remove(i);
+                }
+            }
+        }
+    }
 }

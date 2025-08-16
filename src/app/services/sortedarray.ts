@@ -9,6 +9,10 @@ export class SortedArray<T> {
         this.compareFunction = compareFunction;
     }
 
+    contains(item: T, comparator: (a: T, b: T) => boolean) {
+        return this.items.some(x => comparator(x, item));
+    }
+
     add(item: T): void {
         const index = this.findInsertIndex(item);
         this.items.splice(index, 0, item);
@@ -72,5 +76,9 @@ export class SortedArray<T> {
                 }
             }
         };
+    }
+    
+    public forEach(callback: (item: T, index: number, array: T[]) => void): void {
+        this.items.forEach(callback);
     }
 }

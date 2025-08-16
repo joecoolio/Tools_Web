@@ -1,12 +1,12 @@
 <div class="container">
     <div class="left-section">
-        @if(visibleNeighbors) {
-            @for(neighbor of visibleNeighbors; track neighbor.id) {
-                <mat-card class="person-card">
+        @if(allVisibleNeighbors) {
+            @for(neighbor of allVisibleNeighbors; track neighbor.id) {
+                <mat-card class="person-card" (click)="onListNeighborClick(neighbor.id)">
                     <mat-card-content>
                         <h2 class="person-name">{{ neighbor.name }}</h2>
                         <div class="person-body">
-                            <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image" />
+                            <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image"/>
                             @if(neighbor.is_friend) {
                                 <span class="friend-tag">FRIEND</span>
                             }
