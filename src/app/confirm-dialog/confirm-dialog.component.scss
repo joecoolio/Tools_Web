@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  padding: 16px;
+  font-family: 'Comic Neue', sans-serif; // Cartoon-style font
+  background: #fff8e1;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+mat-dialog-title {
+  font-size: 1.5rem;
+  color: #ff6f00;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+mat-dialog-content {
+  font-size: 1.1rem;
+  color: #444;
+  margin: 12px 0;
+}
+
+mat-dialog-actions {
+  button {
+    font-weight: bold;
+    border-radius: 8px;
+    padding: 6px 16px;
+    &.mat-button {
+      background-color: #ffe082;
+      color: #000;
+    }
+    &.mat-button[color="primary"] {
+      background-color: #ff6f00;
+      color: white;
+    }
+  }
+}

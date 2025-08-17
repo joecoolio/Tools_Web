@@ -3,6 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { DataService, Neighbor, Tool } from '../services/data.service';
 import { SafeUrl } from '@angular/platform-browser';
 import { DecimalPipe } from '@angular/common';
+import { ConfirmationService } from '../services/confirmation.service';
 
 @Component({
   standalone: true,
@@ -16,17 +17,14 @@ import { DecimalPipe } from '@angular/common';
 })
 export class CardComponent implements OnInit {
   constructor(
-    private dataService: DataService,
     public dialogRef: MatDialogRef<CardComponent>,
+    private confirmationService: ConfirmationService,
     @Inject(MAT_DIALOG_DATA) public neighbor: Neighbor,
   ) {
   }
 
   ngOnInit(): void {
   }
-
-  private requestType !: string;
-  private id !: number;
 
   convertMetersToMiles(meters: number): number {
     return meters * 0.000621371;
@@ -39,6 +37,12 @@ export class CardComponent implements OnInit {
 
   // Unfriend an existing friendship
   unfriend() {
-    console.log("Deleting friendship with: " + this.neighbor.name);
+    this.confirmationService.confirm('Unfriend', 'Are you sure you want to remove your friendship with ' + this.neighbor.name + '?')
+    .subscribe(confirmed => {
+      if (confirmed) {
+        console.log("Deleting friendship with: " + this.neighbor.name);
+      }
+    });
+
   }
 }

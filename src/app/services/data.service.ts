@@ -90,7 +90,15 @@ export class DataService {
                 URL_FRIENDS,
                 body,
                 {},
-            ).pipe(
+            )
+            // Add the 'is_friend = true' property to each friend
+            .pipe(
+                map(friends => friends.map(friend => ({
+                    ...friend,
+                    is_friend: true,
+                })))
+            )
+            .pipe(
                 tap(neighbors => {
                     neighbors.forEach(neighbor => this.neighborCache.set(neighbor.id, neighbor))
                 })
