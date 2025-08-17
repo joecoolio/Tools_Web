@@ -49,9 +49,10 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     }
 
     // Stuff for the map
+    private readonly layerGroupNameMe: string = "Me";
     private readonly layerGroupNameFriends: string = "Friends";
     private readonly layerGroupNameNonFriends: string = "Others";
-    layerGroupNames: string[] = [ this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
+    layerGroupNames: string[] = [ this.layerGroupNameMe, this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
     markerData: MarkerData[] | undefined;
 
     // List of all visible friends & neighbors on the map
@@ -59,18 +60,35 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     allVisibleNeighbors: SortedArray<Neighbor> = new SortedArray<Neighbor>(this.sortFunction);
     
     ngOnInit(): void {
-        this.getFriendsAndNeighbors();
+        this.getAllData();
     }
     
     // Get a list of all my friends
-    private getFriendsAndNeighbors(): void {
+    private getAllData(): void {
         Promise.all([
+            this.dataService.getMyInfo(),
             this.dataService.getFriends(),
             this.dataService.listNeighbors(),    
         ])
-        .then(([friends, neighbors]) => {
+        .then(([myinfo, friends, neighbors]) => {
             let markerArray: MarkerData[] = [];
 
+            // Process Me
+            {
+                let markerData: MarkerDataWithDistance = {
+                    layerGroupName: this.layerGroupNameMe,
+                    id: 0,
+                    latitude: myinfo.latitude,
+                    longitude: myinfo.longitude,
+                    icon: 'fa-solid fa-face-grin-wide',
+                    color: "orange",
+                    distance_m: 0,
+                    popupText: "", // No popup
+                    onclick: function (id: number): void {}, // Do nothing on click
+                }
+                markerArray.push(markerData);
+            }            
+            
             // Process friends
             console.log("Retrieved friends: " + friends.length);
             friends.forEach(friend => {

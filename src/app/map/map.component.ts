@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import {
-  Map, Marker, MarkerOptions, Layer, tileLayer, MapOptions, latLng, icon, marker, LayerGroup, layerGroup, // Default stuff
+  Map, Marker, Layer, tileLayer, MapOptions, latLng, icon, marker, LayerGroup, layerGroup, // Default stuff
   ExtraMarkers, // Fancy markers
   MarkerClusterGroup, MarkerClusterGroupOptions, markerClusterGroup, // Cluster groups
   Control
@@ -12,14 +12,11 @@ import 'leaflet.markercluster.layersupport';
 import 'leaflet-sidebar-v2';
 import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
 import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
-import { Neighbor, DataService, Tool, MyInfo } from '../services/data.service';
-import { CardComponent } from '../card/card.component';
-import { MatDialog, MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { DataService } from '../services/data.service';
+import { MatDialog } from '@angular/material/dialog';
+import { DomSanitizer } from '@angular/platform-browser';
 import { SortedArray } from '../services/sortedarray';
-import { IconOptions } from '@angular/material/icon';
 import { HEX } from 'leaflet-extra-markers';
-import { delay } from 'rxjs';
 
 // The data required to draw something on the map.
 // This will be converted to a marker when mapping.
@@ -212,26 +209,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.renderData();
   }
   
-  // private getMyInfo() {
-  //   console.log("Calling for my info");
-  //   this.dataService.getMyInfo().then(
-  //     (myinfo: MyInfo) => {
-  //       this.meLayerGroup.clearLayers();
-  //       const icon = ExtraMarkers.icon({
-  //         icon: 'fa-solid fa-face-grin-wide',
-  //         markerColor: 'orange',
-  //         shape: 'square',
-  //         prefix: 'fa'
-  //       });
-  //       const m: Marker = marker([myinfo.latitude, myinfo.longitude], {icon: icon });
-  //       this.meLayerGroup.addLayer(m);
-
-  //       // Center & zoom the map on my location
-  //       this.map.setView([myinfo.latitude, myinfo.longitude], 15);
-  //     }
-  //   )
-  // }
-
   private renderData() {
     this.markerData.forEach((md: MarkerData) => {
       const icon = ExtraMarkers.icon({
@@ -241,7 +218,9 @@ export class MapComponent implements OnInit, AfterViewInit {
         prefix: 'fa'
       });
       const m: Marker = marker([md.latitude, md.longitude], { icon: icon });
-      m.bindPopup(md.popupText);
+      if (md.popupText != "") {
+        m.bindPopup(md.popupText);
+      }
       (m as any).id = md.id;
       m.on('click', event => md.onclick(md.id));
       const layerGroup = this.layerGroups.get(md.layerGroupName);
