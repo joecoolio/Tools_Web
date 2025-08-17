@@ -7,7 +7,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
-import { CardComponent } from "../../card/card.component";
+import { FriendCardComponent, FriendCardDialogData } from "../../friend-card/friend-card.component";
 
 // Extend the leaflet Marker to include a distance (in meters) from me.
 interface MarkerDataWithDistance extends MarkerData {
@@ -231,10 +231,22 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
             const dialogConfig = new MatDialogConfig();
             dialogConfig.autoFocus = true;
-            dialogConfig.data = neighbor;
+            dialogConfig.data = {
+                neighbor: neighbor,
+                fnCreateFriendship: this.createFriendship,
+                fnDeleteFriendship: this.deleteFriendship,
+            }
 
-            this.dialog.open(CardComponent, dialogConfig);
+            this.dialog.open(FriendCardComponent, dialogConfig);
         }
+    }
+
+    public createFriendship(id: number) {
+        console.log("Creating friendship with: " + id);
+    }
+
+    public deleteFriendship(id: number) {
+        console.log("Deleting friendship with: " + id);
     }
 
     // Keep the list of all items in sync with the layer groups.
