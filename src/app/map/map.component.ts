@@ -236,7 +236,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.layerGroupNames.forEach((layerGroupName: string) => {
       const layerGroup = this.layerGroups.get(layerGroupName);
       if (layerGroup) {
-        console.log("Refresh visible: " + layerGroupName);
         this.refreshVisibleMarkers(layerGroupName);
       }
     });
