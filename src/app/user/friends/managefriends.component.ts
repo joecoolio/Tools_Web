@@ -1,11 +1,11 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef, NgZone } from "@angular/core";
+import { Component, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef } from "@angular/core";
 import { DataService, Neighbor } from "../../services/data.service";
-import { Content, Layer, LeafletMouseEvent } from "leaflet";
+import { latLng, LatLng } from "leaflet";
 import { MapComponent, MarkerData } from "../../map/map.component";
 import { SortedArray } from "../../services/sortedarray";
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { MatCard, MatCardModule } from "@angular/material/card";
-import { QueryParamsHandling, RouterModule } from "@angular/router";
+import { DomSanitizer } from '@angular/platform-browser';
+import { MatCardModule } from "@angular/material/card";
+import { RouterModule } from "@angular/router";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
 import { CardComponent } from "../../card/card.component";
 
@@ -36,23 +36,18 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
         private dataService: DataService,
         private sanitizer: DomSanitizer,
         private dialog: MatDialog,
-        private zone: NgZone,
     ) {}
 
     ngAfterViewInit(): void {
-        this.cards.changes.subscribe(queryList => {
-            queryList.forEach((cardRef: ElementRef, index: number) => {
-                console.log(`ElementRef for mat-card at index ${index}:`, cardRef.nativeElement);
-                // You can now interact with the nativeElement of each mat-card
-            });
-        });
     }
 
     // Stuff for the map
+    defaultCenterLocation!: LatLng;
+    defaultZoomLevel: number = 8;
     private readonly layerGroupNameMe: string = "Me";
     private readonly layerGroupNameFriends: string = "Friends";
     private readonly layerGroupNameNonFriends: string = "Others";
-    layerGroupNames: string[] = [ this.layerGroupNameMe, this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
+    readonly layerGroupNames: string[] = [ this.layerGroupNameMe, this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
     markerData: MarkerData[] | undefined;
 
     // List of all visible friends & neighbors on the map
@@ -87,7 +82,9 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
                     onclick: function (id: number): void {}, // Do nothing on click
                 }
                 markerArray.push(markerData);
-            }            
+            }
+            // While we're here, set the center point on the map to my location
+            this.defaultCenterLocation = latLng([ myinfo.latitude, myinfo.longitude ]);
             
             // Process friends
             console.log("Retrieved friends: " + friends.length);
@@ -100,11 +97,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
                     icon: "fa-solid fa-user-tie",
                     color: "green",
                     popupText: "<div>Neighbor: " + friend.name + "</div>",
-                    onclick: (id: number) => { // Make sure to run this in the angular zone
-                        this.zone.run(() => {
-                            this.neighborOnClick(id);
-                        })
-                    },
+                    onclick: this.neighborOnClick.bind(this), // Careful with the this reference
                     distance_m: friend.distance_m,
                 }
                 markerArray.push(markerData);
@@ -121,11 +114,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
                     icon: "fa-solid fa-user-tie",
                     color: "blue",
                     popupText: "<div>Neighbor: " + neighbor.name + "</div>",
-                    onclick: (id: number) => { // Make sure to run this in the angular zone
-                        this.zone.run(() => {
-                            this.neighborOnClick(id);
-                        })
-                    },
+                    onclick: this.neighborOnClick.bind(this), // Careful with the this reference
                     distance_m: neighbor.distance_m,
                 }
                 // Don't add neighbors if they're already friends

@@ -1,6 +1,6 @@
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import {
-  Map, Marker, Layer, tileLayer, MapOptions, latLng, icon, marker, LayerGroup, layerGroup, // Default stuff
+  Map, Marker, Layer, tileLayer, MapOptions, icon, marker, LayerGroup, layerGroup, // Default stuff
   ExtraMarkers, // Fancy markers
   MarkerClusterGroup, MarkerClusterGroupOptions, markerClusterGroup, // Cluster groups
   Control
@@ -12,9 +12,6 @@ import 'leaflet.markercluster.layersupport';
 import 'leaflet-sidebar-v2';
 import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
 import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
-import { DataService } from '../services/data.service';
-import { MatDialog } from '@angular/material/dialog';
-import { DomSanitizer } from '@angular/platform-browser';
 import { SortedArray } from '../services/sortedarray';
 import { HEX } from 'leaflet-extra-markers';
 
@@ -68,9 +65,11 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   // Inputs for map setup
   @Input() layerGroupNames!: string[]; // List of layer groups
+  @Input() defaultCenterLocation!: L.LatLng; // Where the map is centered at startup
+  @Input() defaultZoomLevel!: number; // Default zoom level
   @Input() markerData!: MarkerData[]; // Data for markers
   @Input() sortFunction!: (o1: any, o2: any) => number; // For sorted arrays
-  @Input() convertIdToObject!: (id: number) => any; // For sorted arrays
+  @Input() convertIdToObject!: (id: number) => any; // For sorted arrays, convert a single item to an object of the proper type
 
   // Emitters for a parent component
   @Output() ready = new EventEmitter<globalThis.Map<string, SortedArray<any>>>();
@@ -86,11 +85,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   private otmMap: Layer = tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)' });
 
   // Leaflet map options
-  options: MapOptions = {
-    layers: [ this.osmMap ],
-    zoom: 8,
-    center: latLng(35.225946, -80.852852), // Bank of America stadium,
-  };
+  options!: MapOptions;
 
   // Layer control
   layerControl!: Control.Layers;
@@ -122,7 +117,14 @@ export class MapComponent implements OnInit, AfterViewInit {
   // All Markers that are in the current view
   visibleLayers: globalThis.Map<string, SortedArray<any>> = new globalThis.Map();
 
-  ngOnInit(): void {  }
+  ngOnInit(): void { 
+    // Default map options
+    this.options = {
+      layers: [ this.osmMap ],
+      zoom: this.defaultZoomLevel,
+      center: this.defaultCenterLocation,
+    };
+  }
 
   ngAfterViewInit(): void {  }
 
@@ -192,7 +194,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   // This fires when you click on the map background.
-  onMapClick() {
+  onMapClick($event: L.LeafletMouseEvent) {
     // console.log("User clicked on map: " + $event);
   }
 
@@ -218,16 +220,13 @@ export class MapComponent implements OnInit, AfterViewInit {
             if (layer instanceof Marker) {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
-                this.zone.run(() => {
-                  sortedArray.add(this.convertIdToObject((marker as any).id));
-                });
+                let obj:any = this.convertIdToObject((marker as any).id)
+                sortedArray.add(obj);
               }
             }
           });
 
-          // this.zone.run(() => {
             this.visibleLayersRefreshed.emit(overlayName);
-          // });
         }
       }
     }

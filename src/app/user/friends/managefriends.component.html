@@ -27,10 +27,12 @@
         @if(markerData) {
             <app-map
                 #mapRef
+                [defaultCenterLocation]="defaultCenterLocation"
+                [defaultZoomLevel]="defaultZoomLevel"
                 [layerGroupNames]="layerGroupNames"
                 [markerData]="markerData"
                 [sortFunction]="sortFunction"
-                [convertIdToObject]="idToNeighbor"
+                [convertIdToObject]="idToNeighbor.bind(this)"
                 (visibleLayersCleared)="onVisibleLayersCleared($event)"
                 (visibleLayersRefreshed)="onVisibleLayersRefreshed($event)"
                 (ready)="onReady($event)"
