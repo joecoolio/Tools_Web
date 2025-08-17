@@ -92,3 +92,13 @@
   font-weight: bold;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
+
+@keyframes blinkBorder {
+  0%   { border: 2px solid #ff4081; }
+  50%  { border: 2px solid transparent; }
+  100% { border: 2px solid #ff4081; }
+}
+
+.blink-border {
+  animation: blinkBorder 1s ease-in-out;
+}

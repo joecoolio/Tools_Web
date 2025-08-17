@@ -1,11 +1,13 @@
-import { Component, OnInit, AfterViewInit, ViewChild } from "@angular/core";
+import { Component, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef, NgZone } from "@angular/core";
 import { DataService, Neighbor } from "../../services/data.service";
 import { Content, Layer, LeafletMouseEvent } from "leaflet";
 import { MapComponent, MarkerData } from "../../map/map.component";
 import { SortedArray } from "../../services/sortedarray";
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { MatCardModule } from "@angular/material/card";
-import { RouterModule } from "@angular/router";
+import { MatCard, MatCardModule } from "@angular/material/card";
+import { QueryParamsHandling, RouterModule } from "@angular/router";
+import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
+import { CardComponent } from "../../card/card.component";
 
 // Extend the leaflet Marker to include a distance (in meters) from me.
 interface MarkerDataWithDistance extends MarkerData {
@@ -19,18 +21,32 @@ interface MarkerDataWithDistance extends MarkerData {
         RouterModule,
         MapComponent,
         MatCardModule,
+        MatDialogModule,
+        CardComponent,
     ],
     templateUrl: './managefriends.component.html',
     styleUrl: './managefriends.component.scss',
 })
 // A component that uses the map to show all of your direct linked friends.
-export class ManageFriendsComponent implements OnInit {
+export class ManageFriendsComponent implements OnInit, AfterViewInit {
     @ViewChild('mapRef') map!: MapComponent;
+    @ViewChildren('neighborCards', { read: ElementRef }) cards!: QueryList<ElementRef>;
 
     constructor(
         private dataService: DataService,
         private sanitizer: DomSanitizer,
+        private dialog: MatDialog,
+        private zone: NgZone,
     ) {}
+
+    ngAfterViewInit(): void {
+        this.cards.changes.subscribe(queryList => {
+            queryList.forEach((cardRef: ElementRef, index: number) => {
+                console.log(`ElementRef for mat-card at index ${index}:`, cardRef.nativeElement);
+                // You can now interact with the nativeElement of each mat-card
+            });
+        });
+    }
 
     // Stuff for the map
     private readonly layerGroupNameFriends: string = "Friends";
@@ -66,7 +82,11 @@ export class ManageFriendsComponent implements OnInit {
                     icon: "fa-solid fa-user-tie",
                     color: "green",
                     popupText: "<div>Neighbor: " + friend.name + "</div>",
-                    onclick: this.neighborOnClick,
+                    onclick: (id: number) => { // Make sure to run this in the angular zone
+                        this.zone.run(() => {
+                            this.neighborOnClick(id);
+                        })
+                    },
                     distance_m: friend.distance_m,
                 }
                 markerArray.push(markerData);
@@ -83,7 +103,11 @@ export class ManageFriendsComponent implements OnInit {
                     icon: "fa-solid fa-user-tie",
                     color: "blue",
                     popupText: "<div>Neighbor: " + neighbor.name + "</div>",
-                    onclick: this.neighborOnClick,
+                    onclick: (id: number) => { // Make sure to run this in the angular zone
+                        this.zone.run(() => {
+                            this.neighborOnClick(id);
+                        })
+                    },
                     distance_m: neighbor.distance_m,
                 }
                 // Don't add neighbors if they're already friends
@@ -104,6 +128,20 @@ export class ManageFriendsComponent implements OnInit {
     // Called by the map when the neighbor is clicked on
     public neighborOnClick(id: number): void {
         console.log("Clicked on neighbor: " + id);
+
+        const index = this.allVisibleNeighbors.findIndex(item => item.id === id);
+        const targetCard = this.cards.get(index);
+        if (targetCard) {
+            targetCard.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Add blinking class
+            targetCard.nativeElement.classList.add('blink-border');
+
+            // Remove it after animation completes
+            setTimeout(() => {
+                targetCard.nativeElement.classList.remove('blink-border');
+            }, 1000); // match animation duration
+        }
     }
 
     // Called by the map whenever an ID is put it in the list of visible markers
@@ -176,8 +214,21 @@ export class ManageFriendsComponent implements OnInit {
     }
 
     // Called by the neighbor list when a neighbor is clicked
-    public onListNeighborClick(id: number): void {
-        console.log("Clicked on list: " + id);
+    public onListNeighborClick(index: number): void {
+        console.log("Clicked on list index: " + index);
+
+        const neighbor: Neighbor | undefined = this.allVisibleNeighbors.get(index);
+
+        if (neighbor) {
+            // Center and zoom the map on the clicked item
+            this.map.setMapView([ neighbor.latitude, neighbor.longitude ], 18);
+
+            const dialogConfig = new MatDialogConfig();
+            dialogConfig.autoFocus = true;
+            dialogConfig.data = neighbor;
+
+            this.dialog.open(CardComponent, dialogConfig);
+        }
     }
 
     // Keep the list of all items in sync with the layer groups.

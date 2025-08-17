@@ -18,6 +18,10 @@ export class SortedArray<T> {
         this.items.splice(index, 0, item);
     }
 
+    findIndex(filterFn: (item: any) => boolean): number {
+        return this.items.findIndex(filterFn);
+    }
+
     private findInsertIndex(item: T): number {
         let low = 0;
         let high = this.items.length;

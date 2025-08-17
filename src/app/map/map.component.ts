@@ -37,7 +37,6 @@ export interface MarkerData {
     onclick: (id: number) => void
 }
 
-
 const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
 
 const iconUrl = 'leafassets/marker-icon.png';
@@ -500,6 +499,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
     // this.refreshVisibleMarkers("Neighbors");
     // this.refreshVisibleMarkers("Tools");
+  }
+
+  // Reset the map center point & zoom.
+  // This is just a passthrough to the map.
+  public setMapView(center: L.LatLngExpression, zoom?: number, options?: L.ZoomPanOptions) {
+    this.map.setView(center, zoom, options);
   }
 
   // // Convert a Marker to a Neighbor (via an API call)

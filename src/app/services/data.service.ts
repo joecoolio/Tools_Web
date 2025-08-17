@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom, of, tap } from 'rxjs';
+import { firstValueFrom, from, map, mergeMap, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { API_URL } from '../app.component';
@@ -80,6 +80,7 @@ export class DataService {
     }
 
     // Get my direct friends
+    // Put each one in the neighbor cache
     async getFriends(depth: number = 999): Promise<Neighbor[]> {
         const body = {
             depth: depth
@@ -89,27 +90,39 @@ export class DataService {
                 URL_FRIENDS,
                 body,
                 {},
+            ).pipe(
+                tap(neighbors => {
+                    neighbors.forEach(neighbor => this.neighborCache.set(neighbor.id, neighbor))
+                })
             )
         );   
     }
 
     // List neighbors
-    async listNeighbors(): Promise<Neighbor[]> {
+    // Put all of them in the neighbor cache
+    async listNeighbors(radiusMiles: number = 100): Promise<Neighbor[]> {
+        const body = {
+            radius_miles: radiusMiles
+        };
         return await firstValueFrom(
             this.http.post<Neighbor[]>(
                 URL_ALL_NEIGHBORS,
+                body,
                 {},
-                {},
+            ).pipe(
+                tap(neighbors => {
+                    neighbors.forEach(neighbor => this.neighborCache.set(neighbor.id, neighbor))
+                })
             )
         );   
     }
 
-    // List neighbors
+    // Get a single neighbor
+    // Put in the neighbor cache
     async getNeighbor(id: number): Promise<Neighbor> {
         if (this.neighborCache.has(id)) {
             return await firstValueFrom(of(this.neighborCache.get(id)!));
         } else {
-            // console.log("API - Getting neighbor: " + id);
             const body = {
                 neighborId: id
             };

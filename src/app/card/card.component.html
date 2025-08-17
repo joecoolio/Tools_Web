@@ -1,17 +1,34 @@
-<div class="pokemon-card">
+<div class="neighbor-card">
   <div class="card-header">
-    <h2 class="pokemon-name">{{ name }}</h2>
-    <span class="pokemon-type" >{{ type }}</span>
+    <h2 class="neighbor-name">{{ neighbor.name }}</h2>
+    <span class="neighbor-type">
+      @if(neighbor.is_friend) {
+        
+          @if(neighbor.depth == 1) {
+            <span class="friend-tag">Friend</span>
+          }
+          @else {
+            <span class="friend-tag friend-of-friend-tag">Friend of Friend</span>
+          }
+      }
+    </span>
   </div>
   <div class="card-image">
-    <img [src]="imageUrl" [alt]="name">
+    <img [src]="neighbor.imageUrl" [alt]="neighbor.name">
   </div>
   <div class="card-stats">
-    <div><strong>HP:</strong> {{ hp }}</div>
-    <div><strong>Attack:</strong> {{ attack }}</div>
-    <div><strong>Damage:</strong> {{ damage }}</div>
+    <div class="left-col">Distance Away:</div>
+    <div class="right-col">{{ convertMetersToMiles(neighbor.distance_m) | number:'1.2-2' }} miles</div>
+    <div class="left-col">Address:</div>
+    <div class="right-col">{{ neighbor.home_address }}</div>
   </div>
-  <div class="card-description">
-    {{ description }}
-  </div>
+  <section class="button-section">
+    @if(neighbor.is_friend && neighbor.depth == 1) {
+      <button class="btn friend" (click)="unfriend()">Unfriend</button>
+    }
+    @else {
+      <button class="btn friend_of_friend" (click)="friend()">Request Friendship</button>
+    }
+  </section>
+
 </div>
