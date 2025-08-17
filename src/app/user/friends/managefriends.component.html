@@ -4,11 +4,14 @@
             @for(neighbor of allVisibleNeighbors; track neighbor.id) {
                 <mat-card class="person-card" (click)="onListNeighborClick(neighbor.id)">
                     <mat-card-content>
-                        <h2 class="person-name">{{ neighbor.name }} ({{ neighbor.depth }})</h2>
+                        <h2 class="person-name">{{ neighbor.name }}</h2>
                         <div class="person-body">
                             <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image"/>
-                            @if(neighbor.is_friend) {
+                            @if(neighbor.is_friend && neighbor.depth == 1) {
                                 <span class="friend-tag">FRIEND</span>
+                            }
+                            @if(neighbor.is_friend && neighbor.depth > 1) {
+                                <span class="friend-of-friend-tag">FRIEND OF FRIEND</span>
                             }
                             <div class="person-info">
                                 <p class="person-address">{{ neighbor.home_address }} </p>

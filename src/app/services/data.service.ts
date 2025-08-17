@@ -80,7 +80,7 @@ export class DataService {
     }
 
     // Get my direct friends
-    async getFriends(depth: number): Promise<Neighbor[]> {
+    async getFriends(depth: number = 999): Promise<Neighbor[]> {
         const body = {
             depth: depth
         };

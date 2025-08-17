@@ -7,6 +7,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 
+// Extend the leaflet Marker to include a distance (in meters) from me.
 interface MarkerDataWithDistance extends MarkerData {
     distance_m: number,
 }
@@ -32,7 +33,9 @@ export class ManageFriendsComponent implements OnInit {
     ) {}
 
     // Stuff for the map
-    layerGroupNames: string[] = [ "Friends", "Neighbors" ];
+    private readonly layerGroupNameFriends: string = "Friends";
+    private readonly layerGroupNameNonFriends: string = "Others";
+    layerGroupNames: string[] = [ this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
     markerData: MarkerData[] | undefined;
 
     // List of all visible friends & neighbors on the map
@@ -46,7 +49,7 @@ export class ManageFriendsComponent implements OnInit {
     // Get a list of all my friends
     private getFriendsAndNeighbors(): void {
         Promise.all([
-            this.dataService.getFriends(1),
+            this.dataService.getFriends(),
             this.dataService.listNeighbors(),    
         ])
         .then(([friends, neighbors]) => {
@@ -56,7 +59,7 @@ export class ManageFriendsComponent implements OnInit {
             console.log("Retrieved friends: " + friends.length);
             friends.forEach(friend => {
                 let markerData: MarkerDataWithDistance = {
-                    layerGroupName: "Friends",
+                    layerGroupName: this.layerGroupNameFriends,
                     id: friend.id,
                     latitude: friend.latitude,
                     longitude: friend.longitude,
@@ -73,7 +76,7 @@ export class ManageFriendsComponent implements OnInit {
             console.log("Retrieved neighbors: " + neighbors.length);
             neighbors.forEach(neighbor => {
                 let markerData: MarkerDataWithDistance = {
-                    layerGroupName: "Neighbors",
+                    layerGroupName: this.layerGroupNameNonFriends,
                     id: neighbor.id,
                     latitude: neighbor.latitude,
                     longitude: neighbor.longitude,
