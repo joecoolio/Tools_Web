@@ -46,7 +46,7 @@ export class ManageFriendsComponent implements OnInit {
     // Get a list of all my friends
     private getFriendsAndNeighbors(): void {
         Promise.all([
-            this.dataService.getFriends(),
+            this.dataService.getFriends(1),
             this.dataService.listNeighbors(),    
         ])
         .then(([friends, neighbors]) => {
@@ -114,7 +114,8 @@ export class ManageFriendsComponent implements OnInit {
             home_address: "",
             distance_m: 0,
             is_friend: false,
-            imageUrl: undefined
+            imageUrl: undefined,
+            depth: 0
         };
 
         this.dataService.getNeighbor(id).then(
@@ -155,7 +156,6 @@ export class ManageFriendsComponent implements OnInit {
 
     // Called by the map whenever the visible layers are emptied
     public onVisibleLayersCleared(groupName: string) {
-        console.log("Visible neighbors cleared: " + groupName);
         setTimeout(() => {
             // Resync the allVisibleNeighbors array
             this.refreshAllVisibleNeighbors();
@@ -164,7 +164,6 @@ export class ManageFriendsComponent implements OnInit {
 
     // Called by the map whenever the visible layers are reloaded
     public onVisibleLayersRefreshed(groupName: string) {
-        console.log("Visible neighbors refreshed: " + groupName);
         // Need to resort after loading new data
         setTimeout(() => {
             this.visibleNeighbors.get(groupName)?.resort();
@@ -192,7 +191,6 @@ export class ManageFriendsComponent implements OnInit {
         });
 
         // Make sure everything in the all list is in one of the layer groups
-        console.log("Size: " + this.allVisibleNeighbors.size());
         for (let i = this.allVisibleNeighbors.size() - 1; i >= 0; i--) { // Iterate backwards to safely remove stuff
             let neighbor: Neighbor | undefined = this.allVisibleNeighbors.get(i);
             if (neighbor) {
@@ -201,7 +199,6 @@ export class ManageFriendsComponent implements OnInit {
                         return this.visibleNeighbors.get(layerGroupName)?.contains(neighbor, obj => obj.id === neighbor.id);
                     }
                 );
-                console.log("Neighbor : " + neighbor.id + " exists: " + exists);
             
                 if(! exists) {
                     this.allVisibleNeighbors.remove(i);

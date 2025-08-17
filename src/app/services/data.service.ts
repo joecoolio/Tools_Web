@@ -38,6 +38,7 @@ export interface Neighbor {
     longitude: number,
     home_address: string,
     distance_m: number,
+    depth: number,
     is_friend: boolean,
     imageUrl: SafeUrl | undefined,
 }
@@ -79,11 +80,14 @@ export class DataService {
     }
 
     // Get my direct friends
-    async getFriends(): Promise<Neighbor[]> {
+    async getFriends(depth: number): Promise<Neighbor[]> {
+        const body = {
+            depth: depth
+        };
         return await firstValueFrom(
             this.http.post<Neighbor[]>(
                 URL_FRIENDS,
-                {},
+                body,
                 {},
             )
         );   

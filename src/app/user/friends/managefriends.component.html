@@ -4,7 +4,7 @@
             @for(neighbor of allVisibleNeighbors; track neighbor.id) {
                 <mat-card class="person-card" (click)="onListNeighborClick(neighbor.id)">
                     <mat-card-content>
-                        <h2 class="person-name">{{ neighbor.name }}</h2>
+                        <h2 class="person-name">{{ neighbor.name }} ({{ neighbor.depth }})</h2>
                         <div class="person-body">
                             <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image"/>
                             @if(neighbor.is_friend) {
