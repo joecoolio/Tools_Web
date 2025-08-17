@@ -22,7 +22,6 @@ interface MarkerDataWithDistance extends MarkerData {
         MapComponent,
         MatCardModule,
         MatDialogModule,
-        CardComponent,
     ],
     templateUrl: './managefriends.component.html',
     styleUrl: './managefriends.component.scss',
@@ -239,11 +238,15 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     }
 
     // Keep the list of all items in sync with the layer groups.
+    // Exclude the "me" layer so I don't see myself in the list.
     // TODO: This feels janky...
     // Instead of clear() and rebuild, try to add/remove only when necessary.
     private refreshAllVisibleNeighbors(): void {
+        // Remove "me" from consideration
+        const layerGroupNamesSubset = this.layerGroupNames.filter(name => name != this.layerGroupNameMe);
+
         // Make sure everything in the layer groups are in the all list
-        this.layerGroupNames.forEach(layerGroupName => {
+        layerGroupNamesSubset.forEach(layerGroupName => {
             this.visibleNeighbors.get(layerGroupName)?.forEach(neighbor => {
                 if (! this.allVisibleNeighbors.contains(neighbor, obj => obj.id === neighbor.id)) {
                     this.allVisibleNeighbors.add(neighbor);
@@ -255,7 +258,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
         for (let i = this.allVisibleNeighbors.size() - 1; i >= 0; i--) { // Iterate backwards to safely remove stuff
             let neighbor: Neighbor | undefined = this.allVisibleNeighbors.get(i);
             if (neighbor) {
-                let exists: boolean = this.layerGroupNames.some(
+                let exists: boolean = layerGroupNamesSubset.some(
                     layerGroupName => {
                         return this.visibleNeighbors.get(layerGroupName)?.contains(neighbor, obj => obj.id === neighbor.id);
                     }
