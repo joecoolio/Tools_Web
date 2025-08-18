@@ -51,6 +51,8 @@ export class FriendCardComponent implements OnInit {
       if (confirmed) {
         console.log("Creating friendship with: " + this.neighbor.name);
         this.fnCreateFriendship(this.neighbor.id);
+
+        this.dialogRef.close();
       }
     });
   }
@@ -62,6 +64,8 @@ export class FriendCardComponent implements OnInit {
       if (confirmed) {
         console.log("Deleting friendship with: " + this.neighbor.name);
         this.fnDeleteFriendship(this.neighbor.id);
+
+        this.dialogRef.close();
       }
     });
   }

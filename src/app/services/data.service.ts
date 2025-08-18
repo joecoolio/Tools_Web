@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom, from, map, mergeMap, of, tap } from 'rxjs';
+import { firstValueFrom, from, map, mergeMap, Observable, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { API_URL } from '../app.component';
@@ -8,9 +8,12 @@ import { SafeUrl } from '@angular/platform-browser';
 
 // URLs
 const URL_MY_INFO = API_URL + 'v1/myinfo';
+const URL_RELOAD_FRIENDS = API_URL + 'v1/reloadfriends';
 const URL_FRIENDS = API_URL + 'v1/friends';
 const URL_ALL_NEIGHBORS = API_URL + 'v1/getneighbors';
 const URL_GET_NEIGHBOR = API_URL + 'v1/getneighbor';
+const URL_ADD_FRIENDSHIP = API_URL + 'v1/addfriendship';
+const URL_REMOVE_FRIENDSHIP = API_URL + 'v1/removefriendship';
 const URL_ALL_TOOLS = API_URL + 'v1/getalltools';
 const URL_GET_TOOL = API_URL + 'v1/gettool';
 const URL_GET_PICTURE = API_URL + 'v1/getImage';
@@ -64,9 +67,9 @@ export class DataService {
     constructor(private http: HttpClient, private tokenStorage: TokenService) { }
 
     // Caches
-    private neighborCache: Map<number, Neighbor> = new BoundedMap(100);
-    private toolCache: Map<number, Tool> = new BoundedMap(100);
-    private photoCache: Map<string, Blob> = new BoundedMap(100);
+    private neighborCache: BoundedMap<number, Neighbor> = new BoundedMap(100);
+    private toolCache: BoundedMap<number, Tool> = new BoundedMap(100);
+    private photoCache: BoundedMap<string, Blob> = new BoundedMap(100);
 
     // Get my info
     async getMyInfo(): Promise<MyInfo> {
@@ -79,50 +82,81 @@ export class DataService {
         );   
     }
 
-    // Get my direct friends
-    // Put each one in the neighbor cache
+    // Reload friends from the DB.
+    // Since the server stores your friend list, if you change it you must re-call this.
+    async reloadfriends(): Promise<string> {
+        return await firstValueFrom(
+            this.http.post<string>(
+                URL_RELOAD_FRIENDS,
+                {},
+                {},
+            )
+        );
+    }
+
+    // Get my friends.
+    // If the friend is already in the cache, return that object but updated.
+    // Put anything new in the neighbor cache.
     async getFriends(depth: number = 999): Promise<Neighbor[]> {
         const body = {
             depth: depth
         };
         return await firstValueFrom(
-            this.http.post<Neighbor[]>(
-                URL_FRIENDS,
-                body,
-                {},
-            )
-            // Add the 'is_friend = true' property to each friend
+            this._getNeighbors(URL_FRIENDS, body)
             .pipe(
-                map(friends => friends.map(friend => ({
-                    ...friend,
+                // Add the 'is_friend = true' property to each friend
+                map((neighbors: Neighbor[]) => neighbors.map(neighbor => ({
+                    ...neighbor,
                     is_friend: true,
                 })))
             )
-            .pipe(
-                tap(neighbors => {
-                    neighbors.forEach(neighbor => this.neighborCache.set(neighbor.id, neighbor))
-                })
-            )
-        );   
+        );
     }
 
-    // List neighbors
-    // Put all of them in the neighbor cache
+    // List neighbors within some radius of me
     async listNeighbors(radiusMiles: number = 100): Promise<Neighbor[]> {
         const body = {
             radius_miles: radiusMiles
         };
         return await firstValueFrom(
-            this.http.post<Neighbor[]>(
-                URL_ALL_NEIGHBORS,
-                body,
-                {},
-            ).pipe(
-                tap(neighbors => {
-                    neighbors.forEach(neighbor => this.neighborCache.set(neighbor.id, neighbor))
-                })
+            this._getNeighbors(URL_ALL_NEIGHBORS, body)
+            .pipe(
+                // Add the 'is_friend = false' property to each friend
+                map((neighbors: Neighbor[]) => neighbors.map(neighbor => ({
+                    ...neighbor,
+                    is_friend: false,
+                })))
             )
-        );   
+
+        );
+    }
+
+    // Get my set of neighbors.
+    // If the neighbor is already in the cache, return that object but updated.
+    // Otherwise add it to the cache.
+    private _getNeighbors(url: string, body: any|null): Observable<Neighbor[]> {
+        return this.http.post<Neighbor[]>(
+            url,
+            body,
+            {},
+        )
+        .pipe(
+            // Handle cached versions
+            map((neighbors: Neighbor[]) => neighbors.map(neighbor => this._getCachedVersionOfNeighbor(neighbor)))
+        );
+    }
+
+    // If the neighbor is already cached, return the existing object instead of a new one.
+    // If it's a new neighbor, cache it
+    private _getCachedVersionOfNeighbor(neighbor: Neighbor): Neighbor {
+        const oldNeighbor: Neighbor | undefined = this.neighborCache.getWithoutReinsert(neighbor.id);
+        if (oldNeighbor) {
+            Object.assign(oldNeighbor, neighbor);
+            return oldNeighbor;
+        } else {
+            this.neighborCache.set(neighbor.id, neighbor);
+            return neighbor;
+        }
     }
 
     // Get a single neighbor
@@ -140,7 +174,7 @@ export class DataService {
                     body,
                     {},
                 )
-                .pipe(tap(data => this.neighborCache.set(id, data)))
+                .pipe(tap(neighbor => this._getCachedVersionOfNeighbor(neighbor)))
             );
         }
     }
@@ -164,6 +198,36 @@ export class DataService {
                 .pipe(tap(data => this.photoCache.set(photo_id, data)))
             );
         }
+    }
+
+    // Create a friendship from me to another person.
+    // You need to call reloadFriends() after this.
+    async createFriendship(neighborId: number): Promise<void> {
+        const body = {
+            neighborId: neighborId
+        };
+        return await firstValueFrom(
+            this.http.post<void>(
+                URL_ADD_FRIENDSHIP,
+                body,
+                {},
+            )
+        );
+    }
+
+    // Remove a friendship from me to another person.
+    // You need to call reloadFriends() after this.
+    async removeFriendship(neighborId: number): Promise<void> {
+        const body = {
+            neighborId: neighborId
+        };
+        return await firstValueFrom(
+            this.http.post<void>(
+                URL_REMOVE_FRIENDSHIP,
+                body,
+                {},
+            )
+        );
     }
 
     // Get all available tools

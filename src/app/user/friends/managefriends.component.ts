@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef } from "@angular/core";
+import { Component, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef, ChangeDetectorRef } from "@angular/core";
 import { DataService, Neighbor } from "../../services/data.service";
 import { latLng, LatLng } from "leaflet";
 import { MapComponent, MarkerData } from "../../map/map.component";
@@ -7,7 +7,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
-import { FriendCardComponent, FriendCardDialogData } from "../../friend-card/friend-card.component";
+import { FriendCardComponent } from "../../friend-card/friend-card.component";
 
 // Extend the leaflet Marker to include a distance (in meters) from me.
 interface MarkerDataWithDistance extends MarkerData {
@@ -35,6 +35,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
         private dataService: DataService,
         private sanitizer: DomSanitizer,
         private dialog: MatDialog,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     ngAfterViewInit(): void {
@@ -42,7 +43,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
     // Stuff for the map
     defaultCenterLocation!: LatLng;
-    defaultZoomLevel: number = 8;
+    defaultZoomLevel: number = 15;
     private readonly layerGroupNameMe: string = "Me";
     private readonly layerGroupNameFriends: string = "Friends";
     private readonly layerGroupNameNonFriends: string = "Others";
@@ -54,12 +55,14 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     allVisibleNeighbors: SortedArray<Neighbor> = new SortedArray<Neighbor>(this.sortFunction);
     
     ngOnInit(): void {
-        this.getAllData();
+        this.getAllData().then((markerData: MarkerData[]) => {
+            this.markerData = markerData;
+        });
     }
     
-    // Get a list of all my friends
-    private getAllData(): void {
-        Promise.all([
+    // Get all data into this.markerData
+    private getAllData(): Promise<MarkerData[]> {
+        return Promise.all([
             this.dataService.getMyInfo(),
             this.dataService.getFriends(),
             this.dataService.listNeighbors(),    
@@ -94,7 +97,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
                     latitude: friend.latitude,
                     longitude: friend.longitude,
                     icon: "fa-solid fa-user-tie",
-                    color: "green",
+                    color: friend.depth == 1 ? "green-dark" : "green-light",
                     popupText: "<div>Neighbor: " + friend.name + "</div>",
                     onclick: this.neighborOnClick.bind(this), // Careful with the this reference
                     distance_m: friend.distance_m,
@@ -122,7 +125,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
                 }
             });
 
-            this.markerData = markerArray.sort(this.sortFunction);
+            return markerArray.sort(this.sortFunction);
         });
     }
 
@@ -167,7 +170,6 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
         this.dataService.getNeighbor(id).then(
             (n: Neighbor) => {
-                    
                 Object.assign(neighbor, n);
                 if (! n.imageUrl) {
                     // Request the image
@@ -233,53 +235,54 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
             dialogConfig.autoFocus = true;
             dialogConfig.data = {
                 neighbor: neighbor,
-                fnCreateFriendship: this.createFriendship,
-                fnDeleteFriendship: this.deleteFriendship,
+                fnCreateFriendship: this.createFriendship.bind(this),
+                fnDeleteFriendship: this.deleteFriendship.bind(this),
             }
 
             this.dialog.open(FriendCardComponent, dialogConfig);
         }
     }
 
+    // Create a new friendship with the provided friend
     public createFriendship(id: number) {
         console.log("Creating friendship with: " + id);
+        this._modifyFriendship( this.dataService.createFriendship(id) );
     }
 
+    // Remove an existing friendship with the provided friend
     public deleteFriendship(id: number) {
-        console.log("Deleting friendship with: " + id);
+        console.log("Removing friendship with: " + id);
+        this._modifyFriendship( this.dataService.removeFriendship(id) );
+    }
+
+    // Create or remove a friendship.
+    // This handles all the friend reloading stuff required for either.
+    private _modifyFriendship(promise: Promise<void>): void {
+        promise.then(() => {
+            // Reload friends on the server
+            this.dataService.reloadfriends().then(() => {
+                // Refresh the map data
+                this.getAllData().then((markerData: MarkerData[]) => {
+                    this.markerData = markerData;
+                    this.map.markerData = this.markerData;
+                    this.map.renderData();
+                    this.refreshAllVisibleNeighbors();
+                });
+            });
+        });
     }
 
     // Keep the list of all items in sync with the layer groups.
     // Exclude the "me" layer so I don't see myself in the list.
-    // TODO: This feels janky...
-    // Instead of clear() and rebuild, try to add/remove only when necessary.
     private refreshAllVisibleNeighbors(): void {
         // Remove "me" from consideration
         const layerGroupNamesSubset = this.layerGroupNames.filter(name => name != this.layerGroupNameMe);
-
-        // Make sure everything in the layer groups are in the all list
+        const newItems: Neighbor[] = [];
         layerGroupNamesSubset.forEach(layerGroupName => {
             this.visibleNeighbors.get(layerGroupName)?.forEach(neighbor => {
-                if (! this.allVisibleNeighbors.contains(neighbor, obj => obj.id === neighbor.id)) {
-                    this.allVisibleNeighbors.add(neighbor);
-                }
+                newItems.push(neighbor);
             });
         });
-
-        // Make sure everything in the all list is in one of the layer groups
-        for (let i = this.allVisibleNeighbors.size() - 1; i >= 0; i--) { // Iterate backwards to safely remove stuff
-            let neighbor: Neighbor | undefined = this.allVisibleNeighbors.get(i);
-            if (neighbor) {
-                let exists: boolean = layerGroupNamesSubset.some(
-                    layerGroupName => {
-                        return this.visibleNeighbors.get(layerGroupName)?.contains(neighbor, obj => obj.id === neighbor.id);
-                    }
-                );
-            
-                if(! exists) {
-                    this.allVisibleNeighbors.remove(i);
-                }
-            }
-        }
+        this.allVisibleNeighbors.reload(newItems);
     }
 }

@@ -14,6 +14,7 @@ import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bl
 import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
 import { SortedArray } from '../services/sortedarray';
 import { HEX } from 'leaflet-extra-markers';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 // The data required to draw something on the map.
 // This will be converted to a marker when mapping.
@@ -158,7 +159,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.renderData();
   }
   
-  private renderData() {
+  public renderData() {
+    console.log("MapComponent / renderData() running");
+    // Remove old stuff
+    this.layerGroups.forEach(layerGroup => layerGroup.clearLayers());
+
+    // Add new stuff
     this.markerData.forEach((md: MarkerData) => {
       const icon = ExtraMarkers.icon({
         icon: md.icon,
@@ -180,6 +186,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     });
 
+    this.map.invalidateSize(); // Makes the leaflet map re-draw
     this.refreshAllVisibleMarkers();
   }
 
@@ -210,10 +217,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       const layerGroup: LayerGroup | undefined = this.layerGroups.get(overlayName);
 
       if (sortedArray && layerGroup) {
-        this.zone.run(() => {
-          sortedArray.clear();
-          this.visibleLayersCleared.emit(overlayName);
-        });
+        const newArray: any[] = [];
 
         if (this.map.hasLayer(layerGroup)) {
           layerGroup.eachLayer((layer: Layer) => {
@@ -221,12 +225,13 @@ export class MapComponent implements OnInit, AfterViewInit {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
                 let obj:any = this.convertIdToObject((marker as any).id)
-                sortedArray.add(obj);
+                newArray.push(obj);
               }
             }
           });
+          sortedArray.reload(newArray);
 
-            this.visibleLayersRefreshed.emit(overlayName);
+          this.visibleLayersRefreshed.emit(overlayName);
         }
       }
     }

@@ -67,6 +67,11 @@ export class SortedArray<T> {
        this.items.sort(this.compareFunction);
     }
 
+    reload(newItems: T[]): void {
+        newItems.sort(this.compareFunction);
+        this.items = newItems;
+    }
+
     [Symbol.iterator](): Iterator<T> {
         let index = 0;
         const data = this.items;

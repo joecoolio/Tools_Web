@@ -33,4 +33,9 @@ export class BoundedMap<K, V> extends Map<K, V>{
     }
     return value;
   }
+
+  // Get without reinserting at the top
+  getWithoutReinsert(key: K): V | undefined {
+    return super.get(key);
+  }
 }
