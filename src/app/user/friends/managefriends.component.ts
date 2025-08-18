@@ -149,7 +149,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
             // Remove it after animation completes
             setTimeout(() => {
                 targetCard.nativeElement.classList.remove('blink-border');
-            }, 1000); // match animation duration
+            }, 2200); // match animation duration
         }
     }
 
