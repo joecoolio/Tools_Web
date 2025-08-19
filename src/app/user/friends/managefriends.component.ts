@@ -279,8 +279,6 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
                 this.getAllData().then((markerData: MarkerData[]) => {
                     this.markerData = markerData;
                     this.map.markerData = this.markerData;
-                    this.map.renderData();
-                    this.refreshAllVisibleNeighbors();
                 });
             });
         });

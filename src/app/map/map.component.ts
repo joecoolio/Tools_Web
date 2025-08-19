@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import {
   Map, Marker, Layer, tileLayer, MapOptions, icon, marker, LayerGroup, layerGroup, // Default stuff
   ExtraMarkers, // Fancy markers
@@ -59,7 +59,7 @@ Marker.prototype.options.icon = iconDefault;
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
 })
-export class MapComponent implements OnInit, AfterViewInit {
+export class MapComponent implements OnInit, AfterViewInit, OnChanges {
   constructor(
     private zone: NgZone,
   ) { }
@@ -128,6 +128,13 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {  }
+
+  // Re-render when the marker data changes
+  ngOnChanges(changes: SimpleChanges): void {
+    if (this.mapIsReady && changes['markerData']) {
+      this.renderData();
+    }
+  }
 
   onMapReady(map: Map) {
     console.log("Leaflet map is ready");
@@ -201,7 +208,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   // This fires when you click on the map background.
   onMapClick($event: L.LeafletMouseEvent) {
-    // console.log("User clicked on map: " + $event);
   }
 
   // Re-populate the list of visible markers.
