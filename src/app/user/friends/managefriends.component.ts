@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, AfterViewInit, ViewChild, ViewChildren, QueryList, ElementRef, ChangeDetectorRef, signal, Signal, inject, Injector, effect, WritableSignal } from "@angular/core";
 import { DataService, Neighbor } from "../../services/data.service";
 import { latLng, LatLng } from "leaflet";
 import { MapComponent, MarkerData } from "../../map/map.component";
@@ -28,7 +28,9 @@ interface MarkerDataWithDistance extends MarkerData {
 })
 // A component that uses the map to show all of your direct linked friends.
 export class ManageFriendsComponent implements OnInit, AfterViewInit {
+    // The main MapComponent
     @ViewChild('mapRef') map!: MapComponent;
+    // The list of neighbors (fed by the map)
     @ViewChildren('neighborCards', { read: ElementRef }) cards!: QueryList<ElementRef>;
 
     constructor(
@@ -41,20 +43,36 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     ngAfterViewInit(): void {
     }
 
+    // Animation stuff
+    neighborCountBounceFlag: WritableSignal<boolean> = signal(false); // Set to true momentarily when the visible neighbor count changes 
+
     // Stuff for the map
     defaultCenterLocation!: LatLng;
     defaultZoomLevel: number = 15;
-    private readonly layerGroupNameMe: string = "Me";
-    private readonly layerGroupNameFriends: string = "Friends";
-    private readonly layerGroupNameNonFriends: string = "Others";
+    private readonly layerGroupNameMe: string = "Me"; // Layer holding me @ the center point
+    private readonly layerGroupNameFriends: string = "Friends"; // My friends (and friends-of-friends)
+    private readonly layerGroupNameNonFriends: string = "Others"; // Other neighbors
     readonly layerGroupNames: string[] = [ this.layerGroupNameMe, this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
-    markerData: MarkerData[] | undefined;
+    markerData: MarkerData[] | undefined; // All of the markers to draw on the map
 
     // List of all visible friends & neighbors on the map
-    private visibleNeighbors: globalThis.Map<string, SortedArray<Neighbor>> = new globalThis.Map();
-    allVisibleNeighbors: SortedArray<Neighbor> = new SortedArray<Neighbor>(this.sortFunction);
+    private visibleNeighbors: globalThis.Map<string, SortedArray<Neighbor>> = new globalThis.Map(); // Map of layer name (e.g. Friends) -> neighbor array
+    allVisibleNeighbors: SortedArray<Neighbor> = new SortedArray<Neighbor>(this.sortFunction); // Combined list of all visible neighbors (for display)
+    
+    // Setup for the neighborCountBounceFlag
+    private injector = inject(Injector);
+    allVisibleNeighborsCount: Signal<number> = this.allVisibleNeighbors.sizeSignal;
     
     ngOnInit(): void {
+        // Setup for the neighborCountBounceFlag.
+        // This effect will momentarily set the bounce flag to true when the visible neighbor count changes.
+        effect(() => {
+            this.neighborCountBounceFlag.set(true);
+            setTimeout(() => this.neighborCountBounceFlag.set(false), 400);
+
+        }, {injector: this.injector});
+
+        // Get all the data!
         this.getAllData().then((markerData: MarkerData[]) => {
             this.markerData = markerData;
         });
@@ -136,8 +154,6 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
     // Called by the map when the neighbor is clicked on
     public neighborOnClick(id: number): void {
-        console.log("Clicked on neighbor: " + id);
-
         const index = this.allVisibleNeighbors.findIndex(item => item.id === id);
         const targetCard = this.cards.get(index);
         if (targetCard) {
@@ -223,8 +239,6 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
     // Called by the neighbor list when a neighbor is clicked
     public onListNeighborClick(index: number): void {
-        console.log("Clicked on list index: " + index);
-
         const neighbor: Neighbor | undefined = this.allVisibleNeighbors.get(index);
 
         if (neighbor) {
@@ -277,6 +291,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
     private refreshAllVisibleNeighbors(): void {
         // Remove "me" from consideration
         const layerGroupNamesSubset = this.layerGroupNames.filter(name => name != this.layerGroupNameMe);
+
         const newItems: Neighbor[] = [];
         layerGroupNamesSubset.forEach(layerGroupName => {
             this.visibleNeighbors.get(layerGroupName)?.forEach(neighbor => {
@@ -284,5 +299,6 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
             });
         });
         this.allVisibleNeighbors.reload(newItems);
+        this.changeDetectorRef.detectChanges();
     }
 }

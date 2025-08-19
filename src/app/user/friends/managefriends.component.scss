@@ -12,6 +12,23 @@
   box-sizing: border-box;
 }
 
+.neighbor-header {
+  background-color: #f0f4ff;
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.neighbor-header h2 {
+  font-size: 1.4rem;
+  color: #333;
+}
+
 .left-section {
   flex: 1;
   overflow-y: auto;
@@ -101,4 +118,17 @@
 
 .blink-border {
   animation: blinkBorder 2s ease-in-out;
+}
+
+@keyframes bounce {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.3); }
+  50%  { transform: scale(0.9); }
+  70%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.bounce {
+  display: inline-block;
+  animation: bounce 0.4s ease;
 }

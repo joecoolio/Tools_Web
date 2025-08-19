@@ -160,7 +160,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   
   public renderData() {
-    console.log("MapComponent / renderData() running");
     // Remove old stuff
     this.layerGroups.forEach(layerGroup => layerGroup.clearLayers());
 
@@ -210,7 +209,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   // lat & long of each, and add all the visible ones to
   // the sortedArray.
   refreshVisibleMarkers(overlayName: string) {
-    if (this.mapIsReady) {
+     if (this.mapIsReady) {
       var bounds = this.map.getBounds();
 
       const sortedArray: SortedArray<any> | undefined = this.visibleLayers.get(overlayName);
@@ -229,10 +228,10 @@ export class MapComponent implements OnInit, AfterViewInit {
               }
             }
           });
-          sortedArray.reload(newArray);
-
-          this.visibleLayersRefreshed.emit(overlayName);
         }
+
+        sortedArray.reload(newArray);
+        this.visibleLayersRefreshed.emit(overlayName);
       }
     }
   }
