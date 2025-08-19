@@ -67,6 +67,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
         // Setup for the neighborCountBounceFlag.
         // This effect will momentarily set the bounce flag to true when the visible neighbor count changes.
         effect(() => {
+            this.allVisibleNeighborsCount(); // Link the effect to the proper signal so it functions
             this.neighborCountBounceFlag.set(true);
             setTimeout(() => this.neighborCountBounceFlag.set(false), 400);
 
