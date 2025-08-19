@@ -137,7 +137,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
   }
 
   onMapReady(map: Map) {
-    console.log("Leaflet map is ready");
+    // console.log("Leaflet map is ready");
 
     this.map = map;
     this.mapIsReady = true;

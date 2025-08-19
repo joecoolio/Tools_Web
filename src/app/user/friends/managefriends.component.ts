@@ -108,7 +108,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
             this.defaultCenterLocation = latLng([ myinfo.latitude, myinfo.longitude ]);
             
             // Process friends
-            console.log("Retrieved friends: " + friends.length);
+            // console.log("Retrieved friends: " + friends.length);
             friends.forEach(friend => {
                 let markerData: MarkerDataWithDistance = {
                     layerGroupName: this.layerGroupNameFriends,
@@ -125,7 +125,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
             });
 
             // Process neighbors
-            console.log("Retrieved neighbors: " + neighbors.length);
+            // console.log("Retrieved neighbors: " + neighbors.length);
             neighbors.forEach(neighbor => {
                 let markerData: MarkerDataWithDistance = {
                     layerGroupName: this.layerGroupNameNonFriends,
@@ -208,7 +208,7 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
     // Called by the map when it's embedded leaflet map is ready
     public onReady(saMap: Map<string, SortedArray<any>>) {
-        console.log("Ready!");
+        // console.log("Ready!");
         this.layerGroupNames.forEach(layerGroupName => {
             const sa: SortedArray<any> | undefined = saMap.get(layerGroupName);
             if (sa) {
@@ -260,13 +260,13 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
     // Create a new friendship with the provided friend
     public createFriendship(id: number) {
-        console.log("Creating friendship with: " + id);
+        // console.log("Creating friendship with: " + id);
         this._modifyFriendship( this.dataService.createFriendship(id) );
     }
 
     // Remove an existing friendship with the provided friend
     public deleteFriendship(id: number) {
-        console.log("Removing friendship with: " + id);
+        // console.log("Removing friendship with: " + id);
         this._modifyFriendship( this.dataService.removeFriendship(id) );
     }
 

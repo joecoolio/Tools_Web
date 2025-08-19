@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom, from, map, mergeMap, Observable, of, tap } from 'rxjs';
+import { firstValueFrom, map, Observable, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { API_URL } from '../app.component';
@@ -113,7 +113,7 @@ export class DataService {
         );
     }
 
-    // List neighbors within some radius of me
+    // List neighbors (not friends) within some radius of me
     async listNeighbors(radiusMiles: number = 100): Promise<Neighbor[]> {
         const body = {
             radius_miles: radiusMiles
@@ -184,7 +184,7 @@ export class DataService {
         if (this.photoCache.has(photo_id)) {
             return await firstValueFrom(of(this.photoCache.get(photo_id)!));
         } else {
-            console.log("API - Getting picture: " + photo_id);
+            // console.log("API - Getting picture: " + photo_id);
             const body = {
                 photo_id: photo_id
             };
@@ -248,7 +248,7 @@ export class DataService {
         if (this.toolCache.has(id)) {
             return await firstValueFrom(of(this.toolCache.get(id)!));
         } else {
-            console.log("API - Getting tool: " + id);
+            // console.log("API - Getting tool: " + id);
             const body = {
                 id: id
             };
