@@ -2,7 +2,7 @@
     <div class="left-section">
         @if(allVisibleNeighbors) {
             <div class="neighbor-header">
-                <h2>Viewing <span [class.bounce]="neighborCountBounceFlag()">{{ allVisibleNeighborsCount() }}</span> Neighbors</h2>
+                <h2><span [class.bounce]="neighborCountBounceFlag()">🔍</span> Viewing <span [class.bounce]="neighborCountBounceFlag()">{{ allVisibleNeighborsCount() }}</span> Neighbors</h2>
             </div>
 
             @for(neighbor of allVisibleNeighbors; track neighbor.id; let i = $index) {
