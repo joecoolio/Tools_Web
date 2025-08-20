@@ -10,6 +10,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from "@angular/common/http";
+import { ImageService } from "../../services/image.service";
 
 
 @Component({
@@ -36,6 +37,7 @@ export class MyInfoComponent implements OnInit {
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
+    private imageService: ImageService,
   ) {  }
   
   faTrash = faTrash;
@@ -88,11 +90,17 @@ export class MyInfoComponent implements OnInit {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
       this.settingsForm.patchValue({ photo: file });
-      const reader = new FileReader();
-      reader.onload = () => this.photoPreview = reader.result;
-      reader.readAsDataURL(file);
+      // const reader = new FileReader();
+      // reader.onload = () => this.photoPreview = reader.result;
+      // reader.readAsDataURL(file);
 
-      this.photoChanged = true;
+      // this.photoChanged = true;
+
+      this.imageService.resizeImageToPngBlob(file, 200, 200)
+      .then((blob: Blob) => {
+        this.photoPreview = URL.createObjectURL(blob);
+        this.photoChanged = true;
+      });
     }
   }
 
