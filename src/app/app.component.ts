@@ -1,9 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, computed, OnInit, Signal } from '@angular/core';
 import { MatMenuModule } from "@angular/material/menu";
 import { MatIconModule } from "@angular/material/icon";
-import { RouterModule } from '@angular/router';
+import { MatDividerModule } from "@angular/material/divider";
+import { Router, RouterModule } from '@angular/router';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MyInfoComponent } from './user/myinfo/myinfo.component';
+import { AuthService } from './services/auth.service';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { TokenService } from './services/token.service';
 
 @Component({
   selector: 'app-root',
@@ -12,21 +16,45 @@ import { MyInfoComponent } from './user/myinfo/myinfo.component';
     RouterModule,
     MatMenuModule,
     MatIconModule,
+    MatDividerModule,
+    MatSnackBarModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'Tools_Web';
 
   constructor(
     private dialog: MatDialog,
+    private authService: AuthService,
+    private snackBar: MatSnackBar,
+    private router: Router,
+    private tokenService: TokenService,
   ) { }
+  loggedIn!: Signal<boolean>;
+
+  ngOnInit(): void {
+    this.loggedIn = this.tokenService.isLoggedIn;
+  }
 
   openMyInfoDialog() {
     const dialogConfig = new MatDialogConfig();
     dialogConfig.autoFocus = true;
 
     this.dialog.open(MyInfoComponent, dialogConfig);
+  }
+
+  logout() {
+    this.authService.logout();
+
+    this.snackBar.open('Your have been logged out successfully!', '', {
+      duration: 3000, // 3 seconds
+      horizontalPosition: 'center',
+      verticalPosition: 'top',
+      panelClass: ['custom-snackbar']
+    });
+
+    this.router.navigate(['login']);
   }
 }

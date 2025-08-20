@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { computed, Injectable, signal, Signal, WritableSignal, ɵunwrapWritableSignal } from '@angular/core';
 
 const TOKEN_KEY = 'auth-token';
 const REFRESHTOKEN_KEY = 'auth-refreshtoken';
@@ -10,9 +10,8 @@ const USER_KEY = 'auth-user';
 export class TokenService {
     constructor() {}
 
-    public get isLoggedIn(): boolean {
-        return typeof localStorage.getItem(REFRESHTOKEN_KEY) === "string";
-    }
+    public _isLoggedIn: WritableSignal<boolean> = signal(false);
+    public readonly isLoggedIn: Signal<boolean> = computed(() => this._isLoggedIn());
 
     public set token(value: string | null) {
         localStorage.removeItem(TOKEN_KEY);
@@ -30,6 +29,9 @@ export class TokenService {
         localStorage.removeItem(REFRESHTOKEN_KEY);
         if (typeof value === "string") {
             localStorage.setItem(REFRESHTOKEN_KEY, value as string);
+            this._isLoggedIn.set(true);
+        } else {
+            this._isLoggedIn.set(false);
         }
     }
 

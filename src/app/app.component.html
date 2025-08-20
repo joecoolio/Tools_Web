@@ -1,28 +1,37 @@
 <div class="container">
   <header class="header">
     <div class="logo" routerLink="/home"><img src="images/logo-300.png"></div>
-    <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-button">
-      <mat-icon>menu</mat-icon>
+    @if(loggedIn()) {
+      <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-button">
+        <mat-icon>menu</mat-icon>
       </button>
 
       <mat-menu #menu="matMenu">
-      <button mat-menu-item routerLink="/home">
-          <mat-icon>home</mat-icon>
-          <span>Home</span>
-      </button>
-      <button mat-menu-item (click)="openMyInfoDialog()">
-          <mat-icon>account_circle</mat-icon>
-          <span>My Info</span>
-      </button>
-      <button mat-menu-item [routerLink]="['/friends']">
-          <mat-icon>people</mat-icon>
-          <span>Manage Friends</span>
-      </button>
-      <button mat-menu-item routerLink="/tools">
-          <mat-icon fontSet="fa" fontIcon="fa-toolbox"></mat-icon>
-          <span>Manage My Tools</span>
-      </button>
+        <button mat-menu-item routerLink="/home">
+            <mat-icon>home</mat-icon>
+            <span>Home</span>
+        </button>
+        <button mat-menu-item (click)="openMyInfoDialog()">
+            <mat-icon>account_circle</mat-icon>
+            <span>My Info</span>
+        </button>
+        <button mat-menu-item [routerLink]="['/friends']">
+            <mat-icon>people</mat-icon>
+            <span>Manage Friends</span>
+        </button>
+        <button mat-menu-item routerLink="/tools">
+            <mat-icon fontSet="fa" fontIcon="fa-toolbox"></mat-icon>
+            <span>Manage My Tools</span>
+        </button>
+
+        <mat-divider></mat-divider>
+
+        <button mat-menu-item (click)="logout()">
+            <mat-icon fontSet="fa" fontIcon="fa-sign-out"></mat-icon>
+            <span>Logout</span>
+        </button>
       </mat-menu>
+    }
   </header>
 
   <main class="content">

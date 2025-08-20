@@ -1,1 +1,2 @@
 Go through all the API calls and properly handle errors.
+Add redirect to login if not authorized
