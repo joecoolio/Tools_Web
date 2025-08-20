@@ -8,7 +8,9 @@ import { AuthService, LoginResult } from './auth.service';
 import { EMPTY, Observable, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { NavigationExtras, Router } from '@angular/router';
-import { API_URL } from '../app.component';
+import { environment } from '../../environments/environment'
+
+const API_URL = environment.baseUrl;
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {

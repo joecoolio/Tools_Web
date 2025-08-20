@@ -2,12 +2,15 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom, map, Observable, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
-import { API_URL } from '../app.component';
 import { BoundedMap } from './boundedmap';
 import { SafeUrl } from '@angular/platform-browser';
+import { environment } from '../../environments/environment'
 
 // URLs
+const API_URL = environment.baseUrl;
 const URL_MY_INFO = API_URL + 'v1/myinfo';
+const URL_VALIDATE_ADDRESS = API_URL + 'v1/validateaddress';
+const URL_UPDATE_MY_INFO = API_URL + 'v1/updateinfo';
 const URL_RELOAD_FRIENDS = API_URL + 'v1/reloadfriends';
 const URL_FRIENDS = API_URL + 'v1/friends';
 const URL_ALL_NEIGHBORS = API_URL + 'v1/getneighbors';
@@ -25,9 +28,18 @@ const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
 };
 
+// A basic http response holding only a success = true/false flag
+export interface SuccessResult {
+    result: boolean
+}
+
 // Data for the current user
 export interface MyInfo {
+    userid: string,
+    name: string,
+    nickname: string,
     home_address: string,
+    photo_link: string,
     latitude: number,
     longitude: number,
 }
@@ -80,6 +92,35 @@ export class DataService {
                 {},
             )
         );   
+    }
+
+    // Validate an address
+    async validateAddress(address: string): Promise<boolean> {
+        const body = {
+            address: address
+        };
+        return await firstValueFrom(
+            this.http.post<SuccessResult>(
+                URL_VALIDATE_ADDRESS,
+                body,
+                {},
+            ).pipe(
+                map((sr: SuccessResult) => sr.result)
+            )
+        );
+    }
+
+    // Update my info
+    async updateMyInfo(formData: FormData): Promise<boolean> {
+        return await firstValueFrom(
+            this.http.post<SuccessResult>(
+                URL_UPDATE_MY_INFO,
+                formData,
+                {},
+            ).pipe(
+                map((sr: SuccessResult) => sr.result)
+            )
+        );
     }
 
     // Reload friends from the DB.

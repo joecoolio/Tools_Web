@@ -2,7 +2,9 @@ import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { filter, firstValueFrom, Observable, tap, timeout } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
-import { API_URL } from '../app.component';
+import { environment } from '../../environments/environment'
+
+const API_URL = environment.baseUrl;
 
 // Timeout for remote calls
 const HTTP_TIMEOUT: number = 5000;
