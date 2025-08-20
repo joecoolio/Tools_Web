@@ -1,14 +1,14 @@
-import { CommonModule } from '@angular/common';
-import { HttpResponse } from '@angular/common/http';
-import { Component } from '@angular/core';
-import { FormControl, Validators, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { NavigationExtras, Router, RouterLinkWithHref } from '@angular/router';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { AuthService, LoginResult, RegisterData } from '../../services/auth.service';
+import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Validators, FormGroup, ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { Router, RouterLinkWithHref } from '@angular/router';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { AuthService } from '../../services/auth.service';
 import { TokenService } from '../../services/token.service';
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { DataService } from '../../services/data.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { ImageService } from '../../services/image.service';
 
 @Component({
   selector: 'app-register',
@@ -16,104 +16,98 @@ import { TokenService } from '../../services/token.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
   imports: [
-    CommonModule,
-    
-    MatCardModule,
-    MatFormFieldModule,
+    MatTooltipModule,
     ReactiveFormsModule,
-    MatInputModule,
-    MatButtonModule,
-    
+    FontAwesomeModule,    
     RouterLinkWithHref,
   ]
 })
 export class RegisterComponent {
+  @ViewChild('photoInput', { static: false }) fileInput!: ElementRef;
 
+  faTrash = faTrash;
+  settingsForm!: FormGroup; // Web form
+  photoPreview: string | ArrayBuffer | null = null; // Photo in the preview box
+  addressValid: boolean | undefined = undefined; // Flag indicating that whatever's in the address box is valid
+  photoChanged: boolean = false; // Flag indicating that the user selected a new photo
+  
   constructor(
-    private authService: AuthService,
-    // private userService: UserService,
     public tokenService: TokenService,
-    private router: Router,
-  ) {
-    this.errorMessage = "";
-    this.loginRunning = false;
-
-    // Get navigation data including any message
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation == null || navigation.extras.state == null) {
-      this.routerMessage = null;
-    } else {
-      const state = navigation.extras.state as {data: string};
-      this.routerMessage = state.data;
-    } 
-
-  }
+    public dataService: DataService,
+    private fb: FormBuilder,
+    private snackBar: MatSnackBar,
+    private imageService: ImageService,
+    private authService: AuthService,
+  ) {  }
 
   ngOnInit() {
+    // Setup form
+    this.settingsForm = this.fb.group({
+      userid: ['', Validators.required],
+      password: ['', Validators.required],
+      name: ['', Validators.required],
+      nickname: [''],
+      address: ['', Validators.required],
+      photo: [null, Validators.required],
+    });
   }
-
-  // If sent here from elsewhere, show the message explaining why
-  routerMessage: string | null;
-
-  // Form fields
-  userid: FormControl = new FormControl('', [ Validators.email, Validators.required ]);
-  name: FormControl = new FormControl('', [ Validators.required ]);
-  password: FormControl = new FormControl('', [ Validators.required ]);
-  address: FormControl = new FormControl('', [ Validators.required ]);
 
   // Toggle for hiding the password
   hidePassword = true;
 
-  // The register form
-  registerFormGroup: FormGroup = new FormGroup({
-    userid: this.userid,
-    name: this.name,
-    password: this.password,
-    address: this.address,
-  });
-
-  // Error message if anything goes wrong
-  errorMessage: string;
-
   // Flags to indicate that buttons were pushed causing an API call to be running
-  loginRunning: boolean;
+  loading: boolean = false;
 
-  // Register a new user (non-guest)
-  register(): void {
-    this.loginRunning = true;
-
-    let registerData: RegisterData = {
-      userid: this.registerFormGroup.get('userid')?.value,
-      name: this.registerFormGroup.get('name')?.value,
-      password: this.registerFormGroup.get('password')?.value,
-      address: this.registerFormGroup.get('address')?.value,
+  validateAddress() {
+    const value: string = this.settingsForm.get('address')?.value;
+    if (value && value.length > 1) {
+      this.dataService.validateAddress(value)
+      .then((success) => this.addressValid = success);
     }
-    this.authService.register(registerData)
-    .then(
-      // Success callback
-      (resp: HttpResponse<LoginResult>) => {
-        console.log("Register success");
-          
-        this.loginRunning = false;
-
-        // Ask for a validation email
-        // this.sendVerificationEmail();
-
-        // Redirect to the user settings page
-        const navigationExtras: NavigationExtras = {state: {data: 'A registration email has been sent to you!'}};
-        this.router.navigate(['main']);
-      },
-      (err) => {
-        this.errorMessage = "Registration failed, user exists with a different password?"
-        console.log("Register failure", err);
-        this.loginRunning = false;
-      }
-    );
   }
 
-  sendVerificationEmail() {
-    // Ask for a validation email
-    // this.userService.sendVerificationEmail();
+  onPhotoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) {
+      this.settingsForm.patchValue({ photo: file });
+      this.imageService.resizeImageToPngBlob(file, 200, 200)
+      .then((blob: Blob) => {
+        this.photoPreview = URL.createObjectURL(blob);
+        this.photoChanged = true;
+      });
+    }
+  }
+
+  // Reset the photo input to the original value
+  resetPhoto(): void {
+    if (this.fileInput) {
+      this.fileInput.nativeElement.value = null;
+    }
+    this.photoPreview = null;
+    this.photoChanged = false;
   }
   
+  onSubmit(): void {
+    if (this.settingsForm.valid) {
+      const formData = new FormData();
+      Object.entries(this.settingsForm.value).forEach(([key, value]) => {
+        formData.append(key, value as string | Blob);
+      });
+
+      // Send the data away
+      this.loading = true;
+      this.authService.register(formData)
+      .then(() => {
+        this.loading = false;
+
+        this.snackBar.open('Your account was created!', '', {
+          duration: 3000, // 3 seconds
+          horizontalPosition: 'center',
+          verticalPosition: 'top',
+          panelClass: ['custom-snackbar']
+        });
+      })
+    }
+  }
+
 }

@@ -1,76 +1,71 @@
-<!-- Navigation message -->
-@if (routerMessage != null) {
-    <div>{{ routerMessage }}</div>
-}
 
-<!-- Registration Form -->
-<mat-card>
-    <mat-card-header>
-        <mat-card-title>Registration</mat-card-title>
-    </mat-card-header>
-    <mat-card-content class="instructions">
-        Enter your email address and a secure password to register.
-    </mat-card-content>
-    <mat-card-content>
-        <form id="register" [formGroup]="registerFormGroup" (ngSubmit)="register()">
+    <div class="settings-container">
+        <h2>🧑‍💻 User Registration</h2>
+        <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()">
+            <!-- Login Information Section -->
+            <fieldset class="section">
+                <legend>Login Information</legend>
+                <div class="form-row">
+                    <label for="userid">User ID</label>
+                    <input id="userid" formControlName="userid" type="text" />
+                </div>
 
-            <!-- User ID -->
-            <mat-form-field>
-                <mat-label>User ID</mat-label>
-                <input matInput placeholder="" formControlName="userid" required>
-                @if(userid.invalid && (userid.dirty || userid.touched)) {
-                    <mat-error>Please enter a valid userid.</mat-error>
+                <div class="form-row">
+                    <label for="password">Password</label>
+                    <input id="password" formControlName="password" type="password" />
+                </div>
+            </fieldset>
+
+            <!-- Personal Information Section -->
+            <fieldset class="section">
+                <legend>Personal Information</legend>
+
+                <div class="form-row">
+                    <label for="name">Name</label>
+                    <input id="name" formControlName="name" type="text"
+                        matTooltip="Your full name, shown to your friends." />
+                </div>
+
+                <div class="form-row">
+                    <label for="nickname">Nickname</label>
+                    <input id="nickname" formControlName="nickname" type="text"
+                        matTooltip="Your nickname (or First Name + Last Initial), shown to neighbors that are not your friend." />
+                </div>
+
+                <div class="form-row">
+                    <label for="address" class="narrower">Address</label>
+                    @if(addressValid) {
+                        <div class="icon" matTooltip="We found your address!">👍</div>
+                    }
+                    @else {
+                        <div class="icon"matTooltip="We can't find your address.  Please try re-entering it.">❌</div>
+                    }
+                    <textarea id="address" formControlName="address" rows="3" (blur)="validateAddress()"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <label for="photo" class="narrower">Photo</label>
+                    @if (this.settingsForm.get('photo')?.value) {
+                        <div class="icon" (click)="resetPhoto()" matTooltip="Discard this picture."><fa-icon [icon]="faTrash"></fa-icon></div>
+                    }
+                    @else {
+                        <div class="icon blank"><fa-icon [icon]="faTrash"></fa-icon></div>
+                    }
+                    <input #photoInput id="photo" type="file" (change)="onPhotoSelected($event)" accept="image/*" />
+                </div>
+
+                @if (photoPreview) {
+                <div class="preview">
+                    <img [src]="photoPreview" alt="Photo preview" />
+                </div>
                 }
-            </mat-form-field>
-
-            <!-- Name -->
-            <mat-form-field>
-                <mat-label>Name</mat-label>
-                <input matInput placeholder="" formControlName="name" required>
-                @if(name.invalid && (name.dirty || name.touched)) {
-                    <mat-error>Please enter a valid name.</mat-error>
-                }
-            </mat-form-field>
-
-            <!-- Email Address -->
-            <!-- <mat-form-field>
-                <mat-label>Email Address</mat-label>
-                <input matInput placeholder="your@email.here" type="email" formControlName="email" required>
-                <mat-error *ngIf="email.invalid && (email.dirty || email.touched)">Please enter a valid email address.</mat-error>
-            </mat-form-field> -->
-
-            <!-- Password -->
-            <mat-form-field>
-                <mat-label>Password</mat-label>
-                <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required>
-            </mat-form-field>
-
-            <!-- Address -->
-            <mat-form-field>
-                <mat-label>Address</mat-label>
-                <input matInput placeholder="" formControlName="address" required>
-                @if(address.invalid && (address.dirty || address.touched)) {
-                    <mat-error>Please enter a valid address.</mat-error>
-                }
-            </mat-form-field>
-
-            <!-- Submission error message -->
-            <mat-error *ngIf="errorMessage.length > 0">
-                {{ errorMessage }}
-            </mat-error>
-
+            </fieldset>
+            <button type="submit" [disabled]="(!settingsForm.dirty && !photoChanged) || settingsForm.invalid || !addressValid">Save Changes</button>
         </form>
-    </mat-card-content>
-</mat-card>
+    </div>
 
-<!-- Register button -->
-<button mat-raised-button form="register" type="submit">
-    <span [ngClass]="{ 'spinner-border spinner-border-sm': loginRunning }"></span> Register 
-</button> 
-
-<div class="donthavea">
-    <span [routerLink]="'/login'">
-        Already have an account?
-    </span>
+    <div class="donthavea">
+        <span [routerLink]="'/login'">
+            Already have an account?
+        </span>
 </div>
-

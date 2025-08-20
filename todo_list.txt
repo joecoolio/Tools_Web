@@ -1,0 +1,1 @@
+Go through all the API calls and properly handle errors.

@@ -1,29 +1,103 @@
-mat-card-title,
-mat-card-content {
-    display: flex;
-    justify-content: center;
-}
-
-mat-card {
-    margin-bottom: 1em;
-    text-align: center;
-}
-
-mat-form-field {
-    width: 100%;
-    min-width: 300px;
-    display: block;
-}
-
-.instructions {
-    padding-top: 20px;
-    padding-bottom: 20px;
-}
-
 .donthavea {
     display: flex;
     justify-content: center;
     width: 100%;
     padding-top: 50px;
     color: indigo;
+}
+
+
+
+.settings-container {
+  max-width: 600px;
+  margin: auto;
+  padding: 2rem;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  background: linear-gradient(to bottom right, #fffacd, #f0e68c);
+  border: 4px solid #333;
+  border-radius: 15px !important;
+}
+
+h2 {
+  text-align: center;
+  margin-top: 0.1rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #cbcbcb;
+}
+
+legend {
+  font-weight: bold;
+  font-size: 1.2rem;
+  padding: 0 0.5rem;
+  color: #3b3b1b;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+label {
+  flex: 0 0 100px;
+  font-weight: bold;
+  margin-right: 1rem;
+}
+
+label.narrower {
+  flex-basis: 80px;
+}
+
+.icon {
+  flex-basis: 20px;
+}
+
+.blank {
+  visibility:hidden !important;
+}
+
+input, textarea {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.preview {
+  display: flex;
+  justify-content: center;
+  max-height: 200px;
+}
+
+.preview img {
+  margin-top: 1rem;
+  border-radius: 8px;
+  max-height: 200px;
+  object-fit: contain;
+}
+
+button {
+  margin-top: 1.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #0078d4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
 }

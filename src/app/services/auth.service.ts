@@ -34,19 +34,20 @@ export class AuthService {
     constructor(private http: HttpClient, private tokenStorage: TokenService) { }
 
     // Register
-    async register(data: RegisterData): Promise<HttpResponse<LoginResult>> {
-        console.log('Authservice Register: ' + data.userid);
+    async register(formData: FormData): Promise<HttpResponse<LoginResult>> {
+        const userid: string = (formData.get('userid') as string) ?? '';
+        console.log('Authservice Register: ' + userid);
         
         return await firstValueFrom(
             this.http.post<LoginResult>(
                 API_URL + 'v1/auth/register',
-                data,
+                formData,
                 { observe: 'response' }
             ).pipe(
                 timeout(HTTP_TIMEOUT),
                 filter(event => event instanceof HttpResponse),
                 tap<HttpResponse<LoginResult>>(
-                    response => this.processResultTokens(response, data.userid)
+                    response => this.processResultTokens(response, userid)
                 )
             )
         );   
