@@ -3,7 +3,7 @@ import { DataService, Neighbor } from "../../services/data.service";
 import { latLng, LatLng } from "leaflet";
 import { MapComponent, MarkerData } from "../../map/map.component";
 import { SortedArray } from "../../services/sortedarray";
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
@@ -35,7 +35,6 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
     constructor(
         private dataService: DataService,
-        private sanitizer: DomSanitizer,
         private dialog: MatDialog,
         private changeDetectorRef: ChangeDetectorRef,
     ) {}
@@ -189,16 +188,8 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
             (n: Neighbor) => {
                 Object.assign(neighbor, n);
                 if (! n.imageUrl) {
-                    // Request the image
-                    if(! n.photo_link) {
-                        n.photo_link = "default.svg";
-                    }
-                    this.dataService.getPicture(n.photo_link).then(
-                        (blob: Blob) => {
-                            const objectURL = URL.createObjectURL(blob);
-                            neighbor.imageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
-                        }
-                    );
+                    // Request/load the image
+                    this.dataService.loadImageUrl(neighbor, "default.svg")
                 }
             }
         );

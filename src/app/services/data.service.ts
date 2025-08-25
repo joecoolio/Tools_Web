@@ -3,7 +3,7 @@ import { firstValueFrom, map, Observable, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { BoundedMap } from './boundedmap';
-import { SafeUrl } from '@angular/platform-browser';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { environment } from '../../environments/environment'
 
 // URLs
@@ -33,35 +33,41 @@ export interface SuccessResult {
     result: boolean
 }
 
+// Parent object that has a photo_link and imageUrl.
+// This makes it easy to load the image for various types of things.
+export interface BaseImageObject {
+    photo_link: string,
+    imageUrl: SafeUrl | undefined, // Not pulled via api but will be filled in later as needed
+}
+
 // Data for the current user
-export interface MyInfo {
+export interface MyInfo extends BaseImageObject {
     userid: string,
     name: string,
     nickname: string,
     home_address: string,
-    photo_link: string,
     latitude: number,
     longitude: number,
 }
 
 // Data for a neighbor
-export interface Neighbor {
+export interface Neighbor extends BaseImageObject {
     id: number,
     name: string,
-    photo_link: string,
     latitude: number,
     longitude: number,
     home_address: string,
     distance_m: number,
     depth: number,
     is_friend: boolean,
-    imageUrl: SafeUrl | undefined,
 }
 
 // Data for a tool
-export interface Tool {
+export interface Tool extends BaseImageObject {
     id: number,
     owner_id: number,
+    short_name: string,
+    brand: string,
     name: string,
     product_url: string,
     replacement_cost: number,
@@ -69,14 +75,18 @@ export interface Tool {
     category_icon: string,
     latitude: number,
     longitude: number,
-    distance_m: number
+    distance_m: number,
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class DataService {
-    constructor(private http: HttpClient, private tokenStorage: TokenService) { }
+    constructor(
+        private http: HttpClient,
+        private tokenStorage: TokenService,
+        private sanitizer: DomSanitizer,
+    ) { }
 
     // Caches
     private neighborCache: BoundedMap<number, Neighbor> = new BoundedMap(100);
@@ -304,5 +314,33 @@ export class DataService {
         }
     };
 
+    
+    // Load up the image for some object.
+    // Loads the image directly into the provided object.
+    async loadImageUrl(obj: BaseImageObject, defaultPhotoLink: string | undefined = undefined): Promise<void> {
+        // Apply a default if needed
+        if (! obj.photo_link && defaultPhotoLink) {
+            obj.photo_link = defaultPhotoLink;
+        }
+        return new Promise((resolve, reject) => {
+            if (obj.photo_link) {
+                this.getPicture(obj.photo_link)
+                .then(
+                    (blob: Blob) => {
+                        const objectURL = URL.createObjectURL(blob);
+                        obj.imageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
+                        resolve();
+                    }
+                )
+                .catch((reason) => {
+                    console.log("Error loading image file: " + obj.photo_link + ": " + reason);
+                    reject();
+                })
+            } else {
+                // Nothing to do
+                resolve();
+            }
+        });
+    }
 }
 
