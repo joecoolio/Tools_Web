@@ -17,9 +17,13 @@ const URL_ALL_NEIGHBORS = API_URL + 'v1/getneighbors';
 const URL_GET_NEIGHBOR = API_URL + 'v1/getneighbor';
 const URL_ADD_FRIENDSHIP = API_URL + 'v1/addfriendship';
 const URL_REMOVE_FRIENDSHIP = API_URL + 'v1/removefriendship';
+const URL_MY_TOOLS = API_URL + 'v1/getmytools'
 const URL_ALL_TOOLS = API_URL + 'v1/getalltools';
 const URL_GET_TOOL = API_URL + 'v1/gettool';
 const URL_GET_PICTURE = API_URL + 'v1/getImage';
+const URL_GET_TOOL_CATEGORIES = API_URL + 'v1/gettoolcategories';
+const URL_UPDATE_TOOL = API_URL + 'v1/updatetool';
+const URL_CREATE_TOOL = API_URL + 'v1/createtool';
 
 // Timeout for remote calls
 const HTTP_TIMEOUT: number = 5000;
@@ -71,11 +75,19 @@ export interface Tool extends BaseImageObject {
     name: string,
     product_url: string,
     replacement_cost: number,
+    category_id: number,
     category: string,
     category_icon: string,
     latitude: number,
     longitude: number,
     distance_m: number,
+}
+
+// A tool category
+export interface ToolCategory {
+    id: number,
+    name: string,
+    icon: string,
 }
 
 @Injectable({
@@ -279,6 +291,61 @@ export class DataService {
                 {},
             )
         );
+    }
+
+    // Get all tool categories
+    async getToolCategories(): Promise<ToolCategory[]> {
+        const body = {};
+
+        return await firstValueFrom(
+            this.http.post<ToolCategory[]>(
+                URL_GET_TOOL_CATEGORIES,
+                body,
+                {}
+            )
+        );
+    }
+    
+    // Get all of my tools
+    async getMyTools(): Promise<Tool[]> {
+        const body = {};
+
+        return await firstValueFrom(
+            this.http.post<Tool[]>(
+                URL_MY_TOOLS,
+                body,
+                {}
+            )
+        );
+    }
+
+    // Update a tool
+    async updateTool(formData: FormData): Promise<boolean> {
+        // If .id is set, do an update / otherwise do a create
+        const rawValue = formData.get('id');
+        const numberValue = rawValue !== null ? parseFloat(rawValue.toString()) : 0;
+
+        if (numberValue > 0) {
+            return await firstValueFrom(
+                this.http.post<SuccessResult>(
+                    URL_UPDATE_TOOL,
+                    formData,
+                    {},
+                ).pipe(
+                    map((sr: SuccessResult) => sr.result)
+                )
+            );
+        } else {
+            return await firstValueFrom(
+                this.http.post<SuccessResult>(
+                    URL_CREATE_TOOL,
+                    formData,
+                    {},
+                ).pipe(
+                    map((sr: SuccessResult) => sr.result)
+                )
+            );
+        }
     }
 
     // Get all available tools

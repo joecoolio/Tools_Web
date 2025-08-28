@@ -1,0 +1,110 @@
+<div class="container">
+    <div class="left-section">
+        @if(tools) {
+            <div class="tools-header">
+                <div class="left-side"><span>🔍</span> <span>{{ tools.length }}</span> Tools</div>
+                <div class="right-side" (click)="addNew()"><fa-icon [icon]="faCirclePlus" matTooltip="Add a new tool!"></fa-icon></div>
+            </div>
+
+            @for(tool of tools; track tool.id; let i = $index) {
+                <mat-card #toolCards class="tool-card" (click)="selectTool(tool.id)">
+                    <mat-card-title>{{ tool.brand }}</mat-card-title>
+                    <mat-card-subtitle>{{ tool.short_name }}</mat-card-subtitle>
+                    <mat-card-content class="tool-details">
+                        <div>
+                            <h3>{{ tool.name }}</h3>
+                            <a class="tool-link" [href]="tool.product_url">Product Link</a>
+                        </div>
+                        <div>
+                            <img [src]="tool.imageUrl" [alt]="tool.name" class="tool-image" />
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+            }
+        }
+    </div>
+
+    <div class="right-section">
+        @if(selectedTool) {
+            <div class="settings-container">
+                <h2>
+                    @if(selectedTool.id > 0) {
+                        🔨 Edit Your Shared Tool
+                    } @else {
+                        🪚 Share A New Tool   
+                    }
+                </h2>
+                <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()">
+                    <div class="form-row">
+                        <label for="category">Category</label>
+                        <mat-select formControlName="category">
+                            <mat-option disabled>Select a category</mat-option>
+
+                            @for(cat of toolCategories; track cat.id; let i = $index) {
+                                <mat-option [value]="cat.id">
+                                    <mat-icon fontSet="fa" [fontIcon]="cat.icon"></mat-icon> {{ cat.name }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        @if(settingsForm.get('category')?.hasError('required')) {
+                            <mat-error>🛠 Please select a category</mat-error>
+                        }
+
+                    </div>
+
+                    <div class="form-row">
+                        <label for="brand">Brand</label>
+                        <input id="brand" formControlName="brand" type="text" />
+                    </div>
+
+                    <div class="form-row">
+                        <label for="short_name">Short Name</label>
+                        <input id="short_name" formControlName="short_name" type="text"
+                            matTooltip="A brief name e.g. 'Car Jack' or 'Shovel'." />
+                    </div>
+
+                    <div class="form-row">
+                        <label for="name">Name</label>
+                        <input id="name" formControlName="name" type="text" matTooltip="The tool's full name." />
+                    </div>
+
+                    <div class="form-row">
+                        <label for="replacement_cost">Replacement Cost</label>
+                        <input id="replacement_cost" formControlName="replacement_cost" type="text"
+                            matTooltip="How much will it cost to replace this tool if someone loses or breaks it?" />
+                    </div>
+
+                    @if(selectedTool.id <= 0) {
+                        <div class="form-row">
+                            <label for="product_url">Product URL</label>
+                            <input id="product_url" formControlName="product_url" type="text"
+                                matTooltip="A link to where you can find more information about this tool." />
+                        </div>
+                    }
+
+                    <div class="form-row">
+                        <label for="photo" class="narrower">Photo</label>
+                        @if (this.settingsForm.get('photo')?.value) {
+                            <div class="icon" (click)="resetPhoto()" matTooltip="Discard this picture.">
+                                <fa-icon [icon]="faTrash"></fa-icon>
+                            </div>
+                        }
+                        @else {
+                            <div class="icon blank"><fa-icon [icon]="faTrash"></fa-icon></div>
+                        }
+                        <input #photoInput id="photo" type="file" (change)="onPhotoSelected($event)" accept="image/*" />
+                    </div>
+
+                    @if (photoPreview) {
+                    <div class="preview">
+                        <img [src]="photoPreview" alt="Photo preview" />
+                    </div>
+                    }
+                    <button type="submit" [disabled]="(!settingsForm.dirty && !photoChanged) || settingsForm.invalid">Save
+                        Changes</button>
+                </form>
+            </div>
+        }
+    </div>
+
+</div>

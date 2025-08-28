@@ -2,9 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from "@angular/core";
 import { MatDialogModule, MatDialogRef } from "@angular/material/dialog";
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ConfirmationService } from "../../services/confirmation.service";
 import { DataService, MyInfo } from "../../services/data.service";
-import { DomSanitizer, SafeUrl } from "@angular/platform-browser";
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -32,9 +30,7 @@ export class MyInfoComponent implements OnInit {
 
   constructor(
     public dataService: DataService,
-    private sanitizer: DomSanitizer,
     public dialogRef: MatDialogRef<MyInfoComponent>,
-    private confirmationService: ConfirmationService,
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private imageService: ImageService,
@@ -89,16 +85,10 @@ export class MyInfoComponent implements OnInit {
   onPhotoSelected(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
-      this.settingsForm.patchValue({ photo: file });
-      // const reader = new FileReader();
-      // reader.onload = () => this.photoPreview = reader.result;
-      // reader.readAsDataURL(file);
-
-      // this.photoChanged = true;
-
-      this.imageService.resizeImageToPngBlob(file, 200, 200)
-      .then((blob: Blob) => {
-        this.photoPreview = URL.createObjectURL(blob);
+      this.imageService.resizeImageToDataUrl(file, 200, 200)
+      .then(url => {
+        this.settingsForm.patchValue({ photo: url });    
+        this.photoPreview = url;
         this.photoChanged = true;
       });
     }
@@ -147,7 +137,7 @@ export class MyInfoComponent implements OnInit {
       .then((value) => {
         this.loading = false;
 
-        this.snackBar.open('Your settings were saved!', '', {
+        this.snackBar.open('Your tool was updated!', '', {
           duration: 3000, // 3 seconds
           horizontalPosition: 'center',
           verticalPosition: 'top',
