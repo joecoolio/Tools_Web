@@ -2,25 +2,19 @@
     <div class="left-section">
         @if(allVisibleObjects) {
             <div class="neighbor-header">
-                <h2><span [class.bounce]="objectCountBounceFlag()">🔍</span> <span [class.bounce]="objectCountBounceFlag()">{{ allVisibleObjectsCount() }}</span> Neighbors</h2>
+                <h2><span [class.bounce]="objectCountBounceFlag()">🔍</span> <span [class.bounce]="objectCountBounceFlag()">{{ allVisibleObjectsCount() }}</span> Tools</h2>
             </div>
 
-            @for(_neighbor of allVisibleObjects; track _neighbor.id; let i = $index) {
-                @let neighbor = asNeighbor(_neighbor);
-                <mat-card #neighborCards class="person-card" (click)="onListObjectClick(i)">
+            @for(_tool of allVisibleObjects; track _tool.id; let i = $index) {
+                @let tool = asTool(_tool);
+                <mat-card #objectCards class="person-card" (click)="onListObjectClick(i)">
                     <mat-card-content>
-                        <h2 class="person-name">{{ neighbor.name }}</h2>
+                        <h2 class="person-name">{{ tool.name }}</h2>
                         <div class="person-body">
-                            <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image"/>
-                            @if(neighbor.is_friend && neighbor.depth == 1) {
-                                <span class="friend-tag">FRIEND</span>
-                            }
-                            @if(neighbor.is_friend && neighbor.depth > 1) {
-                                <span class="friend-of-friend-tag">FRIEND OF FRIEND</span>
-                            }
-                            <div class="person-info">
+                            <img [src]="tool.imageUrl" [alt]="tool.name" class="person-image"/>
+                            <!-- <div class="person-info">
                                 <p class="person-address">{{ neighbor.home_address }} </p>
-                            </div>
+                            </div> -->
                         </div>
                     </mat-card-content>
                 </mat-card>

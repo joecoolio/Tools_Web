@@ -37,6 +37,14 @@ export interface SuccessResult {
     result: boolean
 }
 
+// An object that can be mapped.
+export interface MappableObject {
+    id: number,
+    latitude: number,
+    longitude: number,
+    distance_m: number,
+}
+
 // Parent object that has a photo_link and imageUrl.
 // This makes it easy to load the image for various types of things.
 export interface BaseImageObject {
@@ -55,20 +63,15 @@ export interface MyInfo extends BaseImageObject {
 }
 
 // Data for a neighbor
-export interface Neighbor extends BaseImageObject {
-    id: number,
+export interface Neighbor extends MappableObject, BaseImageObject {
     name: string,
-    latitude: number,
-    longitude: number,
     home_address: string,
-    distance_m: number,
     depth: number,
     is_friend: boolean,
 }
 
 // Data for a tool
-export interface Tool extends BaseImageObject {
-    id: number,
+export interface Tool extends MappableObject, BaseImageObject {
     owner_id: number,
     short_name: string,
     brand: string,
@@ -78,9 +81,6 @@ export interface Tool extends BaseImageObject {
     category_id: number,
     category: string,
     category_icon: string,
-    latitude: number,
-    longitude: number,
-    distance_m: number,
 }
 
 // A tool category
