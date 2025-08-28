@@ -1,4 +1,5 @@
 import { Injectable } from "@angular/core";
+import { Observable } from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -8,12 +9,8 @@ export class ImageService {
 
     // Resize an image file to a png blob.
     // Keeps the aspect ratio and does not upscale.
-    async resizeImageToPngBlob(
-        file: File,
-        maxWidth: number,
-        maxHeight: number
-    ): Promise<Blob> {
-        return new Promise((resolve, reject) => {
+    resizeImageToPngBlob(file: File, maxWidth: number, maxHeight: number): Observable<Blob> {
+        return new Observable<Blob>(observer => {
             const img = new Image();
             const reader = new FileReader();
 
@@ -41,34 +38,38 @@ export class ImageService {
                 canvas.height = newHeight;
 
                 const ctx = canvas.getContext('2d');
-                if (!ctx) return reject(new Error('Canvas context not available'));
+                if (!ctx) {
+                    observer.error(new Error('Canvas context not available'));
+                    return;
+                }
 
                 ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
                 // Convert canvas to PNG blob
                 canvas.toBlob(
                     blob => {
-                        if (blob) resolve(blob);
-                        else reject(new Error('Failed to convert canvas to blob'));
+                        if (blob) {
+                            observer.next(blob);
+                            observer.complete();
+                        } else {
+                            observer.error(new Error('Canvas toBlob() failed'));
+                        }
                     },
                     'image/png',
                     1.0
                 );
             };
 
-            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.onerror = err => observer.error(err);
+            
             reader.readAsDataURL(file);
         });
     }
 
     // Resize an image file to a png blob.
     // Keeps the aspect ratio and does not upscale.
-    async resizeImageToDataUrl(
-        file: File,
-        maxWidth: number,
-        maxHeight: number
-    ): Promise<string> {
-        return new Promise((resolve, reject) => {
+    resizeImageToDataUrl(file: File, maxWidth: number, maxHeight: number): Observable<string> {
+        return new Observable<string>(observer => {
             const img = new Image();
             const reader = new FileReader();
 
@@ -96,15 +97,20 @@ export class ImageService {
                 canvas.height = newHeight;
 
                 const ctx = canvas.getContext('2d');
-                if (!ctx) return reject(new Error('Canvas context not available'));
+                if (!ctx) {
+                    observer.error(new Error('Canvas context not available'));
+                    return;
+                }
 
                 ctx.drawImage(img, 0, 0, newWidth, newHeight);
 
                 // Convert canvas to PNG url
-                resolve(canvas.toDataURL('image/png'));
+                observer.next(canvas.toDataURL('image/png'));
+                observer.complete();
             };
 
-            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.onerror = err => observer.error(err);
+
             reader.readAsDataURL(file);
         });
     }

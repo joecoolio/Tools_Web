@@ -10,6 +10,7 @@ import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
 import { ImageService } from "../../services/image.service";
 import { HttpErrorResponse } from "@angular/common/http";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { catchError, EMPTY } from "rxjs";
 
 export function moneyValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
@@ -65,10 +66,8 @@ export class MyToolsComponent implements OnInit {
 
         // Get the tool categories for the dropdown
         this.dataService.getToolCategories()
-        .then(cats => {
+        .subscribe(cats => {
             this.toolCategories = cats;
-        })
-        .catch(reason => {
         });
 
         // Get all the tools I'm sharing
@@ -78,13 +77,11 @@ export class MyToolsComponent implements OnInit {
     // Get all the tools I'm sharing
     private refreshToolList() {
         this.dataService.getMyTools()
-        .then(tools => {
+        .subscribe(tools => {
             this.tools = tools;
 
             // Get all the tool pictures
-            tools.forEach(tool => this.dataService.loadImageUrl(tool, "default-tool.svg"));
-        })
-        .catch(reason => {
+            tools.forEach(tool => this.dataService.loadImageUrl(tool, "default-tool.svg").subscribe());
         });
     }
 
@@ -143,7 +140,7 @@ export class MyToolsComponent implements OnInit {
         const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
             this.imageService.resizeImageToDataUrl(file, 200, 200)
-            .then(url => {
+            .subscribe(url => {
                 this.settingsForm.patchValue({ photo: url });    
                 this.photoPreview = url;
                 this.photoChanged = true;
@@ -160,25 +157,21 @@ export class MyToolsComponent implements OnInit {
             }
             if (this.selectedTool.photo_link) {
                 this.dataService.getPicture(this.selectedTool.photo_link)
-                .then((blob: Blob) => {
+                .pipe(
+                    catchError(error => {
+                        // Check for invalid photo and load default
+                        if (error instanceof HttpErrorResponse && error.status == 404) {
+                            if (this.selectedTool) {
+                                this.selectedTool.photo_link = "default_tool.svg";
+                                return this.dataService.getPicture(this.selectedTool.photo_link)
+                            }
+                        }
+                        return EMPTY;
+                    })
+                )
+                .subscribe(blob => {
                     this.photoPreview = URL.createObjectURL(blob);
                     this.loading = false; // Done loading all data
-                })
-                .catch(error => {
-                    // Check for invalid photo and load default
-                    if (error instanceof HttpErrorResponse && error.status == 404) {
-                        if (this.selectedTool) {
-                            this.selectedTool.photo_link = "default_tool.svg";
-                            this.dataService.getPicture(this.selectedTool.photo_link)
-                            .then((blob: Blob) => {
-                                this.photoPreview = URL.createObjectURL(blob);
-                                this.loading = false; // Done loading all data
-                            })
-                            .catch(error => {
-                                this.loading = false;
-                            })
-                        }
-                    }
                 });
             }
             this.photoChanged = false;
@@ -195,7 +188,7 @@ export class MyToolsComponent implements OnInit {
             // Send the data away
             this.loading = true;
             this.dataService.updateTool(formData)
-            .then((value) => {
+            .subscribe(value => {
                 this.loading = false;
 
                 this.snackBar.open('Your settings were saved!', '', {

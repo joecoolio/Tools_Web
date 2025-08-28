@@ -9,6 +9,7 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from "@angular/common/http";
 import { ImageService } from "../../services/image.service";
+import { catchError, EMPTY } from "rxjs";
 
 
 @Component({
@@ -57,7 +58,7 @@ export class MyInfoComponent implements OnInit {
 
     // Get MyInfo from the database
     this.dataService.getMyInfo()
-      .then((myInfo) => {
+      .subscribe(myInfo => {
         this.myInfo = myInfo;
 
         // Update the form fields
@@ -78,7 +79,7 @@ export class MyInfoComponent implements OnInit {
     const value: string = this.settingsForm.get('address')?.value;
     if (value && value.length > 1) {
       this.dataService.validateAddress(value)
-      .then((success) => this.addressValid = success);
+      .subscribe(success => this.addressValid = success);
     }
   }
 
@@ -86,7 +87,7 @@ export class MyInfoComponent implements OnInit {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (file) {
       this.imageService.resizeImageToDataUrl(file, 200, 200)
-      .then(url => {
+      .subscribe(url => {
         this.settingsForm.patchValue({ photo: url });    
         this.photoPreview = url;
         this.photoChanged = true;
@@ -102,24 +103,20 @@ export class MyInfoComponent implements OnInit {
     }
     if (this.myInfo.photo_link) {
       this.dataService.getPicture(this.myInfo.photo_link)
-      .then((blob: Blob) => {
+        .pipe(
+          catchError(error => {
+            // Check for invalid photo and load default
+            if (error instanceof HttpErrorResponse && error.status == 404) {
+              this.myInfo.photo_link = "default.svg";
+              return this.dataService.getPicture(this.myInfo.photo_link)
+            }
+            return EMPTY;
+          })
+        )
+      .subscribe((blob: Blob) => {
         this.photoPreview = URL.createObjectURL(blob);
         this.loading = false; // Done loading all data
       })
-      .catch(error => {
-        // Check for invalid photo and load default
-        if (error instanceof HttpErrorResponse && error.status == 404) {
-          this.myInfo.photo_link = "default.svg";
-          this.dataService.getPicture(this.myInfo.photo_link)
-          .then((blob: Blob) => {
-            this.photoPreview = URL.createObjectURL(blob);
-            this.loading = false; // Done loading all data
-          })
-          .catch(error => {
-            this.loading = false;
-          })
-        }
-      });
     }
     this.photoChanged = false;
   }
@@ -134,7 +131,7 @@ export class MyInfoComponent implements OnInit {
       // Send the data away
       this.loading = true;
       this.dataService.updateMyInfo(formData)
-      .then((value) => {
+      .subscribe(value => {
         this.loading = false;
 
         this.snackBar.open('Your tool was updated!', '', {

@@ -77,9 +77,9 @@ export class LoginComponent {
     this.loginRunning = true;
 
     this.authService.login(this.userid.value, this.password.value)
-    // Success
-    .then(
-      (resp: HttpResponse<LoginResult>) => {
+    .subscribe({
+      // Success
+      next: ((resp: HttpResponse<LoginResult>) => {
         console.log("LoginComponent: Login success");
         
         this.loginRunning = false;
@@ -87,14 +87,14 @@ export class LoginComponent {
         // Redirect to the user settings page
         const navigationExtras: NavigationExtras = {state: {data: 'Login Successful!'}};
         this.router.navigate(['home']);
-      },
+      }),
       // Failure
-      (err) => {
+      error: (err) => {
         this.errorMessage = "Login failed, try again?"
         console.log("LoginComponent: Login failure", err);
         this.loginRunning = false;
       }
-    );
+    });
   }
 
 }

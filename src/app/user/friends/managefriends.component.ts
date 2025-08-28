@@ -7,6 +7,7 @@ import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
 import { FriendCardComponent } from "../../friend-card/friend-card.component";
+import { forkJoin, map, Observable } from "rxjs";
 
 // Extend the leaflet Marker to include a distance (in meters) from me.
 interface MarkerDataWithDistance extends MarkerData {
@@ -72,78 +73,80 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
         }, {injector: this.injector});
 
         // Get all the data!
-        this.getAllData().then((markerData: MarkerData[]) => {
+        this.getAllData().subscribe((markerData: MarkerData[]) => {
             this.markerData = markerData;
         });
     }
     
     // Get all data into this.markerData
-    private getAllData(): Promise<MarkerData[]> {
-        return Promise.all([
+    private getAllData(): Observable<MarkerData[]> {
+        return forkJoin([
             this.dataService.getMyInfo(),
             this.dataService.getFriends(),
             this.dataService.listNeighbors(),    
         ])
-        .then(([myinfo, friends, neighbors]) => {
-            let markerArray: MarkerData[] = [];
+        .pipe(
+            map(([myinfo, friends, neighbors]) => {
+                let markerArray: MarkerData[] = [];
 
-            // Process Me
-            {
-                let markerData: MarkerDataWithDistance = {
-                    layerGroupName: this.layerGroupNameMe,
-                    id: 0,
-                    latitude: myinfo.latitude,
-                    longitude: myinfo.longitude,
-                    icon: 'fa-solid fa-face-grin-wide',
-                    color: "orange",
-                    distance_m: 0,
-                    popupText: "", // No popup
-                    onclick: function (id: number): void {}, // Do nothing on click
-                }
-                markerArray.push(markerData);
-            }
-            // While we're here, set the center point on the map to my location
-            this.defaultCenterLocation = latLng([ myinfo.latitude, myinfo.longitude ]);
-            
-            // Process friends
-            // console.log("Retrieved friends: " + friends.length);
-            friends.forEach(friend => {
-                let markerData: MarkerDataWithDistance = {
-                    layerGroupName: this.layerGroupNameFriends,
-                    id: friend.id,
-                    latitude: friend.latitude,
-                    longitude: friend.longitude,
-                    icon: "fa-solid fa-user-tie",
-                    color: friend.depth == 1 ? "green-dark" : "green-light",
-                    popupText: "<div>Neighbor: " + friend.name + "</div>",
-                    onclick: this.neighborOnClick.bind(this), // Careful with the this reference
-                    distance_m: friend.distance_m,
-                }
-                markerArray.push(markerData);
-            });
-
-            // Process neighbors
-            // console.log("Retrieved neighbors: " + neighbors.length);
-            neighbors.forEach(neighbor => {
-                let markerData: MarkerDataWithDistance = {
-                    layerGroupName: this.layerGroupNameNonFriends,
-                    id: neighbor.id,
-                    latitude: neighbor.latitude,
-                    longitude: neighbor.longitude,
-                    icon: "fa-solid fa-user-tie",
-                    color: "blue",
-                    popupText: "<div>Neighbor: " + neighbor.name + "</div>",
-                    onclick: this.neighborOnClick.bind(this), // Careful with the this reference
-                    distance_m: neighbor.distance_m,
-                }
-                // Don't add neighbors if they're already friends
-                if (! markerArray.some(obj => obj.id === neighbor.id)) {
+                // Process Me
+                {
+                    let markerData: MarkerDataWithDistance = {
+                        layerGroupName: this.layerGroupNameMe,
+                        id: 0,
+                        latitude: myinfo.latitude,
+                        longitude: myinfo.longitude,
+                        icon: 'fa-solid fa-face-grin-wide',
+                        color: "orange",
+                        distance_m: 0,
+                        popupText: "", // No popup
+                        onclick: function (id: number): void {}, // Do nothing on click
+                    }
                     markerArray.push(markerData);
                 }
-            });
+                // While we're here, set the center point on the map to my location
+                this.defaultCenterLocation = latLng([ myinfo.latitude, myinfo.longitude ]);
+                
+                // Process friends
+                // console.log("Retrieved friends: " + friends.length);
+                friends.forEach(friend => {
+                    let markerData: MarkerDataWithDistance = {
+                        layerGroupName: this.layerGroupNameFriends,
+                        id: friend.id,
+                        latitude: friend.latitude,
+                        longitude: friend.longitude,
+                        icon: "fa-solid fa-user-tie",
+                        color: friend.depth == 1 ? "green-dark" : "green-light",
+                        popupText: "<div>Neighbor: " + friend.name + "</div>",
+                        onclick: this.neighborOnClick.bind(this), // Careful with the this reference
+                        distance_m: friend.distance_m,
+                    }
+                    markerArray.push(markerData);
+                });
 
-            return markerArray.sort(this.sortFunction);
-        });
+                // Process neighbors
+                // console.log("Retrieved neighbors: " + neighbors.length);
+                neighbors.forEach(neighbor => {
+                    let markerData: MarkerDataWithDistance = {
+                        layerGroupName: this.layerGroupNameNonFriends,
+                        id: neighbor.id,
+                        latitude: neighbor.latitude,
+                        longitude: neighbor.longitude,
+                        icon: "fa-solid fa-user-tie",
+                        color: "blue",
+                        popupText: "<div>Neighbor: " + neighbor.name + "</div>",
+                        onclick: this.neighborOnClick.bind(this), // Careful with the this reference
+                        distance_m: neighbor.distance_m,
+                    }
+                    // Don't add neighbors if they're already friends
+                    if (! markerArray.some(obj => obj.id === neighbor.id)) {
+                        markerArray.push(markerData);
+                    }
+                });
+
+                return markerArray.sort(this.sortFunction);
+            })
+        );
     }
 
     // Provided to map to sort visible marker lists
@@ -183,12 +186,12 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
             depth: 0
         };
 
-        this.dataService.getNeighbor(id).then(
+        this.dataService.getNeighbor(id).subscribe(
             (n: Neighbor) => {
                 Object.assign(neighbor, n);
                 if (! n.imageUrl) {
                     // Request/load the image
-                    this.dataService.loadImageUrl(neighbor, "default.svg")
+                    this.dataService.loadImageUrl(neighbor, "default.svg").subscribe();
                 }
             }
         );
@@ -262,12 +265,12 @@ export class ManageFriendsComponent implements OnInit, AfterViewInit {
 
     // Create or remove a friendship.
     // This handles all the friend reloading stuff required for either.
-    private _modifyFriendship(promise: Promise<void>): void {
-        promise.then(() => {
+    private _modifyFriendship(observable: Observable<void>): void {
+        observable.subscribe(() => {
             // Reload friends on the server
-            this.dataService.reloadfriends().then(() => {
+            this.dataService.reloadfriends().subscribe(() => {
                 // Refresh the map data
-                this.getAllData().then((markerData: MarkerData[]) => {
+                this.getAllData().subscribe((markerData: MarkerData[]) => {
                     this.markerData = markerData;
                     this.map.markerData = this.markerData;
                 });

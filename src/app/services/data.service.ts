@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { firstValueFrom, map, Observable, of, tap } from 'rxjs';
+import { EMPTY, iif, map, Observable, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
 import { Injectable } from '@angular/core';
 import { BoundedMap } from './boundedmap';
@@ -106,91 +106,78 @@ export class DataService {
     private photoCache: BoundedMap<string, Blob> = new BoundedMap(100);
 
     // Get my info
-    async getMyInfo(): Promise<MyInfo> {
-        return await firstValueFrom(
-            this.http.post<MyInfo>(
-                URL_MY_INFO,
-                {},
-                {},
-            )
+    getMyInfo(): Observable<MyInfo> {
+        return this.http.post<MyInfo>(
+            URL_MY_INFO,
+            {},
+            {},
         );   
     }
 
     // Validate an address
-    async validateAddress(address: string): Promise<boolean> {
+    validateAddress(address: string): Observable<boolean> {
         const body = {
             address: address
         };
-        return await firstValueFrom(
-            this.http.post<SuccessResult>(
-                URL_VALIDATE_ADDRESS,
-                body,
-                {},
-            ).pipe(
-                map((sr: SuccessResult) => sr.result)
-            )
+        return this.http.post<SuccessResult>(
+            URL_VALIDATE_ADDRESS,
+            body,
+            {},
+        ).pipe(
+            map((sr: SuccessResult) => sr.result)
         );
     }
 
     // Update my info
-    async updateMyInfo(formData: FormData): Promise<boolean> {
-        return await firstValueFrom(
-            this.http.post<SuccessResult>(
-                URL_UPDATE_MY_INFO,
-                formData,
-                {},
-            ).pipe(
-                map((sr: SuccessResult) => sr.result)
-            )
+    updateMyInfo(formData: FormData): Observable<boolean> {
+        return this.http.post<SuccessResult>(
+            URL_UPDATE_MY_INFO,
+            formData,
+            {},
+        ).pipe(
+            map((sr: SuccessResult) => sr.result)
         );
     }
 
     // Reload friends from the DB.
     // Since the server stores your friend list, if you change it you must re-call this.
-    async reloadfriends(): Promise<string> {
-        return await firstValueFrom(
-            this.http.post<string>(
-                URL_RELOAD_FRIENDS,
-                {},
-                {},
-            )
+    reloadfriends(): Observable<string> {
+        return this.http.post<string>(
+            URL_RELOAD_FRIENDS,
+            {},
+            {},
         );
     }
 
     // Get my friends.
     // If the friend is already in the cache, return that object but updated.
     // Put anything new in the neighbor cache.
-    async getFriends(depth: number = 999): Promise<Neighbor[]> {
+    getFriends(depth: number = 999): Observable<Neighbor[]> {
         const body = {
             depth: depth
         };
-        return await firstValueFrom(
-            this._getNeighbors(URL_FRIENDS, body)
+        return this._getNeighbors(URL_FRIENDS, body)
             .pipe(
                 // Add the 'is_friend = true' property to each friend
                 map((neighbors: Neighbor[]) => neighbors.map(neighbor => ({
                     ...neighbor,
                     is_friend: true,
                 })))
-            )
-        );
+            );
     }
 
     // List neighbors (not friends) within some radius of me
-    async listNeighbors(radiusMiles: number = 100): Promise<Neighbor[]> {
+    listNeighbors(radiusMiles: number = 100): Observable<Neighbor[]> {
         const body = {
             radius_miles: radiusMiles
         };
-        return await firstValueFrom(
-            this._getNeighbors(URL_ALL_NEIGHBORS, body)
+        return this._getNeighbors(URL_ALL_NEIGHBORS, body)
             .pipe(
                 // Add the 'is_friend = false' property to each friend
                 map((neighbors: Neighbor[]) => neighbors.map(neighbor => ({
                     ...neighbor,
                     is_friend: false,
                 })))
-            )
-
         );
     }
 
@@ -224,190 +211,165 @@ export class DataService {
 
     // Get a single neighbor
     // Put in the neighbor cache
-    async getNeighbor(id: number): Promise<Neighbor> {
+    getNeighbor(id: number): Observable<Neighbor> {
         if (this.neighborCache.has(id)) {
-            return await firstValueFrom(of(this.neighborCache.get(id)!));
+            return of(this.neighborCache.get(id)!);
         } else {
             const body = {
                 neighborId: id
             };
-            return await firstValueFrom(
-                this.http.post<Neighbor>(
-                    URL_GET_NEIGHBOR,
-                    body,
-                    {},
-                )
-                .pipe(tap(neighbor => this._getCachedVersionOfNeighbor(neighbor)))
-            );
+            return this.http.post<Neighbor>(
+                URL_GET_NEIGHBOR,
+                body,
+                {},
+            )
+            .pipe(tap(neighbor => this._getCachedVersionOfNeighbor(neighbor)))
+            ;
         }
     }
 
     // Get a neighbor's picture
-    async getPicture(photo_id: string): Promise<Blob> {
+    getPicture(photo_id: string): Observable<Blob> {
         if (this.photoCache.has(photo_id)) {
-            return await firstValueFrom(of(this.photoCache.get(photo_id)!));
+            return of(this.photoCache.get(photo_id)!);
         } else {
             // console.log("API - Getting picture: " + photo_id);
             const body = {
                 photo_id: photo_id
             };
 
-            return await firstValueFrom(
-                this.http.post(
-                    URL_GET_PICTURE,
-                    body,
-                    { observe: 'body', responseType: "blob" },
-                )
-                .pipe(tap(data => this.photoCache.set(photo_id, data)))
-            );
+            return this.http.post(
+                URL_GET_PICTURE,
+                body,
+                { observe: 'body', responseType: "blob" },
+            )
+            .pipe(tap(data => this.photoCache.set(photo_id, data)));
         }
     }
 
     // Create a friendship from me to another person.
     // You need to call reloadFriends() after this.
-    async createFriendship(neighborId: number): Promise<void> {
+    createFriendship(neighborId: number): Observable<void> {
         const body = {
             neighborId: neighborId
         };
-        return await firstValueFrom(
-            this.http.post<void>(
-                URL_ADD_FRIENDSHIP,
-                body,
-                {},
-            )
+        return this.http.post<void>(
+            URL_ADD_FRIENDSHIP,
+            body,
+            {},
         );
     }
 
     // Remove a friendship from me to another person.
     // You need to call reloadFriends() after this.
-    async removeFriendship(neighborId: number): Promise<void> {
+    removeFriendship(neighborId: number): Observable<void> {
         const body = {
             neighborId: neighborId
         };
-        return await firstValueFrom(
-            this.http.post<void>(
-                URL_REMOVE_FRIENDSHIP,
-                body,
-                {},
-            )
+        return this.http.post<void>(
+            URL_REMOVE_FRIENDSHIP,
+            body,
+            {},
         );
     }
 
     // Get all tool categories
-    async getToolCategories(): Promise<ToolCategory[]> {
+    getToolCategories(): Observable<ToolCategory[]> {
         const body = {};
 
-        return await firstValueFrom(
-            this.http.post<ToolCategory[]>(
-                URL_GET_TOOL_CATEGORIES,
-                body,
-                {}
-            )
+        return this.http.post<ToolCategory[]>(
+            URL_GET_TOOL_CATEGORIES,
+            body,
+            {}
         );
     }
     
     // Get all of my tools
-    async getMyTools(): Promise<Tool[]> {
+    getMyTools(): Observable<Tool[]> {
         const body = {};
 
-        return await firstValueFrom(
-            this.http.post<Tool[]>(
-                URL_MY_TOOLS,
-                body,
-                {}
-            )
+        return this.http.post<Tool[]>(
+            URL_MY_TOOLS,
+            body,
+            {}
         );
     }
 
     // Update a tool
-    async updateTool(formData: FormData): Promise<boolean> {
+    updateTool(formData: FormData): Observable<boolean> {
         // If .id is set, do an update / otherwise do a create
         const rawValue = formData.get('id');
         const numberValue = rawValue !== null ? parseFloat(rawValue.toString()) : 0;
 
         if (numberValue > 0) {
-            return await firstValueFrom(
-                this.http.post<SuccessResult>(
-                    URL_UPDATE_TOOL,
-                    formData,
-                    {},
-                ).pipe(
-                    map((sr: SuccessResult) => sr.result)
-                )
+            return this.http.post<SuccessResult>(
+                URL_UPDATE_TOOL,
+                formData,
+                {},
+            ).pipe(
+                map((sr: SuccessResult) => sr.result)
             );
         } else {
-            return await firstValueFrom(
-                this.http.post<SuccessResult>(
-                    URL_CREATE_TOOL,
-                    formData,
-                    {},
-                ).pipe(
-                    map((sr: SuccessResult) => sr.result)
-                )
+            return this.http.post<SuccessResult>(
+                URL_CREATE_TOOL,
+                formData,
+                {},
+            ).pipe(
+                map((sr: SuccessResult) => sr.result)
             );
         }
     }
 
     // Get all available tools
-    async getAllTools(): Promise<Tool[]> {
+    getAllTools(): Observable<Tool[]> {
         const body = {};
 
-        return await firstValueFrom(
-            this.http.post<Tool[]>(
-                URL_ALL_TOOLS,
-                body,
-                {}
-            )
+        return this.http.post<Tool[]>(
+            URL_ALL_TOOLS,
+            body,
+            {}
         );
     }
 
     // Get details about single tool
-    async getTool(id: number): Promise<Tool> {
+    getTool(id: number): Observable<Tool> {
         if (this.toolCache.has(id)) {
-            return await firstValueFrom(of(this.toolCache.get(id)!));
+            return of(this.toolCache.get(id)!);
         } else {
             // console.log("API - Getting tool: " + id);
             const body = {
                 id: id
             };
-            return await firstValueFrom(
-                this.http.post<Tool>(
-                    URL_GET_TOOL,
-                    body,
-                    {}
-                )
-                .pipe(tap(data => this.toolCache.set(id, data)))
-            );
+            return this.http.post<Tool>(
+                URL_GET_TOOL,
+                body,
+                {}
+            )
+            .pipe(tap(data => this.toolCache.set(id, data)));
         }
     };
 
     
     // Load up the image for some object.
     // Loads the image directly into the provided object.
-    async loadImageUrl(obj: BaseImageObject, defaultPhotoLink: string | undefined = undefined): Promise<void> {
+    loadImageUrl(obj: BaseImageObject, defaultPhotoLink: string | undefined = undefined): Observable<void> {
         // Apply a default if needed
         if (! obj.photo_link && defaultPhotoLink) {
             obj.photo_link = defaultPhotoLink;
         }
-        return new Promise((resolve, reject) => {
-            if (obj.photo_link) {
-                this.getPicture(obj.photo_link)
-                .then(
-                    (blob: Blob) => {
-                        const objectURL = URL.createObjectURL(blob);
-                        obj.imageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
-                        resolve();
-                    }
-                )
-                .catch((reason) => {
-                    console.log("Error loading image file: " + obj.photo_link + ": " + reason);
-                    reject();
+
+        console.log("Asked to load " + obj.photo_link);
+
+        return iif(
+            () => obj.photo_link != undefined,
+            this.getPicture(obj.photo_link)
+                .pipe(map(blob => {
+                    const objectURL = URL.createObjectURL(blob);
+                    obj.imageUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
                 })
-            } else {
-                // Nothing to do
-                resolve();
-            }
-        });
+            ),
+            EMPTY
+        );
     }
 }
 

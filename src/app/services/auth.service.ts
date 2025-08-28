@@ -34,44 +34,40 @@ export class AuthService {
     constructor(private http: HttpClient, private tokenStorage: TokenService) { }
 
     // Register
-    async register(formData: FormData): Promise<HttpResponse<LoginResult>> {
+    register(formData: FormData): Observable<HttpResponse<LoginResult>> {
         const userid: string = (formData.get('userid') as string) ?? '';
         console.log('Authservice Register: ' + userid);
         
-        return await firstValueFrom(
-            this.http.post<LoginResult>(
-                API_URL + 'v1/auth/register',
-                formData,
-                { observe: 'response' }
-            ).pipe(
-                timeout(HTTP_TIMEOUT),
-                filter(event => event instanceof HttpResponse),
-                tap<HttpResponse<LoginResult>>(
-                    response => this.processResultTokens(response, userid)
-                )
+        return this.http.post<LoginResult>(
+            API_URL + 'v1/auth/register',
+            formData,
+            { observe: 'response' }
+        ).pipe(
+            timeout(HTTP_TIMEOUT),
+            filter(event => event instanceof HttpResponse),
+            tap<HttpResponse<LoginResult>>(
+                response => this.processResultTokens(response, userid)
             )
         );   
     }
 
     // Login
-    async login(userid: string, password: string): Promise<HttpResponse<LoginResult>> {
+    login(userid: string, password: string): Observable<HttpResponse<LoginResult>> {
         const body = {
             userid: userid,
             password: password,
         };
         console.log('Authservice Login: ' + userid);
 
-        return await firstValueFrom(
-            this.http.post<LoginResult>(
-                API_URL + 'v1/auth/login',
-                body,
-                { observe: 'response' }
-            ).pipe(
-                timeout(HTTP_TIMEOUT),
-                filter(event => event instanceof HttpResponse),
-                tap<HttpResponse<LoginResult>>(
-                    response => this.processResultTokens(response, userid)
-                )
+        return this.http.post<LoginResult>(
+            API_URL + 'v1/auth/login',
+            body,
+            { observe: 'response' }
+        ).pipe(
+            timeout(HTTP_TIMEOUT),
+            filter(event => event instanceof HttpResponse),
+            tap<HttpResponse<LoginResult>>(
+                response => this.processResultTokens(response, userid)
             )
         );
     }

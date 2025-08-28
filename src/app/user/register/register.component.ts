@@ -62,7 +62,7 @@ export class RegisterComponent {
     const value: string = this.settingsForm.get('address')?.value;
     if (value && value.length > 1) {
       this.dataService.validateAddress(value)
-      .then((success) => this.addressValid = success);
+      .subscribe(success => this.addressValid = success);
     }
   }
 
@@ -71,7 +71,7 @@ export class RegisterComponent {
     if (file) {
       this.settingsForm.patchValue({ photo: file });
       this.imageService.resizeImageToPngBlob(file, 200, 200)
-      .then((blob: Blob) => {
+      .subscribe((blob: Blob) => {
         this.photoPreview = URL.createObjectURL(blob);
         this.photoChanged = true;
       });
@@ -97,7 +97,7 @@ export class RegisterComponent {
       // Send the data away
       this.loading = true;
       this.authService.register(formData)
-      .then(() => {
+      .subscribe(() => {
         this.loading = false;
 
         this.snackBar.open('Your account was created!', '', {
@@ -109,5 +109,4 @@ export class RegisterComponent {
       })
     }
   }
-
 }

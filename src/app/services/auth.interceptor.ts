@@ -56,7 +56,7 @@ export class AuthInterceptor implements HttpInterceptor {
 
                             const navigationExtras: NavigationExtras = {state: {data: 'Your login has expired, please login again.'}};
                             // this.router.navigateByUrl('/login', navigationExtras);
-                            this.router.navigate(["", { outlets: { right: ["login"] } }], navigationExtras);
+                            this.router.navigate(['login'], navigationExtras);
     
                             throw new Error("Refresh token expired, redirecting to /login");
                         }
