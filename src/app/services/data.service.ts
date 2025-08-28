@@ -358,8 +358,6 @@ export class DataService {
             obj.photo_link = defaultPhotoLink;
         }
 
-        console.log("Asked to load " + obj.photo_link);
-
         return iif(
             () => obj.photo_link != undefined,
             this.getPicture(obj.photo_link)

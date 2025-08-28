@@ -1,4 +1,3 @@
-Change all promises to Observables in DataService.  This would be a bit cleaner.
 Go through all the API calls and properly handle errors.
 Tool listing, probably a card view ordered by proximity.  Also on a map?
 Some kind of free search thing on the tool list to filter it.
