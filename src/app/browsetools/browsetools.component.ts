@@ -8,8 +8,8 @@ import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../shared/browseobjects.component"
 import { ToolCardComponent } from "../tool-card/tool-card.component";
 import { SafeUrl } from "@angular/platform-browser";
-import { k } from "../../../node_modules/@angular/material/module.d-m-qXd3m8";
 import { MatTooltipModule } from "@angular/material/tooltip";
+import { ResizeDirective } from "../shared/resize-directive";
 
 // A Tool with the owner's info appended
 export interface ToolPlusOwner extends Tool {
@@ -26,6 +26,7 @@ export interface ToolPlusOwner extends Tool {
     MatCardModule,
     MatDialogModule,
     MatTooltipModule,
+    ResizeDirective,
 ],
     templateUrl: './browsetools.component.html',
     styleUrl: './browsetools.component.scss',

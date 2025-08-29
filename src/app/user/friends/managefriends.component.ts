@@ -7,6 +7,7 @@ import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/d
 import { FriendCardComponent } from "../../friend-card/friend-card.component";
 import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../../shared/browseobjects.component";
+import { ResizeDirective } from "../../shared/resize-directive";
 
 @Component({
     standalone: true,
@@ -16,6 +17,7 @@ import { BrowseObjectsComponent, MarkerDataWithDistance } from "../../shared/bro
         MapComponent,
         MatCardModule,
         MatDialogModule,
+        ResizeDirective,
     ],
     templateUrl: './managefriends.component.html',
     styleUrl: './managefriends.component.scss',

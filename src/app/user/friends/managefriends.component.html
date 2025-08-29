@@ -1,5 +1,5 @@
-<div class="container">
-    <div class="left-section">
+<div class="container" #parentContainer>
+    <div class="left-section" #leftSection>
         @if(allVisibleObjects) {
             <div class="neighbor-header">
                 <h2><span [class.bounce]="objectCountBounceFlag()">🔍</span> <span [class.bounce]="objectCountBounceFlag()">{{ allVisibleObjectsCount() }}</span> Neighbors</h2>
@@ -28,7 +28,9 @@
         }
     </div>
 
-    <div class="right-section">
+    <div class="grabber" appResize [parentContainer]="parentContainer" [leftResize]="leftSection" [rightResize]="rightSection"></div>
+
+    <div class="right-section" #rightSection>
         @if(markerData) {
             <app-map
                 #mapRef
