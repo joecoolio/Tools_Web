@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal } from '@angular/core';
+import { Component, effect, OnInit, Signal } from '@angular/core';
 import { MatMenuModule } from "@angular/material/menu";
 import { MatIconModule } from "@angular/material/icon";
 import { MatDividerModule } from "@angular/material/divider";
@@ -33,13 +33,27 @@ export class AppComponent implements OnInit {
     private router: Router,
     private tokenService: TokenService,
     private dataService: DataService,
-  ) { }
+  ) {
+    // Monitor the loggedIn signal.
+    // When it is false, clear myinfo (including picture and whatnot).
+    // When it is true, immediately call getMyInfo().
+    effect(() => {
+      if(this.tokenService.isLoggedIn()) { // Link the effect to the proper signal so it functions
+        console.log("App: running getMyInfo");
+        this.dataService.getMyInfo().subscribe();
+      } else {
+        console.log("App: expiring my info");
+        this.dataService.expireMyInfo.set(true);
+      }
+    });
+  }
+
   loggedIn!: Signal<boolean>;
   myInfo!: Signal<MyInfo>;
-  
+
   ngOnInit(): void {
     this.loggedIn = this.tokenService.isLoggedIn;
-    this.dataService.getMyInfo().subscribe(myinfoSignal => { this.myInfo = myinfoSignal });
+    this.myInfo = this.dataService.myInfoSignal;
   }
 
   openMyInfoDialog() {

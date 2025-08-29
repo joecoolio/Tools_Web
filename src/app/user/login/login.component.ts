@@ -93,6 +93,7 @@ export class LoginComponent {
       complete: () => {
         // Go ahead and load up the neighbor for my ID.
         // This will ensure my info is cached as well as the picture.
+        this.dataService.expireMyInfo.set(true);
         this.dataService.getMyInfo();
       },
       // Failure

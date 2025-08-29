@@ -1,7 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { EMPTY, iif, map, Observable, of, tap } from 'rxjs';
-import { TokenService } from './token.service';
-import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
+import { effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { BoundedMap } from './boundedmap';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { environment } from '../../environments/environment'
@@ -95,18 +94,27 @@ export interface ToolCategory {
 export class DataService {
     constructor(
         private http: HttpClient,
-        private tokenStorage: TokenService,
         private sanitizer: DomSanitizer,
-    ) { }
+    ) { 
+        this.myInfo = signal(this.defaultMyInfo);
+        this.myInfoSignal = this.myInfo.asReadonly();
+        this.expireMyInfo = signal<boolean>(true, { equal: (a,b) => false }); // When set, we need to discard MyInfo
+
+        // Watch the signal
+        effect(() => {
+            this.expireMyInfo(); // Link the effect to the proper signal so it functions
+            console.log("DataService: wiping mydata");
+            this.myInfo.set(this.defaultMyInfo);
+        });
+    }
 
     // Caches
     private neighborCache: BoundedMap<number, Neighbor> = new BoundedMap(100);
     private toolCache: BoundedMap<number, Tool> = new BoundedMap(100);
     private photoCache: BoundedMap<string, Blob> = new BoundedMap(100);
 
-    // Signals for my info.  Use this to get the current logged in guy & his picture.
-    private reloadMyInfo: boolean = true; // If true, we need to reload the myinfo data
-    private myInfo: WritableSignal<MyInfo> = signal({
+    // A blank MyInfo
+    private readonly defaultMyInfo: MyInfo = {
         id: -1,
         latitude: 0,
         longitude: 0,
@@ -117,13 +125,17 @@ export class DataService {
         name: '',
         nickname: '',
         home_address: '',
-    });
+    };
+
+    // Signals for my info.  Use this to get the current logged in guy & his picture.
+    private myInfo: WritableSignal<MyInfo>;
     // Public signals
-    public readonly myInfoSignal: Signal<MyInfo> = this.myInfo.asReadonly();
+    public readonly myInfoSignal: Signal<MyInfo>;
+    public expireMyInfo: WritableSignal<boolean>; // If true, we need to discard MyInfo
 
     // Get my info
     getMyInfo(): Observable<Signal<MyInfo>> {
-        if (this.reloadMyInfo) {
+        if (this.myInfo().id <= 0) {
             return this.http.post<MyInfo>(
                 URL_MY_INFO,
                 {},
@@ -142,8 +154,14 @@ export class DataService {
                     });
                 }),
                 map(myInfo => {
-                    this.reloadMyInfo = false;
-                    this.myInfo.set(myInfo);
+                    // Take imageUrl out of the stuff to update.
+                    // That is updated above in the other query.
+                    // Without this, out of order operations can end up with a blank picture.
+                    const { imageUrl, ...newstuff } = myInfo;
+                    this.myInfo.update(current => {
+                        const { imageUrl, ...trash } = current;
+                        return { imageUrl, ...newstuff };
+                    });
                     return this.myInfoSignal;
                 })
             );
