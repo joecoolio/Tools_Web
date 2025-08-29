@@ -20,6 +20,9 @@
                             }
                             <div class="person-info">
                                 <p class="person-address">{{ neighbor.home_address }} </p>
+                                @if (neighbor.tool_count > 0) {
+                                    <p class="person-toolcount">Sharing {{ neighbor.tool_count }} tools!</p>
+                                }
                             </div>
                         </div>
                     </mat-card-content>

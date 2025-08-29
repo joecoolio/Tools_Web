@@ -100,7 +100,8 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             distance_m: 0,
             is_friend: false,
             imageUrl: undefined,
-            depth: 0
+            depth: 0,
+            tool_count: 0
         };
 
         this.dataService.getNeighbor(id).subscribe(

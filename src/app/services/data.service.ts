@@ -66,6 +66,7 @@ export interface Neighbor extends MappableObject, BaseImageObject {
     home_address: string,
     depth: number,
     is_friend: boolean,
+    tool_count: number,
 }
 
 // Data for a tool
@@ -342,7 +343,7 @@ export class DataService {
         );
     }
 
-    // Update a tool
+    // Update or create a tool
     updateTool(formData: FormData): Observable<boolean> {
         // If .id is set, do an update / otherwise do a create
         const rawValue = formData.get('id');
