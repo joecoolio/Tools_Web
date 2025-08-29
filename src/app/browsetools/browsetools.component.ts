@@ -6,16 +6,27 @@ import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../shared/browseobjects.component"
+import { ToolCardComponent } from "../tool-card/tool-card.component";
+import { SafeUrl } from "@angular/platform-browser";
+import { k } from "../../../node_modules/@angular/material/module.d-m-qXd3m8";
+import { MatTooltipModule } from "@angular/material/tooltip";
+
+// A Tool with the owner's info appended
+export interface ToolPlusOwner extends Tool {
+    ownerName: string | undefined,
+    ownerimageUrl: SafeUrl | undefined,
+}
 
 @Component({
     standalone: true,
-    selector: 'app-manage-friends',
+    selector: 'app-browse-tools',
     imports: [
-        RouterModule,
-        MapComponent,
-        MatCardModule,
-        MatDialogModule,
-    ],
+    RouterModule,
+    MapComponent,
+    MatCardModule,
+    MatDialogModule,
+    MatTooltipModule,
+],
     templateUrl: './browsetools.component.html',
     styleUrl: './browsetools.component.scss',
 })
@@ -49,7 +60,7 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
                         id: tool.id,
                         latitude: tool.latitude,
                         longitude: tool.longitude,
-                        icon: "fa-solid fa-user-tie",
+                        icon: "fa-solid fa-screwdriver-wrench",
                         color: "green-dark",
                         popupText: "<div>Tool: " + tool.name + "</div>",
                         onclick: this.objectOnClick.bind(this), // Careful with the this reference
@@ -65,7 +76,7 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
 
     // Called by the map whenever an ID is put it in the list of visible markers
     public idToObject(id: number): Tool {
-        const tool: Tool = {
+        const tool: ToolPlusOwner = {
             id: id,
             owner_id: 0,
             short_name: "",
@@ -81,6 +92,8 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
             distance_m: 0,
             photo_link: "",
             imageUrl: undefined,
+            ownerName: undefined,
+            ownerimageUrl: undefined
         };
 
         this.dataService.getTool(id).subscribe(
@@ -89,6 +102,14 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
                 if (! t.imageUrl) {
                     // Request/load the image
                     this.dataService.loadImageUrl(tool, "default_tool.svg").subscribe();
+
+                    // Get the related neighbor & picture
+                    this.dataService.getNeighbor(tool.owner_id).subscribe(neighbor => {
+                        tool.ownerName = neighbor.name;
+                        this.dataService.getPictureAsSafeUrl(neighbor.photo_link).subscribe(url => {
+                            tool.ownerimageUrl = url;
+                        })
+                    });
                 }
             }
         );
@@ -101,7 +122,7 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
         const mo: MappableObject | undefined = this.allVisibleObjects.get(index);
 
         if (mo) {
-            const tool: Tool = mo as Tool;
+            const tool: ToolPlusOwner = mo as ToolPlusOwner;
 
             // Center and zoom the map on the clicked item
             this.map.setMapView([ tool.latitude, tool.longitude ], 18);
@@ -110,17 +131,22 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
             dialogConfig.autoFocus = true;
             dialogConfig.data = {
                 tool: tool,
-                // fnCreateFriendship: this.createFriendship.bind(this),
-                // fnDeleteFriendship: this.deleteFriendship.bind(this),
+                fnBorrow: this.borrow.bind(this),
             }
 
-            // this.dialog.open(ToolCardComponent, dialogConfig);
+            this.dialog.open(ToolCardComponent, dialogConfig);
         }
     }
 
+    // Borrow a tool
+    public borrow(id: number) {
+        console.log("Borrowing: " + id);
+        //TODO
+    }
+
     // All objects in this component are Tools
-    public asTool(obj: MappableObject): Tool {
-        return obj as Tool;
+    public asTool(obj: MappableObject): ToolPlusOwner {
+        return obj as ToolPlusOwner;
     }
 
 }

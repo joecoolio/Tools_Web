@@ -1,0 +1,20 @@
+<div class="tool-card">
+  <div class="card-header">
+    <h2 class="tool-name">{{ tool.name }}</h2>
+  </div>
+  <div class="card-image">
+    <img [src]="tool.imageUrl" [alt]="tool.name">
+  </div>
+  <div class="card-stats">
+    <div class="left-col">Distance Away:</div>
+    <div class="right-col">{{ convertMetersToMiles(tool.distance_m) | number:'1.2-2' }} miles</div>
+    <div class="left-col">Owner:</div>
+    <div class="right-col">{{ tool.ownerName }}</div>
+    <div class="left-col">Replacement Value:</div>
+    <div class="right-col">{{ tool.replacement_cost | currency }}</div>
+  </div>
+  <section class="button-section">
+    <button class="btn friend" (click)="borrow()">Borrow</button>
+  </section>
+
+</div>

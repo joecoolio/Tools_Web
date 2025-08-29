@@ -1,20 +1,34 @@
 <div class="container">
     <div class="left-section">
         @if(allVisibleObjects) {
-            <div class="neighbor-header">
+            <div class="header">
                 <h2><span [class.bounce]="objectCountBounceFlag()">🔍</span> <span [class.bounce]="objectCountBounceFlag()">{{ allVisibleObjectsCount() }}</span> Tools</h2>
             </div>
 
             @for(_tool of allVisibleObjects; track _tool.id; let i = $index) {
                 @let tool = asTool(_tool);
-                <mat-card #objectCards class="person-card" (click)="onListObjectClick(i)">
-                    <mat-card-content>
-                        <h2 class="person-name">{{ tool.name }}</h2>
-                        <div class="person-body">
-                            <img [src]="tool.imageUrl" [alt]="tool.name" class="person-image"/>
-                            <!-- <div class="person-info">
-                                <p class="person-address">{{ neighbor.home_address }} </p>
-                            </div> -->
+
+                <mat-card #objectCards class="tool-card" (click)="onListObjectClick(i)">
+                    <mat-card-title>
+                        <div class="title-row">
+                            <div>
+                                {{ tool.brand }}
+                            </div>
+                            @if(tool.ownerName && tool.ownerimageUrl) {
+                                <div matTooltip="{{ tool.ownerName }}">
+                                    <img [src]="tool.ownerimageUrl" [alt]="tool.ownerName" class="tool-owner"/>
+                                </div>
+                            }
+                        </div>
+                    </mat-card-title>
+                    <mat-card-subtitle>{{ tool.short_name }}</mat-card-subtitle>
+                    <mat-card-content class="tool-details">
+                        <div>
+                            <h3>{{ tool.name }}</h3>
+                            <a class="tool-link" [href]="tool.product_url" target="_blank" rel="noopener noreferrer">Product Link</a>
+                        </div>
+                        <div>
+                            <img [src]="tool.imageUrl" [alt]="tool.name" class="tool-image" />
                         </div>
                     </mat-card-content>
                 </mat-card>

@@ -247,6 +247,15 @@ export class DataService {
         }
     }
 
+    // Get a picture as a SafeURL
+    getPictureAsSafeUrl(photo_id: string): Observable<SafeUrl> {
+        return this.getPicture(photo_id)
+            .pipe(map(blob => {
+                const objectURL = URL.createObjectURL(blob);
+                return this.sanitizer.bypassSecurityTrustUrl(objectURL);
+            }));
+    }
+
     // Create a friendship from me to another person.
     // You need to call reloadFriends() after this.
     createFriendship(neighborId: number): Observable<void> {
@@ -369,5 +378,6 @@ export class DataService {
             EMPTY
         );
     }
+
 }
 
