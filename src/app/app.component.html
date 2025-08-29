@@ -3,7 +3,11 @@
     <div class="logo" routerLink="/home"><img src="images/logo-300.png"></div>
     @if(loggedIn()) {
       <button mat-icon-button [matMenuTriggerFor]="menu" class="hamburger-button">
-        <mat-icon>menu</mat-icon>
+        @if(myInfo().imageUrl) {
+          <img [src]="myInfo().imageUrl" alt="picture" class="hamburger-photo"/>
+        } @else {
+          <mat-icon>menu</mat-icon>
+        }
       </button>
 
       <mat-menu #menu="matMenu">

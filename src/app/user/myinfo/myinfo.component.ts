@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from "@angular/core";
+import { Component, ElementRef, OnInit, SecurityContext, ViewChild } from "@angular/core";
 import { MatDialogModule, MatDialogRef } from "@angular/material/dialog";
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -9,7 +9,7 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from "@angular/common/http";
 import { ImageService } from "../../services/image.service";
-import { catchError, EMPTY } from "rxjs";
+import { DomSanitizer } from "@angular/platform-browser";
 
 
 @Component({
@@ -35,6 +35,7 @@ export class MyInfoComponent implements OnInit {
     private fb: FormBuilder,
     private snackBar: MatSnackBar,
     private imageService: ImageService,
+    private sanitizer: DomSanitizer,
   ) {  }
   
   faTrash = faTrash;
@@ -58,15 +59,15 @@ export class MyInfoComponent implements OnInit {
 
     // Get MyInfo from the database
     this.dataService.getMyInfo()
-      .subscribe(myInfo => {
-        this.myInfo = myInfo;
+      .subscribe(myInfoSignal => {
+        this.myInfo = myInfoSignal();
 
         // Update the form fields
         this.settingsForm.patchValue({
-          userid: myInfo.userid,
-          name: myInfo.name,
-          nickname: myInfo.nickname,
-          address: myInfo.home_address,
+          userid: this.myInfo.userid,
+          name: this.myInfo.name,
+          nickname: this.myInfo.nickname,
+          address: this.myInfo.home_address,
         });
         this.validateAddress();
 
@@ -101,22 +102,9 @@ export class MyInfoComponent implements OnInit {
       this.fileInput.nativeElement.value = null;
       this.photoPreview = null;
     }
-    if (this.myInfo.photo_link) {
-      this.dataService.getPicture(this.myInfo.photo_link)
-        .pipe(
-          catchError(error => {
-            // Check for invalid photo and load default
-            if (error instanceof HttpErrorResponse && error.status == 404) {
-              this.myInfo.photo_link = "default.svg";
-              return this.dataService.getPicture(this.myInfo.photo_link)
-            }
-            return EMPTY;
-          })
-        )
-      .subscribe((blob: Blob) => {
-        this.photoPreview = URL.createObjectURL(blob);
-        this.loading = false; // Done loading all data
-      })
+    if (this.myInfo.imageUrl) {
+      this.photoPreview = this.sanitizer.sanitize(SecurityContext.URL, this.myInfo.imageUrl) ?? '';
+      this.loading = false; // Done loading all data
     }
     this.photoChanged = false;
   }

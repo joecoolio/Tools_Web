@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, effect, ElementRef, inject, Injector, OnInit, QueryList, signal, Signal, ViewChild, ViewChildren, WritableSignal } from "@angular/core";
 import { MapComponent, MarkerData } from "../map/map.component";
-import { DataService, MappableObject } from "../services/data.service";
+import { DataService, MappableObject, MyInfo } from "../services/data.service";
 import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
@@ -81,8 +81,9 @@ export abstract class BrowseObjectsComponent implements OnInit {
             this.dataService.getMyInfo(),
         ])
         .pipe(
-            map(([subclassArray, myinfo]) => {
+            map(([subclassArray, myinfoSignal]) => {
                 let markerArray: MarkerData[] = [];
+                let myinfo: MyInfo = myinfoSignal();
 
                 // Process subclass data
                 subclassArray.forEach( markerData => markerArray.push(markerData) );

@@ -9,6 +9,7 @@ import { NavigationExtras, Router, RouterLinkWithHref } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { AuthService, LoginResult } from '../../services/auth.service';
 import { TokenService } from '../../services/token.service';
+import { DataService } from '../../services/data.service';
 
 @Component({
   standalone: true,
@@ -30,7 +31,8 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    public tokenService: TokenService,
+    private tokenService: TokenService,
+    private dataService: DataService,
     private router: Router,
   ) {
     this.errorMessage = "";
@@ -88,6 +90,11 @@ export class LoginComponent {
         const navigationExtras: NavigationExtras = {state: {data: 'Login Successful!'}};
         this.router.navigate(['home']);
       }),
+      complete: () => {
+        // Go ahead and load up the neighbor for my ID.
+        // This will ensure my info is cached as well as the picture.
+        this.dataService.getMyInfo();
+      },
       // Failure
       error: (err) => {
         this.errorMessage = "Login failed, try again?"

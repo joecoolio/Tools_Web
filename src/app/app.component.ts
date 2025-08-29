@@ -1,4 +1,4 @@
-import { Component, computed, OnInit, Signal } from '@angular/core';
+import { Component, OnInit, Signal } from '@angular/core';
 import { MatMenuModule } from "@angular/material/menu";
 import { MatIconModule } from "@angular/material/icon";
 import { MatDividerModule } from "@angular/material/divider";
@@ -8,6 +8,7 @@ import { MyInfoComponent } from './user/myinfo/myinfo.component';
 import { AuthService } from './services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TokenService } from './services/token.service';
+import { DataService, MyInfo } from './services/data.service';
 
 @Component({
   selector: 'app-root',
@@ -31,11 +32,14 @@ export class AppComponent implements OnInit {
     private snackBar: MatSnackBar,
     private router: Router,
     private tokenService: TokenService,
+    private dataService: DataService,
   ) { }
   loggedIn!: Signal<boolean>;
-
+  myInfo!: Signal<MyInfo>;
+  
   ngOnInit(): void {
     this.loggedIn = this.tokenService.isLoggedIn;
+    this.dataService.getMyInfo().subscribe(myinfoSignal => { this.myInfo = myinfoSignal });
   }
 
   openMyInfoDialog() {

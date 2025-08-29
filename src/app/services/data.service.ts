@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { EMPTY, iif, map, Observable, of, tap } from 'rxjs';
 import { TokenService } from './token.service';
-import { Injectable } from '@angular/core';
+import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { BoundedMap } from './boundedmap';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { environment } from '../../environments/environment'
@@ -53,13 +53,11 @@ export interface BaseImageObject {
 }
 
 // Data for the current user
-export interface MyInfo extends BaseImageObject {
+export interface MyInfo extends MappableObject, BaseImageObject {
     userid: string,
     name: string,
     nickname: string,
     home_address: string,
-    latitude: number,
-    longitude: number,
 }
 
 // Data for a neighbor
@@ -105,13 +103,53 @@ export class DataService {
     private toolCache: BoundedMap<number, Tool> = new BoundedMap(100);
     private photoCache: BoundedMap<string, Blob> = new BoundedMap(100);
 
+    // Signals for my info.  Use this to get the current logged in guy & his picture.
+    private reloadMyInfo: boolean = true; // If true, we need to reload the myinfo data
+    private myInfo: WritableSignal<MyInfo> = signal({
+        id: -1,
+        latitude: 0,
+        longitude: 0,
+        distance_m: 0,
+        photo_link: '',
+        imageUrl: undefined,
+        userid: '',
+        name: '',
+        nickname: '',
+        home_address: '',
+    });
+    // Public signals
+    public readonly myInfoSignal: Signal<MyInfo> = this.myInfo.asReadonly();
+
     // Get my info
-    getMyInfo(): Observable<MyInfo> {
-        return this.http.post<MyInfo>(
-            URL_MY_INFO,
-            {},
-            {},
-        );   
+    getMyInfo(): Observable<Signal<MyInfo>> {
+        if (this.reloadMyInfo) {
+            return this.http.post<MyInfo>(
+                URL_MY_INFO,
+                {},
+                {},
+            ).pipe(
+                tap(myInfo => {
+                    // Fire the request to get the picture
+                    if (! myInfo.photo_link) {
+                        myInfo.photo_link = "default_neighbor.svg";
+                    }
+                    console.log("Login: Requesting picture for logged in user: " + myInfo.photo_link);
+                    this.getPictureAsSafeUrl(myInfo.photo_link).subscribe(value => {
+                        if (value) {
+                            this.myInfo.update(current => ({... current, imageUrl: value }));
+                        }
+                    });
+                }),
+                map(myInfo => {
+                    this.reloadMyInfo = false;
+                    this.myInfo.set(myInfo);
+                    return this.myInfoSignal;
+                })
+            );
+        } else {
+            // Data already loaded, don't re-query
+            return of(this.myInfoSignal);
+        }
     }
 
     // Validate an address
