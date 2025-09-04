@@ -48,6 +48,7 @@ export class AppComponent implements OnInit {
     });
   }
 
+  // Signals for the hamburger menu / user picture
   loggedIn!: Signal<boolean>;
   myInfo!: Signal<MyInfo>;
 

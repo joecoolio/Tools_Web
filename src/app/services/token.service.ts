@@ -20,9 +20,9 @@ export class TokenService {
         }
     }
 
-    public get token(): string {
+    public get token(): string | null {
         let t = localStorage.getItem(TOKEN_KEY);
-        return (typeof t === "string") ? t as string : "";
+        return (typeof t === "string") ? t as string : null;
     }
 
     public set refreshToken(value: string | null) {
