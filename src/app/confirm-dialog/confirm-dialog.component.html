@@ -1,6 +1,40 @@
 <h2 mat-dialog-title>{{ data.title }}</h2>
 <mat-dialog-content>{{ data.message }}</mat-dialog-content>
+
+<form [formGroup]="form" mat-dialog-content>
+  <ng-container>
+    @for(field of data.fields; track field) {
+      @if(field.type === 'text' || field.type === 'number') {
+        <mat-form-field>
+          <mat-label>{{ field.label }}</mat-label>
+          <input matInput [type]="field.type" [formControlName]="field.name" />
+        </mat-form-field>
+      } @else if (field.type === 'textarea') {
+        <mat-form-field>
+          <mat-label>{{ field.label }}</mat-label>
+          <textarea matInput [type]="field.type" [formControlName]="field.name" ></textarea>
+        </mat-form-field>
+      } @else if (field.type === 'checkbox') {
+        <mat-checkbox [formControlName]="field.name">
+          {{ field.label }}
+        </mat-checkbox>
+      } @else if (field.type === 'select') {
+        <mat-form-field>
+          <mat-label>{{ field.label }}</mat-label>
+          <mat-select [formControlName]="field.name">
+            @for(option of field.options; track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+    }
+  </ng-container>
+</form>
+
+
+
 <mat-dialog-actions align="end">
-  <button mat-button [mat-dialog-close]="false">Cancel</button>
-  <button mat-button color="primary" [mat-dialog-close]="true">Confirm</button>
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-button color="primary" (click)="confirm()">Confirm</button>
 </mat-dialog-actions>

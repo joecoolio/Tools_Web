@@ -12,12 +12,19 @@
                         <h2 class="person-name">{{ neighbor.name }}</h2>
                         <div class="person-body">
                             <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image"/>
-                            @if(neighbor.is_friend && neighbor.depth == 1) {
-                                <span class="friend-tag">FRIEND</span>
-                            }
-                            @if(neighbor.is_friend && neighbor.depth > 1) {
-                                <span class="friend-of-friend-tag">FRIEND OF FRIEND</span>
-                            }
+                            <span class="neighbor-type bottom-right-content" >
+                                @if(neighbor.is_friend) {
+                                    @if(neighbor.depth == 1) {
+                                        <span class="friend-tag">Friend</span>
+                                    }
+                                    @else {
+                                        <span class="friend-tag friend-of-friend-tag">Friend of Friend</span>
+                                    }
+                                }
+                                @if(neighbor.friendship_requested) {
+                                    <span class="friend-tag friend-request-tag">Requested</span>
+                                }
+                            </span>
                             <div class="person-info">
                                 <p class="person-address">{{ neighbor.home_address }} </p>
                                 @if (neighbor.tool_count > 0) {

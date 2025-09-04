@@ -14,7 +14,8 @@ const URL_RELOAD_FRIENDS = API_URL + 'v1/reloadfriends';
 const URL_FRIENDS = API_URL + 'v1/friends';
 const URL_ALL_NEIGHBORS = API_URL + 'v1/getneighbors';
 const URL_GET_NEIGHBOR = API_URL + 'v1/getneighbor';
-const URL_ADD_FRIENDSHIP = API_URL + 'v1/addfriendship';
+const URL_REQ_FRIENDSHIP = API_URL + 'v1/requestfriendship';
+const URL_CANCEL_FRIENDSHIP_REQ = API_URL + 'v1/deletefriendshiprequest';
 const URL_REMOVE_FRIENDSHIP = API_URL + 'v1/removefriendship';
 const URL_MY_TOOLS = API_URL + 'v1/getmytools'
 const URL_ALL_TOOLS = API_URL + 'v1/getalltools';
@@ -65,6 +66,7 @@ export interface Neighbor extends MappableObject, BaseImageObject {
     home_address: string,
     depth: number,
     is_friend: boolean,
+    friendship_requested: boolean,
     tool_count: number,
 }
 
@@ -269,6 +271,10 @@ export class DataService {
     // Get a single neighbor
     // Put in the neighbor cache
     getNeighbor(id: number): Observable<Neighbor> {
+        // Id <= 0 indicates a non-neighbor (e.g. the "Me" marker)
+        if (id <= 0) {
+            return EMPTY;
+        }
         if (this.neighborCache.has(id)) {
             return of(this.neighborCache.get(id)!);
         } else {
@@ -313,14 +319,26 @@ export class DataService {
             }));
     }
 
-    // Create a friendship from me to another person.
-    // You need to call reloadFriends() after this.
-    createFriendship(neighborId: number): Observable<void> {
+    // Create a friendship request from me to another person.
+    requestFriendship(neighborId: number, message: string): Observable<void> {
         const body = {
-            neighborId: neighborId
+            neighborId: neighborId,
+            message: message,
         };
         return this.http.post<void>(
-            URL_ADD_FRIENDSHIP,
+            URL_REQ_FRIENDSHIP,
+            body,
+            {},
+        );
+    }
+
+    // Cancel a friendship request
+    cancelFriendshipRequest(neighborId: number): Observable<void> {
+        const body = {
+            neighborId: neighborId,
+        };
+        return this.http.post<void>(
+            URL_CANCEL_FRIENDSHIP_REQ,
             body,
             {},
         );

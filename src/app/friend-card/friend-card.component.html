@@ -3,13 +3,15 @@
     <h2 class="neighbor-name">{{ neighbor.name }}</h2>
     <span class="neighbor-type">
       @if(neighbor.is_friend) {
-        
           @if(neighbor.depth == 1) {
             <span class="friend-tag">Friend</span>
           }
           @else {
             <span class="friend-tag friend-of-friend-tag">Friend of Friend</span>
           }
+      }
+      @if(neighbor.friendship_requested) {
+          <span class="friend-tag friend-request-tag">Requested</span>
       }
     </span>
   </div>
@@ -26,8 +28,11 @@
     @if(neighbor.is_friend && neighbor.depth == 1) {
       <button class="btn friend" (click)="unfriend()">Unfriend</button>
     }
-    @else {
+    @else if(!neighbor.friendship_requested) {
       <button class="btn friend_of_friend" (click)="friend()">Request Friendship</button>
+    }
+    @else {
+      <button class="btn" (click)="cancelrequest()" requested>Cancel Pending Request</button>
     }
   </section>
 

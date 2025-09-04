@@ -96,10 +96,18 @@
   font-style: italic;
 }
 
-.friend-tag {
+.neighbor-type {
+  padding: 5px 10px;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  text-transform: uppercase;
   position: absolute;
   bottom: 8px;
   right: 8px;
+}
+.friend-tag {
   background-color: #013220;
   color: white;
   padding: 4px 8px;
@@ -108,18 +116,11 @@
   font-weight: bold;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
-
-.friend-of-friend-tag {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background-color: #228b22;
-  color: white;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  border-radius: 12px;
-  font-weight: bold;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+.friend-tag.friend-of-friend-tag {
+  background-color: #228b22 !important;
+}
+.friend-tag.friend-request-tag {
+  background-color: #B22222 !important;
 }
 
 @keyframes blinkBorder {

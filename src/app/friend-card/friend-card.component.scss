@@ -33,6 +33,8 @@
   font-weight: bold;
   font-size: 14px;
   text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
 }
 .friend-tag {
   background-color: #013220;
@@ -42,9 +44,13 @@
   border-radius: 12px;
   font-weight: bold;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
 }
 .friend-tag.friend-of-friend-tag {
   background-color: #228b22 !important;
+}
+.friend-tag.friend-request-tag {
+  background-color: #B22222 !important;
 }
 
 .card-image img {

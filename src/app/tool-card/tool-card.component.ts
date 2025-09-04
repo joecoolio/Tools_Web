@@ -45,7 +45,7 @@ export class ToolCardComponent implements OnInit {
 
   // Borrow this tool
   borrow() {
-    this.confirmationService.confirm('Ask to Borrow', 'This will send a borrow request to ' + this.tool.ownerName + '.')
+    this.confirmationService.confirm('Ask to Borrow', 'This will send a borrow request to ' + this.tool.ownerName + '.', [])
     .subscribe(confirmed => {
       if (confirmed) {
         console.log("Sending borrow request to: " + this.tool.ownerName);

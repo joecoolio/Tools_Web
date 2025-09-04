@@ -4,7 +4,7 @@ import { MapComponent, MarkerData } from "../../map/map.component";
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
-import { FriendCardComponent } from "../../friend-card/friend-card.component";
+import { FriendCardComponent, FriendCardDialogData } from "../../friend-card/friend-card.component";
 import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../../shared/browseobjects.component";
 import { ResizeDirective } from "../../shared/resize-directive";
@@ -99,6 +99,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             home_address: "",
             distance_m: 0,
             is_friend: false,
+            friendship_requested: false,
             imageUrl: undefined,
             depth: 0,
             tool_count: 0
@@ -129,32 +130,45 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
 
             const dialogConfig = new MatDialogConfig();
             dialogConfig.autoFocus = true;
-            dialogConfig.data = {
+            const data: FriendCardDialogData = {
                 neighbor: neighbor,
-                fnCreateFriendship: this.createFriendship.bind(this),
+                fnRequestFriendship: this.requestFriendship.bind(this),
+                fnCancelRequestFriendship: this.cancelFriendshipRequest.bind(this),
                 fnDeleteFriendship: this.deleteFriendship.bind(this),
             }
+            dialogConfig.data = data;
 
             this.dialog.open(FriendCardComponent, dialogConfig);
         }
     }
 
     // Create a new friendship with the provided friend
-    public createFriendship(id: number) {
+    public requestFriendship(id: number, message: string) {
         // console.log("Creating friendship with: " + id);
-        this._modifyFriendship( this.dataService.createFriendship(id) );
+        this.dataService.requestFriendship(id, message).subscribe(() => {
+            // Refresh the map data (to flag the newly requested friend)
+            this._getAllData().subscribe((markerData: MarkerData[]) => {
+                this.markerData = markerData;
+                this.map.markerData = this.markerData;
+            });
+        })
+    }
+
+    // Create a new friendship with the provided friend
+    public cancelFriendshipRequest(id: number) {
+        this.dataService.cancelFriendshipRequest(id).subscribe(() => {
+            // Refresh the map data (to flag the newly un-requested friend)
+            this._getAllData().subscribe((markerData: MarkerData[]) => {
+                this.markerData = markerData;
+                this.map.markerData = this.markerData;
+            });
+        })
     }
 
     // Remove an existing friendship with the provided friend
     public deleteFriendship(id: number) {
         // console.log("Removing friendship with: " + id);
-        this._modifyFriendship( this.dataService.removeFriendship(id) );
-    }
-
-    // Create or remove a friendship.
-    // This handles all the friend reloading stuff required for either.
-    private _modifyFriendship(observable: Observable<void>): void {
-        observable.subscribe(() => {
+        this.dataService.removeFriendship(id).subscribe(() => {
             // Reload friends on the server
             this.dataService.reloadfriends().subscribe(() => {
                 // Refresh the map data
