@@ -1,0 +1,88 @@
+.envelope-button {
+  background-color: transparent !important;
+  color: white;
+  width: 35px;
+  height: 35px;
+  display: inline-block;
+  // border: 1px solid white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mail-icon {
+  font-size: 28px;
+}
+
+.badge {
+  background: #e34234;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  position: absolute;
+  top: -4px;
+  left: -4px;
+}
+
+::ng-deep .mailbox {
+  background: #F6E27F;
+  max-width: 600px !important;
+}
+
+.inbox-panel {
+  width: 400px;
+  padding: 1rem;
+}
+
+.message-card {
+  color: black;
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background-color: #d7d7d7;
+  position: relative;
+
+  &.unread {
+    background-color: #f9f9f9;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+  }
+
+  .message-content {
+    flex: 1;
+  }
+
+  .buttons {
+    display: flex;
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    gap: 5px;
+  }
+}
+
+.nomail {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+  width: 100%;
+}
+.nomail > img {
+  width: 200px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.nomail > h4 {
+  margin-left: auto;
+  margin-right: auto;
+}

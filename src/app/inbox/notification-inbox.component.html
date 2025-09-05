@@ -1,0 +1,39 @@
+<span class="envelope-button" [matMenuTriggerFor]="mailMenu">
+  <fa-icon [icon]="faEnvelope" class="mail-icon"></fa-icon>
+  @if( notifications.length ) {
+    <span class="badge">{{ notifications.length }}</span>
+  }
+</span>
+
+<mat-menu #mailMenu="matMenu" class="mailbox">
+  <div class="inbox-panel">
+    <h3>Notifications</h3>
+    @for(notification of notifications; track notification.id) {
+      <div class="message-card" [class.unread]="!notification.read">
+          <img [src]="notification.from_neighbor?.imageUrl || 'system_photo.png'" class="avatar" />
+          
+          <div class="message-content">
+            <h4>{{ notification.header }}</h4>
+            @if (notification.subheader) {
+              <h5>{{ notification.subheader }}</h5>
+            }
+            <p>{{ notification.message }}</p>
+            <small>{{ notification.created_ts| date:'short' }}</small>
+          </div>
+
+          <span class="buttons">
+            @for(opt of notification.resolutionOptions; track opt.buttonText) {
+              <button mat-button (click)="$event.stopPropagation(); runFunction(notification.id, opt.function)">{{ opt.buttonText }}</button>
+            }
+          </span>
+      </div>
+    }
+
+    @if (notifications.length == 0) {
+      <span class="nomail">
+        <img src="/no_mail.png"/>
+        <h4>You have no notifications.</h4>
+      </span>
+    }
+  </div>
+</mat-menu>

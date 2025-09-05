@@ -7,12 +7,12 @@
 
             @for(_neighbor of allVisibleObjects; track _neighbor.id; let i = $index) {
                 @let neighbor = asNeighbor(_neighbor);
-                <mat-card #neighborCards class="person-card" (click)="onListObjectClick(i)">
+                <mat-card #objectCards class="person-card" (click)="onListObjectClick(i)">
                     <mat-card-content>
                         <h2 class="person-name">{{ neighbor.name }}</h2>
                         <div class="person-body">
                             <img [src]="neighbor.imageUrl" [alt]="neighbor.name" class="person-image"/>
-                            <span class="neighbor-type bottom-right-content" >
+                            <span class="neighbor-type" >
                                 @if(neighbor.is_friend) {
                                     @if(neighbor.depth == 1) {
                                         <span class="friend-tag">Friend</span>

@@ -105,15 +105,13 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             tool_count: 0
         };
 
-        this.dataService.getNeighbor(id).subscribe(
-            (n: Neighbor) => {
-                Object.assign(neighbor, n);
-                if (! n.imageUrl) {
-                    // Request/load the image
-                    this.dataService.loadImageUrl(neighbor, "default_neighbor.svg").subscribe();
-                }
+        this.dataService.getNeighbor(id).subscribe(n => {
+            Object.assign(neighbor, n);
+            if (! n.imageUrl) {
+                // Request/load the image
+                this.dataService.loadImageUrl(neighbor, "default_neighbor.svg").subscribe();
             }
-        );
+        });
 
         return neighbor;
     }

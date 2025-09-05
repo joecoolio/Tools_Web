@@ -24,6 +24,8 @@ const URL_GET_PICTURE = API_URL + 'v1/getImage';
 const URL_GET_TOOL_CATEGORIES = API_URL + 'v1/gettoolcategories';
 const URL_UPDATE_TOOL = API_URL + 'v1/updatetool';
 const URL_CREATE_TOOL = API_URL + 'v1/createtool';
+const URL_GET_NOTIFICATIONS = API_URL + 'v1/getnotifications';
+const URL_RESOLVE_NOTIFICATION = API_URL + 'v1/resolvenotification';
 
 // Timeout for remote calls
 const HTTP_TIMEOUT: number = 5000;
@@ -69,6 +71,24 @@ export interface Neighbor extends MappableObject, BaseImageObject {
     friendship_requested: boolean,
     tool_count: number,
 }
+
+// Data for a friend request
+export interface FriendRequest {
+    neighbor_id: number,
+    message: string,
+    request_ts: Date
+}
+
+// Data for a notification
+export interface Notification {
+    id: number,
+    from_neighbor?: number,
+    type: string,
+    message: string,
+    created_ts: Date,
+    read: boolean,
+}
+
 
 // Data for a tool
 export interface Tool extends MappableObject, BaseImageObject {
@@ -256,7 +276,8 @@ export class DataService {
     }
 
     // If the neighbor is already cached, return the existing object instead of a new one.
-    // If it's a new neighbor, cache it
+    // If you do return a cached version, update all the properties to the new values.
+    // If it's a new neighbor, cache it.
     private _getCachedVersionOfNeighbor(neighbor: Neighbor): Neighbor {
         const oldNeighbor: Neighbor | undefined = this.neighborCache.getWithoutReinsert(neighbor.id);
         if (oldNeighbor) {
@@ -268,8 +289,9 @@ export class DataService {
         }
     }
 
-    // Get a single neighbor
-    // Put in the neighbor cache
+    // Get a single neighbor.
+    // If it's already cached, return that instead.
+    // If it's new, put in the neighbor cache and request the image async.
     getNeighbor(id: number): Observable<Neighbor> {
         // Id <= 0 indicates a non-neighbor (e.g. the "Me" marker)
         if (id <= 0) {
@@ -286,7 +308,16 @@ export class DataService {
                 body,
                 {},
             )
-            .pipe(tap(neighbor => this._getCachedVersionOfNeighbor(neighbor)))
+            .pipe(
+                // Cache the neighbor object
+                tap(neighbor => this.neighborCache.set(neighbor.id, neighbor)),
+                // Request that the image loads
+                tap(neighbor => {
+                    if (neighbor.photo_link) {
+                        this.loadImageUrl(neighbor, "default_neighbor.svg").subscribe();
+                    }
+                })
+            )
             ;
         }
     }
@@ -355,6 +386,32 @@ export class DataService {
             body,
             {},
         );
+    }
+
+    // Get all notifications
+    getNotifications(): Observable<Notification[]> {
+        return this.http.post<Notification[]>(
+            URL_GET_NOTIFICATIONS,
+            {},
+            httpOptions,
+        ).pipe(
+            map(notifications => notifications.map(n => ({
+                ...n,
+                created_ts: new Date(n.created_ts)
+            })))
+        )
+    }
+
+    // Resolve a notification
+    resolveNotification(id: number): Observable<void> {
+        const body = {
+            id: id
+        };
+        return this.http.post<void>(
+            URL_RESOLVE_NOTIFICATION,
+            body,
+            httpOptions,
+        )
     }
 
     // Get all tool categories

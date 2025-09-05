@@ -9,6 +9,7 @@ import { AuthService } from './services/auth.service';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TokenService } from './services/token.service';
 import { DataService, MyInfo } from './services/data.service';
+import { NotificationInboxComponent } from "./inbox/notification-inbox.component";
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,8 @@ import { DataService, MyInfo } from './services/data.service';
     MatIconModule,
     MatDividerModule,
     MatSnackBarModule,
-  ],
+    NotificationInboxComponent
+],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -48,6 +50,9 @@ export class AppComponent implements OnInit {
     });
   }
 
+  // Inbox
+  showInbox: boolean = false;
+
   // Signals for the hamburger menu / user picture
   loggedIn!: Signal<boolean>;
   myInfo!: Signal<MyInfo>;
@@ -55,6 +60,10 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.loggedIn = this.tokenService.isLoggedIn;
     this.myInfo = this.dataService.myInfoSignal;
+  }
+
+  toggleInbox() {
+    this.showInbox = !this.showInbox;
   }
 
   openMyInfoDialog() {
