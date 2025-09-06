@@ -168,7 +168,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
         // console.log("Removing friendship with: " + id);
         this.dataService.removeFriendship(id).subscribe(() => {
             // Reload friends on the server
-            this.dataService.reloadfriends().subscribe(() => {
+            this.dataService.expirefriends().subscribe(() => {
                 // Refresh the map data
                 this._getAllData().subscribe((markerData: MarkerData[]) => {
                     this.markerData = markerData;

@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ViewContainerRef } from '@angular/core';
-import { NotificationMessage, NotificationService } from '../services/notification.service';
+import { NotificationMessage, NotificationOption, NotificationService } from '../services/notification.service';
 import { MatIconModule } from "@angular/material/icon";
 import { CommonModule } from '@angular/common';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
@@ -7,6 +7,7 @@ import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { MatMenuModule } from "@angular/material/menu";
 import { Observable } from 'rxjs';
 import { DataService } from '../services/data.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
     selector: 'app-notification-inbox',
@@ -28,6 +29,7 @@ export class NotificationInboxComponent implements OnInit {
     constructor(
         private notificationService: NotificationService,
         private dataService: DataService,
+        private snackBar: MatSnackBar,
     ) { }
 
     ngOnInit(): void {
@@ -39,19 +41,38 @@ export class NotificationInboxComponent implements OnInit {
     // Run one of the button functions.
     // If that function completes successfully, update the notification to resolved in db.
     // If it fails, show a message but leave the notification alive.
-    runFunction(notificationId: number, func: () => Observable<void>): void {
-        func().subscribe({
+    runFunction(opt: NotificationOption, notification: NotificationMessage): void {
+        opt.function().subscribe({
             error: (err) => console.error('Notification Inbox Error:', err),
-            complete: () => this.resolveNotification(notificationId)
+            complete: () => this.resolveNotification(opt, notification)
         });
     }
 
     // This resolves the notification in the db.
-    resolveNotification(notificationId: number): void {
-        this.dataService.resolveNotification(notificationId).subscribe({
+    resolveNotification(opt: NotificationOption, notification: NotificationMessage): void {
+        this.dataService.resolveNotification(notification.id).subscribe({
             complete: () => {
                 // Remove the notification from the list (the next poll will remove it also)
-                this.notifications = this.notifications.filter(n => n.id != notificationId);
+                this.notifications = this.notifications.filter(n => n.id != notification.id);
+
+                if (opt.successMessage) {
+                    this.snackBar.open(opt.successMessage, '', {
+                        duration: 3000, // 3 seconds
+                        horizontalPosition: 'center',
+                        verticalPosition: 'top',
+                        panelClass: ['custom-snackbar']
+                    });
+                }
+            },
+            error: (err) => {
+                const message = opt.failureMessage || err;
+
+                this.snackBar.open(message, '', {
+                    duration: 3000, // 3 seconds
+                    horizontalPosition: 'center',
+                    verticalPosition: 'top',
+                    panelClass: ['custom-snackbar']
+                });
             }
         })
     }

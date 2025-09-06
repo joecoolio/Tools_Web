@@ -23,7 +23,7 @@
 
           <span class="buttons">
             @for(opt of notification.resolutionOptions; track opt.buttonText) {
-              <button mat-button (click)="$event.stopPropagation(); runFunction(notification.id, opt.function)">{{ opt.buttonText }}</button>
+              <button mat-button (click)="$event.stopPropagation(); runFunction(opt, notification)">{{ opt.buttonText }}</button>
             }
           </span>
       </div>

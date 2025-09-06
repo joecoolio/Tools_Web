@@ -10,11 +10,12 @@ const API_URL = environment.baseUrl;
 const URL_MY_INFO = API_URL + 'v1/myinfo';
 const URL_VALIDATE_ADDRESS = API_URL + 'v1/validateaddress';
 const URL_UPDATE_MY_INFO = API_URL + 'v1/updateinfo';
-const URL_RELOAD_FRIENDS = API_URL + 'v1/reloadfriends';
+const URL_EXPIRE_FRIENDS = API_URL + 'v1/expirefriends';
 const URL_FRIENDS = API_URL + 'v1/friends';
 const URL_ALL_NEIGHBORS = API_URL + 'v1/getneighbors';
 const URL_GET_NEIGHBOR = API_URL + 'v1/getneighbor';
 const URL_REQ_FRIENDSHIP = API_URL + 'v1/requestfriendship';
+const URL_CREATE_FRIENDSHIP = API_URL + 'v1/createfriendship';
 const URL_CANCEL_FRIENDSHIP_REQ = API_URL + 'v1/deletefriendshiprequest';
 const URL_REMOVE_FRIENDSHIP = API_URL + 'v1/removefriendship';
 const URL_MY_TOOLS = API_URL + 'v1/getmytools'
@@ -220,9 +221,9 @@ export class DataService {
 
     // Reload friends from the DB.
     // Since the server stores your friend list, if you change it you must re-call this.
-    reloadfriends(): Observable<string> {
+    expirefriends(): Observable<string> {
         return this.http.post<string>(
-            URL_RELOAD_FRIENDS,
+            URL_EXPIRE_FRIENDS,
             {},
             {},
         );
@@ -363,6 +364,18 @@ export class DataService {
         );
     }
 
+    // Create a friendship (accept a request) to me from another person.
+    createFriendship(neighborId: number): Observable<void> {
+        const body = {
+            neighborId: neighborId,
+        };
+        return this.http.post<void>(
+            URL_CREATE_FRIENDSHIP,
+            body,
+            {},
+        );
+    }
+
     // Cancel a friendship request
     cancelFriendshipRequest(neighborId: number): Observable<void> {
         const body = {
@@ -376,7 +389,7 @@ export class DataService {
     }
 
     // Remove a friendship from me to another person.
-    // You need to call reloadFriends() after this.
+    // You need to call expirefriends() after this.
     removeFriendship(neighborId: number): Observable<void> {
         const body = {
             neighborId: neighborId

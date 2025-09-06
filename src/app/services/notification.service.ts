@@ -10,6 +10,8 @@ const POLL_INTERVAL = 30000;
 export interface NotificationOption {
     buttonText: string, // The words on the button
     function: () => Observable<void>, // The function to run when the button is pushed
+    successMessage?: string, // Shown to the user upon success, if not provided, nothing is shown
+    failureMessage?: string, // Shown to the user upon failure, if not provided, nothing is shown
 }
 
 export interface NotificationMessage {
@@ -49,7 +51,7 @@ export class NotificationService {
                             
                             // You might need to fill stuff in after the neighbor loads below.
                             // If so, set this function to something
-                            let afterLoadFunction: (neighbor: Neighbor) => void;
+                            let afterLoadFunction: ((neighbor: Neighbor) => void) | undefined;
 
                             // Fill in the buttons & extra data based on the message type
 
@@ -66,6 +68,13 @@ export class NotificationService {
                                 afterLoadFunction = (neighbor => {
                                     notificationMessage.header = neighbor.name + " would like to be your friend!";
                                     notificationMessage.subheader = neighbor.home_address;
+
+                                    // Setup info messages
+                                    let accept = notificationMessage.resolutionOptions?.[0];
+                                    if (accept) {
+                                        accept.successMessage = "Accepted friendship request from " + neighbor.name + "!";
+                                        accept.failureMessage = "Failed to accept friendship request from " + neighbor.name + "!";
+                                    }
                                 });
                             }
 
@@ -75,13 +84,15 @@ export class NotificationService {
                                 notificationMessage.resolutionOptions = [
                                     { buttonText: 'Dismiss', function: () => this.noop() },
                                 ];
+                                afterLoadFunction = undefined;
                             }
 
                             // Then get the neighbor that sent this message
                             if (rawNotification.from_neighbor) {
                                 this.dataService.getNeighbor(rawNotification.from_neighbor).subscribe(neighbor => {
                                     notificationMessage.from_neighbor = neighbor;
-                                    afterLoadFunction(neighbor);
+                                    if (afterLoadFunction != undefined)
+                                        afterLoadFunction(neighbor);
                                 });
                             }
                             nms.push(notificationMessage);
@@ -103,8 +114,7 @@ export class NotificationService {
 
     // Accept friend request
     acceptFriendRequest(neighborId: number, notificationId: number) : Observable<void> {
-        console.log("ACCEPTED FRIEND REQUEST: " + neighborId + " - " + notificationId);
-        return EMPTY;
+        return this.dataService.createFriendship(neighborId);
     }
 
     // Reject friend request
