@@ -121,6 +121,10 @@ export class MyInfoComponent implements OnInit {
 
         this.messageService.send('info', 'Your info was updated!');
 
+        // Reload my data to reflect the changes.
+        this.dataService.expireMyInfo.set(true);
+        this.dataService.getMyInfo();
+
         this.dialogRef.close();
       })
     }
