@@ -5,9 +5,8 @@ import { CommonModule } from '@angular/common';
 import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from "@fortawesome/angular-fontawesome";
 import { MatMenuModule } from "@angular/material/menu";
-import { Observable } from 'rxjs';
 import { DataService } from '../services/data.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { NotifierService } from 'gramli-angular-notifier';
 
 @Component({
     selector: 'app-notification-inbox',
@@ -29,7 +28,7 @@ export class NotificationInboxComponent implements OnInit {
     constructor(
         private notificationService: NotificationService,
         private dataService: DataService,
-        private snackBar: MatSnackBar,
+        private notifierService: NotifierService,
     ) { }
 
     ngOnInit(): void {
@@ -56,23 +55,12 @@ export class NotificationInboxComponent implements OnInit {
                 this.notifications = this.notifications.filter(n => n.id != notification.id);
 
                 if (opt.successMessage) {
-                    this.snackBar.open(opt.successMessage, '', {
-                        duration: 3000, // 3 seconds
-                        horizontalPosition: 'center',
-                        verticalPosition: 'top',
-                        panelClass: ['custom-snackbar']
-                    });
+                    this.notifierService.notify('success', opt.successMessage);
                 }
             },
             error: (err) => {
                 const message = opt.failureMessage || err;
-
-                this.snackBar.open(message, '', {
-                    duration: 3000, // 3 seconds
-                    horizontalPosition: 'center',
-                    verticalPosition: 'top',
-                    panelClass: ['custom-snackbar']
-                });
+                this.notifierService.notify('error', message);
             }
         })
     }

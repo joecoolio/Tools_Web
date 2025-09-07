@@ -37,27 +37,3 @@ body {
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-
-.custom-snackbar.mat-mdc-snack-bar-container {
-  animation: bounceIn 0.5s ease;
-  .mdc-snackbar__surface {
-    background: green;
-
-    .mat-mdc-button {
-      color: white !important;
-    }
-  }
-
-  .mat-mdc-snack-bar-label.mdc-snackbar__label {
-    color: white;
-    font-weight: 500;
-    white-space: pre-wrap
-  }
-}
-
-@keyframes bounceIn {
-  0% { transform: scale(0.5); opacity: 0; }
-  60% { transform: scale(1.2); opacity: 1; }
-  100% { transform: scale(1); }
-}
-

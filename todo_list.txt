@@ -1,3 +1,4 @@
+Something is wrong with updating myinfo - the picture gets jacked if you don't replace it?
 Improve the tool card to show more information
 Create entire borrow request workflow.
 Fix hamburger menu to show only things that are available.
@@ -5,4 +6,3 @@ Go through all the API calls and properly handle errors.
 Some kind of free search thing on the tool list to filter it.
 Eventually, some AI thing that does "if I want to tile my shower, what tools do I need to borrow"
 Wherever you do something (request friend or whatever) show a toast after.
-Maybe use angular-notifier instead of toast for notifications.

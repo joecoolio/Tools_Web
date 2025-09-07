@@ -236,29 +236,15 @@ export class DataService {
         const body = {
             depth: depth
         };
-        return this._getNeighbors(URL_FRIENDS, body)
-            .pipe(
-                // Add the 'is_friend = true' property to each friend
-                map((neighbors: Neighbor[]) => neighbors.map(neighbor => ({
-                    ...neighbor,
-                    is_friend: true,
-                })))
-            );
+        return this._getNeighbors(URL_FRIENDS, body);
     }
 
-    // List neighbors (not friends) within some radius of me
+    // List all neighbors within some radius of me
     listNeighbors(radiusMiles: number = 100): Observable<Neighbor[]> {
         const body = {
             radius_miles: radiusMiles
         };
-        return this._getNeighbors(URL_ALL_NEIGHBORS, body)
-            .pipe(
-                // Add the 'is_friend = false' property to each friend
-                map((neighbors: Neighbor[]) => neighbors.map(neighbor => ({
-                    ...neighbor,
-                    is_friend: false,
-                })))
-        );
+        return this._getNeighbors(URL_ALL_NEIGHBORS, body);
     }
 
     // Get my set of neighbors.

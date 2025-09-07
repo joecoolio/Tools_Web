@@ -8,6 +8,7 @@ import { FriendCardComponent, FriendCardDialogData } from "../../friend-card/fri
 import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../../shared/browseobjects.component";
 import { ResizeDirective } from "../../shared/resize-directive";
+import { MessageService } from "../../services/message.service";
 
 @Component({
     standalone: true,
@@ -28,6 +29,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
         protected override dataService: DataService,
         protected override dialog: MatDialog,
         protected override changeDetectorRef: ChangeDetectorRef,
+        private messageService: MessageService,
     ) {
         super(dataService, dialog, changeDetectorRef);
     }
@@ -36,7 +38,11 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
     private readonly layerGroupNameNonFriends: string = "Others"; // Other neighbors
     readonly layerGroupNames: string[] = [ this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
     
-    // Get all data into this.markerData
+    // All the neighbors - in sync with what's provided in this.markerData.
+    private neighbors: Neighbor[] = [];
+
+    // Get all data into this.markerData.
+    // Also put all the neighbor objects in this.neighbors.
     protected getAllData(): Observable<MarkerData[]> {
         return forkJoin([
             this.dataService.getFriends(),
@@ -83,6 +89,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
                     }
                 });
 
+                this.neighbors = neighbors;
                 return markerArray;
             })
         );
@@ -144,6 +151,11 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
     public requestFriendship(id: number, message: string) {
         // console.log("Creating friendship with: " + id);
         this.dataService.requestFriendship(id, message).subscribe(() => {
+            const neighbor: Neighbor | undefined = this.neighbors.find(n => n.id == id);
+            if (neighbor) {
+                this.messageService.send('info', "Friendship requested with " + neighbor.name + "!");
+            }
+
             // Refresh the map data (to flag the newly requested friend)
             this._getAllData().subscribe((markerData: MarkerData[]) => {
                 this.markerData = markerData;
@@ -155,6 +167,11 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
     // Create a new friendship with the provided friend
     public cancelFriendshipRequest(id: number) {
         this.dataService.cancelFriendshipRequest(id).subscribe(() => {
+            const neighbor: Neighbor | undefined = this.neighbors.find(n => n.id == id);
+            if (neighbor) {
+                this.messageService.send('info', "Friendship request with " + neighbor.name + " cancelled!");
+            }
+
             // Refresh the map data (to flag the newly un-requested friend)
             this._getAllData().subscribe((markerData: MarkerData[]) => {
                 this.markerData = markerData;
@@ -165,8 +182,12 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
 
     // Remove an existing friendship with the provided friend
     public deleteFriendship(id: number) {
-        // console.log("Removing friendship with: " + id);
         this.dataService.removeFriendship(id).subscribe(() => {
+            const neighbor: Neighbor | undefined = this.neighbors.find(n => n.id == id);
+            if (neighbor) {
+                this.messageService.send('info', "Friendship with " + neighbor.name + " terminated!");
+            }
+
             // Reload friends on the server
             this.dataService.expirefriends().subscribe(() => {
                 // Refresh the map data

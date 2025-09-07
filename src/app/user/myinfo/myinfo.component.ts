@@ -6,11 +6,9 @@ import { DataService, MyInfo } from "../../services/data.service";
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { HttpErrorResponse } from "@angular/common/http";
 import { ImageService } from "../../services/image.service";
 import { DomSanitizer } from "@angular/platform-browser";
-
+import { MessageService } from "../../services/message.service";
 
 @Component({
   standalone: true,
@@ -21,7 +19,6 @@ import { DomSanitizer } from "@angular/platform-browser";
     MatTooltipModule,
     MatProgressSpinnerModule,
     FontAwesomeModule,
-    MatSnackBarModule,
   ],
   templateUrl: './myinfo.component.html',
   styleUrl: './myinfo.component.scss'
@@ -33,9 +30,9 @@ export class MyInfoComponent implements OnInit {
     public dataService: DataService,
     public dialogRef: MatDialogRef<MyInfoComponent>,
     private fb: FormBuilder,
-    private snackBar: MatSnackBar,
     private imageService: ImageService,
     private sanitizer: DomSanitizer,
+    private messageService: MessageService,
   ) {  }
   
   faTrash = faTrash;
@@ -122,12 +119,7 @@ export class MyInfoComponent implements OnInit {
       .subscribe(value => {
         this.loading = false;
 
-        this.snackBar.open('Your tool was updated!', '', {
-          duration: 3000, // 3 seconds
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: ['custom-snackbar']
-        });
+        this.messageService.send('info', 'Your info was updated!');
 
         this.dialogRef.close();
       })

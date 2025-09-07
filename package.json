@@ -27,6 +27,7 @@
     "@fortawesome/free-solid-svg-icons": "^7.0.0",
     "@popperjs/core": "^2.11.8",
     "font-awesome": "^4.7.0",
+    "gramli-angular-notifier": "^17.0.0",
     "leaflet": "^1.9.4",
     "leaflet-extra-markers": "^1.2.2",
     "leaflet-sidebar-v2": "^3.2.3",

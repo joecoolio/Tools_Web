@@ -1,4 +1,4 @@
-import { Component, effect, OnInit, Signal } from '@angular/core';
+import { Component, effect, OnDestroy, OnInit, Signal } from '@angular/core';
 import { MatMenuModule } from "@angular/material/menu";
 import { MatIconModule } from "@angular/material/icon";
 import { MatDividerModule } from "@angular/material/divider";
@@ -6,10 +6,13 @@ import { Router, RouterModule } from '@angular/router';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MyInfoComponent } from './user/myinfo/myinfo.component';
 import { AuthService } from './services/auth.service';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TokenService } from './services/token.service';
 import { DataService, MyInfo } from './services/data.service';
 import { NotificationInboxComponent } from "./inbox/notification-inbox.component";
+import { NotifierModule } from 'gramli-angular-notifier';
+import { NotifierService } from 'gramli-angular-notifier';
+import { Subscription } from 'rxjs';
+import { MessageService } from './services/message.service';
 
 @Component({
   selector: 'app-root',
@@ -19,22 +22,23 @@ import { NotificationInboxComponent } from "./inbox/notification-inbox.component
     MatMenuModule,
     MatIconModule,
     MatDividerModule,
-    MatSnackBarModule,
-    NotificationInboxComponent
+    NotificationInboxComponent,
+    NotifierModule,
 ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'Tools_Web';
 
   constructor(
     private dialog: MatDialog,
     private authService: AuthService,
-    private snackBar: MatSnackBar,
     private router: Router,
     private tokenService: TokenService,
     private dataService: DataService,
+    private messageService: MessageService,
+    private notifierService: NotifierService,
   ) {
     // Monitor the loggedIn signal.
     // When it is false, clear myinfo (including picture and whatnot).
@@ -57,9 +61,22 @@ export class AppComponent implements OnInit {
   loggedIn!: Signal<boolean>;
   myInfo!: Signal<MyInfo>;
 
+  // Subscription to get messages to send to the notifier service
+  private messageSubscription = new Subscription();
+
   ngOnInit(): void {
     this.loggedIn = this.tokenService.isLoggedIn;
     this.myInfo = this.dataService.myInfoSignal;
+
+    // Subscribe to messages
+    this.messageSubscription = this.messageService.notify$.subscribe(msg => {
+      this.notifierService.notify(msg.type, msg.message);
+    });
+
+  }
+
+  ngOnDestroy(): void {
+    this.messageSubscription.unsubscribe();
   }
 
   toggleInbox() {
@@ -76,12 +93,7 @@ export class AppComponent implements OnInit {
   logout() {
     this.authService.logout();
 
-    this.snackBar.open('Your have been logged out successfully!', '', {
-      duration: 3000, // 3 seconds
-      horizontalPosition: 'center',
-      verticalPosition: 'top',
-      panelClass: ['custom-snackbar']
-    });
+    this.messageService.send('info', 'You have been logged out successfully!');
 
     this.router.navigate(['login']);
   }

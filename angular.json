@@ -44,6 +44,7 @@
               "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
               "node_modules/leaflet-sidebar-v2/css/leaflet-sidebar.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/gramli-angular-notifier/styles.css",
               "src/styles.scss"
             ],
             "scripts": [

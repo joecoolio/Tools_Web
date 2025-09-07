@@ -1,14 +1,14 @@
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { Validators, FormGroup, ReactiveFormsModule, FormBuilder } from '@angular/forms';
-import { Router, RouterLinkWithHref } from '@angular/router';
+import {  RouterLinkWithHref } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../../services/auth.service';
 import { TokenService } from '../../services/token.service';
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DataService } from '../../services/data.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { ImageService } from '../../services/image.service';
+import { MessageService } from '../../services/message.service';
 
 @Component({
   selector: 'app-register',
@@ -35,9 +35,9 @@ export class RegisterComponent {
     public tokenService: TokenService,
     public dataService: DataService,
     private fb: FormBuilder,
-    private snackBar: MatSnackBar,
     private imageService: ImageService,
     private authService: AuthService,
+    private messageService: MessageService,
   ) {  }
 
   ngOnInit() {
@@ -100,12 +100,7 @@ export class RegisterComponent {
       .subscribe(() => {
         this.loading = false;
 
-        this.snackBar.open('Your account was created!', '', {
-          duration: 3000, // 3 seconds
-          horizontalPosition: 'center',
-          verticalPosition: 'top',
-          panelClass: ['custom-snackbar']
-        });
+        this.messageService.send('info', 'Your account was created!');
       })
     }
   }

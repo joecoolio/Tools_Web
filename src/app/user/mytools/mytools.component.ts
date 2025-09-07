@@ -9,8 +9,8 @@ import { faTrash, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
 import { ImageService } from "../../services/image.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { MatSnackBar } from "@angular/material/snack-bar";
 import { catchError, EMPTY } from "rxjs";
+import { MessageService } from "../../services/message.service";
 
 export function moneyValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
@@ -48,7 +48,7 @@ export class MyToolsComponent implements OnInit {
         private dataService: DataService,
         private imageService: ImageService,
         private fb: FormBuilder,
-        private snackBar: MatSnackBar,
+        private messageService: MessageService,
     ) { }
 
     ngOnInit(): void {
@@ -191,12 +191,7 @@ export class MyToolsComponent implements OnInit {
             .subscribe(value => {
                 this.loading = false;
 
-                this.snackBar.open('Your settings were saved!', '', {
-                    duration: 3000, // 3 seconds
-                    horizontalPosition: 'center',
-                    verticalPosition: 'top',
-                    panelClass: ['custom-snackbar']
-                });
+                this.messageService.send('info', 'Your settings were saved!');
 
                 // Refresh the left side list
                 this.refreshToolList();

@@ -10,6 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { AuthService, LoginResult } from '../../services/auth.service';
 import { TokenService } from '../../services/token.service';
 import { DataService } from '../../services/data.service';
+import { MessageService } from '../../services/message.service';
 
 @Component({
   standalone: true,
@@ -31,9 +32,9 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private tokenService: TokenService,
     private dataService: DataService,
     private router: Router,
+    private messageService: MessageService,
   ) {
     this.errorMessage = "";
     this.loginRunning = false;
@@ -82,8 +83,6 @@ export class LoginComponent {
     .subscribe({
       // Success
       next: ((resp: HttpResponse<LoginResult>) => {
-        console.log("LoginComponent: Login success");
-        
         this.loginRunning = false;
 
         // Redirect to the user settings page
@@ -91,6 +90,8 @@ export class LoginComponent {
         this.router.navigate(['home']);
       }),
       complete: () => {
+        this.messageService.send('info', "Welcome back!");
+
         // Go ahead and load up the neighbor for my ID.
         // This will ensure my info is cached as well as the picture.
         this.dataService.expireMyInfo.set(true);
