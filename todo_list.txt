@@ -1,7 +1,14 @@
+-- Nuts & Bolts
 Improve the tool card to show more information
-Create entire borrow request workflow.
 Fix hamburger menu to show only things that are available.
 Go through all the API calls and properly handle errors.
+Add radius to browse tools.
+Look at storing data in the browser cache instead
+
+-- Big functionality
+Create entire borrow request workflow.
+Add search for tools.
+Add search for neighbors.  By address?  By name?
 Some kind of free search thing on the tool list to filter it.
 Eventually, some AI thing that does "if I want to tile my shower, what tools do I need to borrow"
-Wherever you do something (request friend or whatever) show a toast after.
+News.  New neighbor nearby, new tool listed, whatever.

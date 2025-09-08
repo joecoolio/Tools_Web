@@ -14,22 +14,23 @@ import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bl
 import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
 import { SortedArray } from '../services/sortedarray';
 import { HEX } from 'leaflet-extra-markers';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 // The data required to draw something on the map.
 // This will be converted to a marker when mapping.
 export interface MarkerData {
-    layerGroupName: string, // what label group to put this marker in
-    id: number, // unique id for this guy
-    latitude: number, // where to put it on the map
-    longitude: number,
-    icon: string, // e.g. 'fa-solid fa-hammer'
-    // color on the map: e.g. 'red'
-    /** Color of the marker (css class). Default value 'blue'. */
-    color?: "red" | "orange-dark" | "orange" | "yellow" | "blue" | "blue-dark" | "cyan" | "purple"
-                | "violet" | "pink" | "green-dark" | "green" | "green-light" | "black" | "white" | HEX,
-    popupText: string, // some html for mouse over: e.g. `<div>Tool: Hammer</div>`;
-    onclick: (id: number) => void
+  markerType?: "marker" | "circle",
+  layerGroupName: string | undefined, // what label group to put this marker in, undefined means directly on the map
+  id: number, // unique id for this guy
+  latitude: number, // where to put it on the map
+  longitude: number,
+  icon: string, // e.g. 'fa-solid fa-hammer'
+  // color on the map: e.g. 'red'
+  /** Color of the marker (css class). Default value 'blue'. */
+  color?: "red" | "orange-dark" | "orange" | "yellow" | "blue" | "blue-dark" | "cyan" | "purple"
+              | "violet" | "pink" | "green-dark" | "green" | "green-light" | "black" | "white" | HEX,
+  popupText: string, // some html for mouse over: e.g. `<div>Tool: Hammer</div>`;
+  onclick: (id: number) => void,
+  radius?: number, // For circles, what is the radius
 }
 
 const iconRetinaUrl = 'leafassets/marker-icon-2x.png';
@@ -109,6 +110,10 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
   // The set of layer groups
   layerGroups: globalThis.Map<string, LayerGroup> = new globalThis.Map();
 
+  // Some things aren't drawn in layer groups (e.g. circles)
+  // Store them here so you can remove and replace them when needed.
+  nonGroupLayers: Layer[] = [];
+
   // The tools + neighbors cluster group
   markerClusterGroup!: MarkerClusterGroup.LayerSupport;
 
@@ -169,26 +174,52 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
   public renderData() {
     // Remove old stuff
     this.layerGroups.forEach(layerGroup => layerGroup.clearLayers());
+    this.nonGroupLayers.forEach(layer => this.map.removeLayer(layer));
 
     // Add new stuff
     this.markerData.forEach((md: MarkerData) => {
-      const icon = ExtraMarkers.icon({
-        icon: md.icon,
-        markerColor: md.color,
-        shape: 'square',
-        prefix: 'fa'
-      });
-      const m: Marker = marker([md.latitude, md.longitude], { icon: icon });
-      if (md.popupText != "") {
-        m.bindPopup(md.popupText);
+      let layer: Layer | undefined = undefined; // The layer we're going to draw on the map
+
+      // Draw markers
+      if (!md.markerType || md.markerType == "marker") {
+        const icon = ExtraMarkers.icon({
+          icon: md.icon,
+          markerColor: md.color,
+          shape: 'square',
+          prefix: 'fa'
+        });
+        layer = marker([md.latitude, md.longitude], { icon: icon });
+        if (md.popupText != "") {
+          layer.bindPopup(md.popupText);
+        }
+        (layer as any).id = md.id;
+        layer.on('click', () => md.onclick(md.id));
       }
-      (m as any).id = md.id;
-      m.on('click', () => md.onclick(md.id));
-      const layerGroup = this.layerGroups.get(md.layerGroupName);
-      if (layerGroup) {
-        layerGroup.addLayer(m);
-      } else {
-        console.log("Trying to add layer to non-existant layer group: " + md.layerGroupName);
+
+      // Draw circles directly on the map.
+      // These do not go into layer groups because you can't see them rolled up.
+      if (md.markerType == "circle" && md.radius) {
+        layer = L.circle([md.latitude, md.longitude], {
+          color: md.color,
+          fillOpacity: 0.08,
+          radius: md.radius
+        });
+      }
+
+      // Figure out where to put the new layer, either in a layergroup or directly on the map
+      if (layer) {
+        if (md.layerGroupName) {
+          const layerGroup = this.layerGroups.get(md.layerGroupName);
+          if (layerGroup) {
+            layerGroup.addLayer(layer);
+          } else {
+            console.log("Trying to add layer to non-existant layer group: " + md.layerGroupName);
+          }
+        } else {
+          // Undefined layer group means add it directly to the map
+          this.nonGroupLayers.push(layer);
+          this.map.addLayer(layer);
+        }
       }
     });
 

@@ -1,15 +1,17 @@
-import { ChangeDetectorRef, Component, effect, ElementRef, inject, Injector, OnInit, QueryList, signal, Signal, ViewChild, ViewChildren, WritableSignal } from "@angular/core";
+import { ChangeDetectorRef, Component } from "@angular/core";
 import { MapComponent, MarkerData } from "../map/map.component";
-import { DataService, MappableObject, Neighbor, Tool } from "../services/data.service";
+import { DataService, MappableObject, MyInfo, Tool } from "../services/data.service";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
 import { MatCardModule } from "@angular/material/card";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../shared/browseobjects.component"
 import { ToolCardComponent } from "../tool-card/tool-card.component";
 import { SafeUrl } from "@angular/platform-browser";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { ResizeDirective } from "../shared/resize-directive";
+import { GlobalValuesService } from "../shared/global-values";
+import { FormsModule } from "@angular/forms";
 
 // A Tool with the owner's info appended
 export interface ToolPlusOwner extends Tool {
@@ -21,13 +23,14 @@ export interface ToolPlusOwner extends Tool {
     standalone: true,
     selector: 'app-browse-tools',
     imports: [
-    RouterModule,
-    MapComponent,
-    MatCardModule,
-    MatDialogModule,
-    MatTooltipModule,
-    ResizeDirective,
-],
+        RouterModule,
+        MapComponent,
+        MatCardModule,
+        MatDialogModule,
+        MatTooltipModule,
+        ResizeDirective,
+        FormsModule,
+    ],
     templateUrl: './browsetools.component.html',
     styleUrl: './browsetools.component.scss',
 })
@@ -37,9 +40,23 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
         protected override dataService: DataService,
         protected override dialog: MatDialog,
         protected override changeDetectorRef: ChangeDetectorRef,
+        private router: Router,
+        public globalValuesService: GlobalValuesService,
     ) {
         super(dataService, dialog, changeDetectorRef);
+
+        // Get the provided radius (if it was provided)
+        const nav = this.router.getCurrentNavigation();
+        if (nav?.extras.state?.['radius']) {
+            this.radius = nav?.extras.state?.['radius'];
+        } else {
+            // Default 1 mile
+            this.radius = 1;
+        }
     }
+
+    // Radius in which to search
+    radius!: number;
     
     // Stuff for the map
     private readonly layerGroupNameTools: string = "Tools"; // All the tools
@@ -49,13 +66,17 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
     protected getAllData(): Observable<MarkerData[]> {
         return forkJoin([
             this.dataService.getAllTools(),    
+            this.dataService.getMyInfo(),
         ])
         .pipe(
-            map(([tools]) => {
+            map(([tools, myinfoSignal]) => {
                 let markerArray: MarkerData[] = [];
 
+                // Filter tools by radius (convert miles to meters)
+                const filteredTools = tools.filter(tool => tool.distance_m <= this.radius * 1609.344);
+
                 // Process tools
-                tools.forEach(tool => {
+                filteredTools.forEach(tool => {
                     let markerData: MarkerDataWithDistance = {
                         layerGroupName: this.layerGroupNameTools,
                         id: tool.id,
@@ -69,6 +90,24 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
                     }
                     markerArray.push(markerData);
                 });
+
+                // Add the search radius circle centered on my location
+                let myInfo: MyInfo = myinfoSignal();
+                let circle: MarkerDataWithDistance = {
+                    markerType: "circle",
+                    id: -1,
+                    latitude: myInfo.latitude,
+                    longitude: myInfo.longitude,
+                    distance_m: 0,
+                    color: "orange",
+                    radius: this.radius * 1609.344,
+                    layerGroupName: undefined, // This should be drawn directly on the map, not in a layer group
+                    // Extra stuff that is ignored for circles
+                    icon: "",
+                    popupText: "",
+                    onclick: function (id: number): void {},
+                };
+                markerArray.push(circle);
 
                 return markerArray;
             })
@@ -150,4 +189,9 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
         return obj as ToolPlusOwner;
     }
 
+    // Runs when the select changes
+    public radiusChange(radius: number): void {
+        this.radius = radius;
+        this.refreshData();
+    }
 }

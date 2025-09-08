@@ -1,12 +1,29 @@
 <div class="main-grid">
   <div class="left-column">
-    <section class="search-tools">
+
+    <section>
       <h2>Search for Tools</h2>
+      <img src="/search_for_tools.png">
       <input type="text" placeholder="Search tools..." />
     </section>
 
+    <section>
+      <h2>Browse Nearby Tools</h2>
+      <img src="/browse_for_tools.png">
+      <div class="card-controls">
+        <select id="browseRadiusSelect" class="card-dropdown">
+          <option value="" disabled selected hidden>Search Radius:</option>
+          @for (radius of this.globalValuesService.browseRadii; track radius.value) {
+            <option [value]="radius.value">{{ radius.text }}</option>
+          }
+        </select>
+        <button class="card-button" (click)="browseTools()">Go</button>
+      </div>
+    </section>
+
     <section class="search-neighbors">
-      <h2>Search for Neighbors</h2>
+      <h2>Search for Friends</h2>
+      <img src="/search_for_friends.png">
       <input type="text" placeholder="Search neighbors..." />
     </section>
   </div>

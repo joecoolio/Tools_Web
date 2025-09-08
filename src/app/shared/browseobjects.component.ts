@@ -73,6 +73,16 @@ export abstract class BrowseObjectsComponent implements OnInit {
         this.layerGroupNames = [ ...this.layerGroupNames, this.layerGroupNameMe ];
     }
 
+    // Called by subclasses to refresh the whole set of data
+    // and redraw it on the screen.
+    protected refreshData(): void {
+        // Refresh the map data (to flag the newly requested friend)
+        this._getAllData().subscribe((markerData: MarkerData[]) => {
+            this.markerData = markerData;
+            this.map.markerData = this.markerData;
+        });
+    }
+
     // Get all data from subclasses + the "Me" layer.
     // If you need a full reload of data, call this, not getAllData().
     protected _getAllData(): Observable<MarkerData[]> {

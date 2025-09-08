@@ -157,10 +157,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             }
 
             // Refresh the map data (to flag the newly requested friend)
-            this._getAllData().subscribe((markerData: MarkerData[]) => {
-                this.markerData = markerData;
-                this.map.markerData = this.markerData;
-            });
+            this.refreshData();
         })
     }
 
@@ -173,10 +170,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             }
 
             // Refresh the map data (to flag the newly un-requested friend)
-            this._getAllData().subscribe((markerData: MarkerData[]) => {
-                this.markerData = markerData;
-                this.map.markerData = this.markerData;
-            });
+            this.refreshData();
         })
     }
 
@@ -191,10 +185,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             // Reload friends on the server
             this.dataService.expirefriends().subscribe(() => {
                 // Refresh the map data
-                this._getAllData().subscribe((markerData: MarkerData[]) => {
-                    this.markerData = markerData;
-                    this.map.markerData = this.markerData;
-                });
+                this.refreshData();
             });
         });
     }
