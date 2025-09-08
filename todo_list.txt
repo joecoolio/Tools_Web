@@ -2,7 +2,6 @@
 Improve the tool card to show more information
 Fix hamburger menu to show only things that are available.
 Go through all the API calls and properly handle errors.
-Add radius to browse tools.
 Look at storing data in the browser cache instead
 
 -- Big functionality
