@@ -45,10 +45,10 @@ export class AppComponent implements OnInit, OnDestroy {
     // When it is true, immediately call getMyInfo().
     effect(() => {
       if(this.tokenService.isLoggedIn()) { // Link the effect to the proper signal so it functions
-        console.log("App: running getMyInfo");
+        // console.log("App: running getMyInfo");
         this.dataService.getMyInfo().subscribe();
       } else {
-        console.log("App: expiring my info");
+        // console.log("App: expiring my info");
         this.dataService.expireMyInfo.set(true);
       }
     });

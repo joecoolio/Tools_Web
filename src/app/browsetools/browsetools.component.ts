@@ -136,23 +136,18 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
             ownerimageUrl: undefined
         };
 
-        this.dataService.getTool(id).subscribe(
-            t => {
-                Object.assign(tool, t);
-                if (! t.imageUrl) {
-                    // Request/load the image
-                    this.dataService.loadImageUrl(tool, "default_tool.svg").subscribe();
+        this.dataService.getTool(id, imageUrl => { tool.imageUrl = imageUrl }).subscribe(t => {
+            Object.assign(tool, t);
 
-                    // Get the related neighbor & picture
-                    this.dataService.getNeighbor(tool.owner_id).subscribe(neighbor => {
-                        tool.ownerName = neighbor.name;
-                        this.dataService.getPictureAsSafeUrl(neighbor.photo_link).subscribe(url => {
-                            tool.ownerimageUrl = url;
-                        })
-                    });
+            this.dataService.getNeighbor(t.owner_id, imageUrl => { tool.ownerimageUrl = imageUrl }).subscribe({
+                error(err) {
+                    console.log("ERROR in browse/idToObject: " + JSON.stringify(err));
+                },
+                next(neighbor) {
+                    tool.ownerName = neighbor.name;
                 }
-            }
-        );
+            });
+        });
 
         return tool;
     }

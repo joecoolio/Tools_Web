@@ -260,8 +260,10 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
             if (layer instanceof Marker) {
               let marker: Marker = (layer as Marker);
               if(bounds.contains(marker.getLatLng())) {
-                let obj:any = this.convertIdToObject((marker as any).id)
-                newArray.push(obj);
+                if((marker as any).id > 0) { // Anything with id <=0 should not be converted to an object
+                  let obj:any = this.convertIdToObject((marker as any).id)
+                  newArray.push(obj);
+                }
               }
             }
           });

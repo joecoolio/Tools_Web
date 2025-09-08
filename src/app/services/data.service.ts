@@ -126,7 +126,7 @@ export class DataService {
         // Watch the signal
         effect(() => {
             this.expireMyInfo(); // Link the effect to the proper signal so it functions
-            console.log("DataService: wiping mydata");
+            // console.log("DataService: wiping mydata");
             this.myInfo.set(this.defaultMyInfo);
         });
     }
@@ -279,13 +279,20 @@ export class DataService {
     // Get a single neighbor.
     // If it's already cached, return that instead.
     // If it's new, put in the neighbor cache and request the image async.
-    getNeighbor(id: number): Observable<Neighbor> {
+    // This automatically requests that the image of the neighbor is loaded.
+    // If imageLoadedFunction is supplied, that's called after the image is loaded.
+    getNeighbor(id: number, imageLoadedFunction?: (imageUrl: SafeUrl) => void): Observable<Neighbor> {
         // Id <= 0 indicates a non-neighbor (e.g. the "Me" marker)
         if (id <= 0) {
             return EMPTY;
         }
         if (this.neighborCache.has(id)) {
-            return of(this.neighborCache.get(id)!);
+            const neighbor: Neighbor = this.neighborCache.get(id)!;
+            // Presuming the image exists, tell the caller that it has loaded
+            if (imageLoadedFunction && neighbor.imageUrl) {
+                imageLoadedFunction(neighbor.imageUrl);
+            }
+            return of(neighbor);
         } else {
             const body = {
                 neighborId: id
@@ -300,12 +307,20 @@ export class DataService {
                 tap(neighbor => this.neighborCache.set(neighbor.id, neighbor)),
                 // Request that the image loads
                 tap(neighbor => {
-                    if (neighbor.photo_link) {
-                        this.loadImageUrl(neighbor, "default_neighbor.svg").subscribe();
-                    }
+                    this.loadImageUrl(neighbor, "default_neighbor.svg").subscribe({
+                        error: (err) => {
+                            console.error('Error loading image in getNeighbor:', err);
+                            console.log('Error: ' + neighbor.photo_link);
+                        },
+                        complete: () => {
+                            // Tell the caller that the image is loaded
+                            if (imageLoadedFunction && neighbor.imageUrl) {
+                                imageLoadedFunction(neighbor.imageUrl);
+                            }
+                        }
+                    })
                 })
-            )
-            ;
+            );
         }
     }
 
@@ -472,11 +487,19 @@ export class DataService {
     }
 
     // Get details about single tool
-    getTool(id: number): Observable<Tool> {
+    // If it's already cached, return that instead.
+    // If it's new, put in the tool cache and request the image async.
+    // This automatically requests that the image of the tool is loaded.
+    // If imageLoadedFunction is supplied, that's called after the image is loaded.
+    getTool(id: number, imageLoadedFunction?: (imageUrl: SafeUrl) => void ): Observable<Tool> {
         if (this.toolCache.has(id)) {
-            return of(this.toolCache.get(id)!);
+            const tool: Tool = this.toolCache.get(id)!;
+            // Presuming the image exists, tell the caller that it has loaded
+            if (imageLoadedFunction && tool.imageUrl) {
+                imageLoadedFunction(tool.imageUrl);
+            }
+            return of(tool);
         } else {
-            // console.log("API - Getting tool: " + id);
             const body = {
                 id: id
             };
@@ -485,7 +508,28 @@ export class DataService {
                 body,
                 {}
             )
-            .pipe(tap(data => this.toolCache.set(id, data)));
+            .pipe(
+                // Cache the tool object
+                tap(tool => this.toolCache.set(id, tool)),
+                // Request the tool image
+                tap(tool => {
+                    if (tool.photo_link) {
+                        this.loadImageUrl(tool, "default_tool.svg").subscribe({
+                            error: (err) => {
+                                console.error('Error loading image in getTool:', err);
+                                console.log('Error: ' + tool.photo_link);
+                            },
+                            complete: () => {
+                                // Tell the caller that the image is loaded
+                                if (imageLoadedFunction && tool.imageUrl) {
+                                    imageLoadedFunction(tool.imageUrl);
+                                }
+                            }
+                        })
+                    }
+                })
+            );
+
         }
     };
 
