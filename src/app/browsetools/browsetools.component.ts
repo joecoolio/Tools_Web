@@ -12,6 +12,7 @@ import { ResizeDirective } from "../shared/resize-directive";
 import { GlobalValuesService } from "../shared/global-values";
 import { FormsModule } from "@angular/forms";
 import { BrowseToolsToolCardComponent } from "./toolcard.component";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 
 @Component({
     standalone: true,
@@ -24,7 +25,8 @@ import { BrowseToolsToolCardComponent } from "./toolcard.component";
     MatTooltipModule,
     ResizeDirective,
     FormsModule,
-    BrowseToolsToolCardComponent
+    BrowseToolsToolCardComponent,
+    MatProgressSpinnerModule
 ],
     templateUrl: './browsetools.component.html',
     styleUrl: './browsetools.component.scss',

@@ -12,6 +12,7 @@ import { MessageService } from "../../services/message.service";
 import { NeighborCardComponent } from "./neighborcard.component";
 import { GlobalValuesService } from "../../shared/global-values";
 import { FormsModule } from "@angular/forms";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 
 @Component({
     standalone: true,
@@ -24,6 +25,7 @@ import { FormsModule } from "@angular/forms";
     ResizeDirective,
     NeighborCardComponent,
     FormsModule,
+    MatProgressSpinnerModule
 ],
     templateUrl: './managefriends.component.html',
     styleUrl: './managefriends.component.scss',
