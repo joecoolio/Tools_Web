@@ -36,7 +36,7 @@ export class NotificationService {
     pollNotifications(): Observable<NotificationMessage[]> {
         return timer(0, POLL_INTERVAL).pipe(
             switchMap(() => {
-                console.log("Polling for notifications");
+                // console.log("Polling for notifications");
                 return this.dataService.getNotifications()
                 .pipe(
                     map(notifications => {

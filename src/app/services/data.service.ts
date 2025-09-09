@@ -325,7 +325,7 @@ export class DataService {
 
         // If data isn't loaded, call the database
         if (!cachedNeighbor.loaded) {
-            console.log("getNeighbor: Neighbor from db: " + id);
+            // console.log("getNeighbor: Neighbor from db: " + id);
             return this.http.post<Neighbor>(
                 URL_GET_NEIGHBOR,
                 { neighborId: id },
