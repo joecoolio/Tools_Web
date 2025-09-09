@@ -181,7 +181,7 @@ export class DataService {
                     if (! myInfo.photo_link) {
                         myInfo.photo_link = "default_neighbor.svg";
                     }
-                    console.log("Login: Requesting picture for logged in user: " + myInfo.photo_link);
+                    // console.log("Login: Requesting picture for logged in user: " + myInfo.photo_link);
                     this.getPictureAsSafeUrl(myInfo.photo_link).subscribe(value => {
                         if (value) {
                             this.myInfo.update(current => ({... current, imageUrl: value, imageLoaded: true }));
@@ -335,7 +335,7 @@ export class DataService {
                 // Do not return the new object, copy everything into the cached copy
                 map(dbNeighbor => {
                     Object.assign(cachedNeighbor, dbNeighbor); // Update attributes from db
-                    console.log("getNeighbor: Image from db: " + cachedNeighbor.id);
+                    // console.log("getNeighbor: Image from db: " + cachedNeighbor.id);
                     this.loadImageUrl(cachedNeighbor, "default_neighbor.svg").subscribe({
                         error: (err) => {
                             console.error('Error loading image in getNeighbor:', err);
@@ -353,7 +353,7 @@ export class DataService {
                 })
             );
         } else {
-            console.log("getNeighbor: Neighbor from cache: " + id);
+            // console.log("getNeighbor: Neighbor from cache: " + id);
             // If data is loaded, make sure the photo is loaded
             if (cachedNeighbor.imageLoaded) {
                 // Image already loaded, tell the caller
@@ -362,7 +362,7 @@ export class DataService {
                 }
             } else {
                 // Image not loaded, load it and then tell the caller
-                console.log("getNeighbor: Image from db: " + cachedNeighbor.id);
+                // console.log("getNeighbor: Image from db: " + cachedNeighbor.id);
                 this.loadImageUrl(cachedNeighbor, "default_neighbor.svg").subscribe({
                     error: (err) => {
                         console.error('Error loading image in getNeighbor:', err);
@@ -580,7 +580,7 @@ export class DataService {
 
         // If data isn't loaded, call the database
         if (!cachedTool.loaded) {
-            console.log("getTool: Tool from db: " + id);
+            // console.log("getTool: Tool from db: " + id);
             return this.http.post<Tool>(
                 URL_GET_TOOL,
                 { id: id },
@@ -597,7 +597,7 @@ export class DataService {
                 })
             );
         } else {
-            console.log("getTool: Tool from cache: " + id);
+            // console.log("getTool: Tool from cache: " + id);
             // Make sure all the deep updates are done
             this._updateToolDeep(cachedTool, loadOwner, imageLoadedFunction);
             
@@ -610,7 +610,7 @@ export class DataService {
     private _updateToolDeep(cachedTool: Tool, loadOwner: boolean, imageLoadedFunction?: (imageUrl: SafeUrl) => void): void {
         // Update the image if needed
         if (!cachedTool.imageLoaded) {
-            console.log("getTool: Image from db: " + cachedTool.id);
+            // console.log("getTool: Image from db: " + cachedTool.id);
             this.loadImageUrl(cachedTool, "default_tool.svg").subscribe({
                 error: (err) => {
                     console.error('Error loading image in getTool:', err);
