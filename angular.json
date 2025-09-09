@@ -84,7 +84,8 @@
               "buildTarget": "Tools_Web:build:production"
             },
             "development": {
-              "buildTarget": "Tools_Web:build:development"
+              "buildTarget": "Tools_Web:build:development",
+              "hmr": false
             }
           },
           "defaultConfiguration": "development"

@@ -9,17 +9,19 @@ import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../../shared/browseobjects.component";
 import { ResizeDirective } from "../../shared/resize-directive";
 import { MessageService } from "../../services/message.service";
+import { NeighborCardComponent } from "./neighborcard.component";
 
 @Component({
     standalone: true,
     selector: 'app-manage-friends',
     imports: [
-        RouterModule,
-        MapComponent,
-        MatCardModule,
-        MatDialogModule,
-        ResizeDirective,
-    ],
+    RouterModule,
+    MapComponent,
+    MatCardModule,
+    MatDialogModule,
+    ResizeDirective,
+    NeighborCardComponent
+],
     templateUrl: './managefriends.component.html',
     styleUrl: './managefriends.component.scss',
 })
@@ -97,30 +99,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
 
     // Called by the map whenever an ID is put it in the list of visible markers
     public idToObject(id: number): Neighbor {
-        const neighbor: Neighbor = {
-            id: id,
-            name: "",
-            photo_link: "",
-            latitude: 0,
-            longitude: 0,
-            home_address: "",
-            distance_m: 0,
-            is_friend: false,
-            friendship_requested: false,
-            imageUrl: undefined,
-            depth: 0,
-            tool_count: 0
-        };
-
-        this.dataService.getNeighbor(id).subscribe(n => {
-            Object.assign(neighbor, n);
-            if (! n.imageUrl) {
-                // Request/load the image
-                this.dataService.loadImageUrl(neighbor, "default_neighbor.svg").subscribe();
-            }
-        });
-
-        return neighbor;
+        return this.dataService.getOrCreateNeighbor(id);
     }
 
     // Called by the neighbor list when a neighbor is clicked
@@ -189,10 +168,4 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             });
         });
     }
-
-    // All objects in this component are Tools
-    public asNeighbor(obj: MappableObject): Neighbor {
-        return obj as Neighbor;
-    }
-
 }

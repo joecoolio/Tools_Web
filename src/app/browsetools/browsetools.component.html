@@ -11,33 +11,17 @@
                 </select>
             </div>
 
-            @for(_tool of allVisibleObjects; track _tool.id; let i = $index) {
-                @let tool = asTool(_tool);
-
-                <mat-card #objectCards class="tool-card" (click)="onListObjectClick(i)">
-                    <mat-card-title>
-                        <div class="title-row">
-                            <div>
-                                {{ tool.brand }}
-                            </div>
-                            @if(tool.ownerName && tool.ownerimageUrl) {
-                                <div matTooltip="{{ tool.ownerName }}">
-                                    <img [src]="tool.ownerimageUrl" [alt]="tool.ownerName" class="tool-owner"/>
-                                </div>
-                            }
+            @for(tool of allVisibleObjects; track tool.id; let i = $index) {
+                <div #objectCards>
+                    @defer (on viewport) {
+                        <app-browse-tool-card [object]="tool" (click)="onListObjectClick(i)"></app-browse-tool-card>
+                    }
+                    @placeholder { 
+                        <div class="tool-card-placeholder">
+                            <img src="https://wp.angular.love/wp-content/uploads/2024/04/image3.png">
                         </div>
-                    </mat-card-title>
-                    <mat-card-subtitle>{{ tool.short_name }}</mat-card-subtitle>
-                    <mat-card-content class="tool-details">
-                        <div>
-                            <h3>{{ tool.name }}</h3>
-                            <a class="tool-link" [href]="tool.product_url" target="_blank" rel="noopener noreferrer">Product Link</a>
-                        </div>
-                        <div>
-                            <img [src]="tool.imageUrl" [alt]="tool.name" class="tool-image" />
-                        </div>
-                    </mat-card-content>
-                </mat-card>
+                    }
+                </div>
             }
         }
     </div>

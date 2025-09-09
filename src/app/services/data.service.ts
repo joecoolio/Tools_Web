@@ -40,6 +40,11 @@ export interface SuccessResult {
     result: boolean
 }
 
+// An object that is ultimately sourced from the database
+export interface DbSourceObject {
+    loaded: boolean, // Has this been loaded from the database
+}
+
 // An object that can be mapped.
 export interface MappableObject {
     id: number,
@@ -53,10 +58,11 @@ export interface MappableObject {
 export interface BaseImageObject {
     photo_link: string,
     imageUrl: SafeUrl | undefined, // Not pulled via api but will be filled in later as needed
+    imageLoaded: boolean, // Has the image been loaded from the database
 }
 
 // Data for the current user
-export interface MyInfo extends MappableObject, BaseImageObject {
+export interface MyInfo extends DbSourceObject, MappableObject, BaseImageObject {
     userid: string,
     name: string,
     nickname: string,
@@ -64,7 +70,7 @@ export interface MyInfo extends MappableObject, BaseImageObject {
 }
 
 // Data for a neighbor
-export interface Neighbor extends MappableObject, BaseImageObject {
+export interface Neighbor extends DbSourceObject, MappableObject, BaseImageObject {
     name: string,
     home_address: string,
     depth: number,
@@ -92,7 +98,7 @@ export interface Notification {
 
 
 // Data for a tool
-export interface Tool extends MappableObject, BaseImageObject {
+export interface Tool extends DbSourceObject, MappableObject, BaseImageObject {
     owner_id: number,
     short_name: string,
     brand: string,
@@ -102,6 +108,10 @@ export interface Tool extends MappableObject, BaseImageObject {
     category_id: number,
     category: string,
     category_icon: string,
+    ownerName: string | undefined,
+    ownerimageUrl: SafeUrl | undefined,
+    ownerLoaded: boolean,
+    ownerImageLoaded: boolean,
 }
 
 // A tool category
@@ -148,6 +158,8 @@ export class DataService {
         name: '',
         nickname: '',
         home_address: '',
+        loaded: false,
+        imageLoaded: false
     };
 
     // Signals for my info.  Use this to get the current logged in guy & his picture.
@@ -172,7 +184,7 @@ export class DataService {
                     console.log("Login: Requesting picture for logged in user: " + myInfo.photo_link);
                     this.getPictureAsSafeUrl(myInfo.photo_link).subscribe(value => {
                         if (value) {
-                            this.myInfo.update(current => ({... current, imageUrl: value }));
+                            this.myInfo.update(current => ({... current, imageUrl: value, imageLoaded: true }));
                         }
                     });
                 }),
@@ -183,7 +195,7 @@ export class DataService {
                     const { imageUrl, ...newstuff } = myInfo;
                     this.myInfo.update(current => {
                         const { imageUrl, ...trash } = current;
-                        return { imageUrl, ...newstuff };
+                        return { imageUrl, ...newstuff, loaded: true };
                     });
                     return this.myInfoSignal;
                 })
@@ -250,7 +262,7 @@ export class DataService {
     // Get my set of neighbors.
     // If the neighbor is already in the cache, return that object but updated.
     // Otherwise add it to the cache.
-    private _getNeighbors(url: string, body: any|null): Observable<Neighbor[]> {
+    private _getNeighbors(url: string, body: any = {}): Observable<Neighbor[]> {
         return this.http.post<Neighbor[]>(
             url,
             body,
@@ -258,27 +270,48 @@ export class DataService {
         )
         .pipe(
             // Handle cached versions
-            map((neighbors: Neighbor[]) => neighbors.map(neighbor => this._getCachedVersionOfNeighbor(neighbor)))
+            map((neighbors: Neighbor[]) => neighbors.map(neighbor => {
+                const cachedNeighbor = this.getOrCreateNeighbor(neighbor.id);
+                Object.assign(cachedNeighbor, neighbor); // Update attributes from db
+                cachedNeighbor.loaded = true;
+                cachedNeighbor.imageLoaded = false;
+                return cachedNeighbor;
+            }))
         );
     }
 
-    // If the neighbor is already cached, return the existing object instead of a new one.
-    // If you do return a cached version, update all the properties to the new values.
-    // If it's a new neighbor, cache it.
-    private _getCachedVersionOfNeighbor(neighbor: Neighbor): Neighbor {
-        const oldNeighbor: Neighbor | undefined = this.neighborCache.getWithoutReinsert(neighbor.id);
-        if (oldNeighbor) {
-            Object.assign(oldNeighbor, neighbor);
-            return oldNeighbor;
+    // Create a new neighbor object.
+    // Nowhere else should ever create a Neighbor object.
+    // If this neighbor id is already in the cache, return that object (untouched).
+    // If not, put the new neighbor into the cache and return it.
+    // This does not make db calls.
+    getOrCreateNeighbor(id: number): Neighbor {
+        if (this.neighborCache.has(id)) {
+            return this.neighborCache.getWithoutReinsert(id)!;
         } else {
-            this.neighborCache.set(neighbor.id, neighbor);
+            const neighbor: Neighbor = {
+                id: id,
+                name: "",
+                photo_link: "",
+                latitude: 0,
+                longitude: 0,
+                home_address: "",
+                distance_m: 0,
+                is_friend: false,
+                friendship_requested: false,
+                imageUrl: undefined,
+                depth: 0,
+                tool_count: 0,
+                loaded: false,
+                imageLoaded: false,
+            };
+            this.neighborCache.set(id, neighbor);
             return neighbor;
         }
     }
 
-    // Get a single neighbor.
-    // If it's already cached, return that instead.
-    // If it's new, put in the neighbor cache and request the image async.
+    // Get a single neighbor.  If not loaded, load it immediately.
+    // This is what display components should call.
     // This automatically requests that the image of the neighbor is loaded.
     // If imageLoadedFunction is supplied, that's called after the image is loaded.
     getNeighbor(id: number, imageLoadedFunction?: (imageUrl: SafeUrl) => void): Observable<Neighbor> {
@@ -286,41 +319,65 @@ export class DataService {
         if (id <= 0) {
             return EMPTY;
         }
-        if (this.neighborCache.has(id)) {
-            const neighbor: Neighbor = this.neighborCache.get(id)!;
-            // Presuming the image exists, tell the caller that it has loaded
-            if (imageLoadedFunction && neighbor.imageUrl) {
-                imageLoadedFunction(neighbor.imageUrl);
-            }
-            return of(neighbor);
-        } else {
-            const body = {
-                neighborId: id
-            };
+
+        // Get the cached neighbor
+        const cachedNeighbor = this.getOrCreateNeighbor(id);
+
+        // If data isn't loaded, call the database
+        if (!cachedNeighbor.loaded) {
+            console.log("getNeighbor: Neighbor from db: " + id);
             return this.http.post<Neighbor>(
                 URL_GET_NEIGHBOR,
-                body,
+                { neighborId: id },
                 {},
             )
             .pipe(
-                // Cache the neighbor object
-                tap(neighbor => this.neighborCache.set(neighbor.id, neighbor)),
-                // Request that the image loads
-                tap(neighbor => {
-                    this.loadImageUrl(neighbor, "default_neighbor.svg").subscribe({
+                // Do not return the new object, copy everything into the cached copy
+                map(dbNeighbor => {
+                    Object.assign(cachedNeighbor, dbNeighbor); // Update attributes from db
+                    console.log("getNeighbor: Image from db: " + cachedNeighbor.id);
+                    this.loadImageUrl(cachedNeighbor, "default_neighbor.svg").subscribe({
                         error: (err) => {
                             console.error('Error loading image in getNeighbor:', err);
-                            console.log('Error: ' + neighbor.photo_link);
+                            console.log('Error: ' + cachedNeighbor.photo_link);
                         },
                         complete: () => {
+                            cachedNeighbor.imageLoaded = true;
                             // Tell the caller that the image is loaded
-                            if (imageLoadedFunction && neighbor.imageUrl) {
-                                imageLoadedFunction(neighbor.imageUrl);
+                            if (imageLoadedFunction && cachedNeighbor.imageUrl) {
+                                imageLoadedFunction(cachedNeighbor.imageUrl);
                             }
                         }
-                    })
+                    });
+                    return cachedNeighbor;
                 })
             );
+        } else {
+            console.log("getNeighbor: Neighbor from cache: " + id);
+            // If data is loaded, make sure the photo is loaded
+            if (cachedNeighbor.imageLoaded) {
+                // Image already loaded, tell the caller
+                if (imageLoadedFunction) {
+                    imageLoadedFunction(cachedNeighbor.imageUrl!);
+                }
+            } else {
+                // Image not loaded, load it and then tell the caller
+                console.log("getNeighbor: Image from db: " + cachedNeighbor.id);
+                this.loadImageUrl(cachedNeighbor, "default_neighbor.svg").subscribe({
+                    error: (err) => {
+                        console.error('Error loading image in getNeighbor:', err);
+                        console.log('Error: ' + cachedNeighbor.photo_link);
+                    },
+                    complete: () => {
+                        cachedNeighbor.imageLoaded = true;
+                        // Tell the caller that the image is loaded
+                        if (imageLoadedFunction && cachedNeighbor.imageUrl) {
+                            imageLoadedFunction(cachedNeighbor.imageUrl);
+                        }
+                    }
+                })
+            }
+            return of(cachedNeighbor);
         }
     }
 
@@ -441,13 +498,145 @@ export class DataService {
     
     // Get all of my tools
     getMyTools(): Observable<Tool[]> {
-        const body = {};
+        return this._getTools(URL_MY_TOOLS);
+    }
 
+    // List all tools within some radius of me
+    listTools(radiusMiles: number = 100): Observable<Tool[]> {
+        return this._getTools(URL_ALL_TOOLS, { radius_miles: radiusMiles });
+    }
+
+    // Get a set of tools.
+    // If the tool is already in the cache, return that object but updated.
+    // Otherwise add it to the cache.
+    private _getTools(url: string, body: any = {}): Observable<Tool[]> {
         return this.http.post<Tool[]>(
-            URL_MY_TOOLS,
+            url,
             body,
-            {}
+            {},
+        )
+        .pipe(
+            // Handle cached versions
+            map((tools: Tool[]) => tools.map(tool => {
+                const cachedTool = this.getOrCreateTool(tool.id);
+                Object.assign(cachedTool, tool); // Update attributes from db
+                cachedTool.loaded = true;
+                cachedTool.imageLoaded = false;
+                return cachedTool;
+            }))
         );
+    }
+
+    // Create a new tool object.
+    // Nowhere else should ever create a Tool object.
+    // If this tool id is already in the cache, return that object (untouched).
+    // If not, put the new tool into the cache and return it.
+    // This does not make db calls.
+    getOrCreateTool(id: number): Tool {
+        if (this.toolCache.has(id)) {
+            return this.toolCache.getWithoutReinsert(id)!;
+        } else {
+            const tool: Tool = {
+                id: id,
+                owner_id: 0,
+                short_name: "",
+                brand: "",
+                name: "",
+                product_url: "",
+                replacement_cost: 0,
+                category_id: 0,
+                category: "",
+                category_icon: "",
+                latitude: 0,
+                longitude: 0,
+                distance_m: 0,
+                photo_link: "",
+                imageUrl: undefined,
+                ownerName: undefined,
+                ownerimageUrl: undefined,
+                loaded: false,
+                imageLoaded: false,
+                ownerLoaded: false,
+                ownerImageLoaded: false
+            };
+            this.toolCache.set(id, tool);
+            return tool;
+        }
+    }
+
+    // Get a single tool.  If not loaded, load it immediately.
+    // If loadOwner = true, the owner Neighbor will be loaded. If you don't need it, set to false.
+    // This is what display components should call.
+    // This automatically requests that the image of the tool is loaded.
+    // If imageLoadedFunction is supplied, that's called after the image is loaded.
+    getTool(id: number, loadOwner: boolean, imageLoadedFunction?: (imageUrl: SafeUrl) => void): Observable<Tool> {
+        // Id <= 0 indicates a non-tool (e.g. the "Me" marker)
+        if (id <= 0) {
+            return EMPTY;
+        }
+
+        // Get the cached neighbor
+        const cachedTool = this.getOrCreateTool(id);
+
+        // If data isn't loaded, call the database
+        if (!cachedTool.loaded) {
+            console.log("getTool: Tool from db: " + id);
+            return this.http.post<Tool>(
+                URL_GET_TOOL,
+                { id: id },
+                {}
+            )
+            .pipe(
+                // Do not return the new object, copy everything into the cached copy
+                map(dbTool => {
+                    Object.assign(cachedTool, dbTool); // Update attributes from db
+
+                    this._updateToolDeep(cachedTool, loadOwner, imageLoadedFunction);
+
+                    return cachedTool;
+                })
+            );
+        } else {
+            console.log("getTool: Tool from cache: " + id);
+            // Make sure all the deep updates are done
+            this._updateToolDeep(cachedTool, loadOwner, imageLoadedFunction);
+            
+            return of(cachedTool);
+        }
+    }
+
+    // Update the image, neighbor, and neighbor image for a tool.
+    // This makes whatever DB calls are needed.
+    private _updateToolDeep(cachedTool: Tool, loadOwner: boolean, imageLoadedFunction?: (imageUrl: SafeUrl) => void): void {
+        // Update the image if needed
+        if (!cachedTool.imageLoaded) {
+            console.log("getTool: Image from db: " + cachedTool.id);
+            this.loadImageUrl(cachedTool, "default_tool.svg").subscribe({
+                error: (err) => {
+                    console.error('Error loading image in getTool:', err);
+                    console.log('Error: ' + cachedTool.photo_link);
+                },
+                complete: () => {
+                    cachedTool.imageLoaded = true;
+                    // Tell the caller that the image is loaded
+                    if (imageLoadedFunction) {
+                        imageLoadedFunction(cachedTool.imageUrl!);
+                    }
+                }
+            });
+        } else {
+            if (imageLoadedFunction) {
+                imageLoadedFunction(cachedTool.imageUrl!);
+            }
+        }
+
+        // Update the neighbor + image if needed
+        if (!cachedTool.ownerLoaded && loadOwner) {
+            this.getNeighbor(cachedTool.owner_id, imageUrl => { cachedTool.ownerimageUrl = imageUrl; cachedTool.ownerImageLoaded = true }).subscribe(neighbor => {
+                cachedTool.ownerName = neighbor.name;
+                cachedTool.ownerLoaded = true;
+            });
+        }
     }
 
     // Update or create a tool
@@ -475,65 +664,6 @@ export class DataService {
         }
     }
 
-    // Get all available tools
-    getAllTools(): Observable<Tool[]> {
-        const body = {};
-
-        return this.http.post<Tool[]>(
-            URL_ALL_TOOLS,
-            body,
-            {}
-        );
-    }
-
-    // Get details about single tool
-    // If it's already cached, return that instead.
-    // If it's new, put in the tool cache and request the image async.
-    // This automatically requests that the image of the tool is loaded.
-    // If imageLoadedFunction is supplied, that's called after the image is loaded.
-    getTool(id: number, imageLoadedFunction?: (imageUrl: SafeUrl) => void ): Observable<Tool> {
-        if (this.toolCache.has(id)) {
-            const tool: Tool = this.toolCache.get(id)!;
-            // Presuming the image exists, tell the caller that it has loaded
-            if (imageLoadedFunction && tool.imageUrl) {
-                imageLoadedFunction(tool.imageUrl);
-            }
-            return of(tool);
-        } else {
-            const body = {
-                id: id
-            };
-            return this.http.post<Tool>(
-                URL_GET_TOOL,
-                body,
-                {}
-            )
-            .pipe(
-                // Cache the tool object
-                tap(tool => this.toolCache.set(id, tool)),
-                // Request the tool image
-                tap(tool => {
-                    if (tool.photo_link) {
-                        this.loadImageUrl(tool, "default_tool.svg").subscribe({
-                            error: (err) => {
-                                console.error('Error loading image in getTool:', err);
-                                console.log('Error: ' + tool.photo_link);
-                            },
-                            complete: () => {
-                                // Tell the caller that the image is loaded
-                                if (imageLoadedFunction && tool.imageUrl) {
-                                    imageLoadedFunction(tool.imageUrl);
-                                }
-                            }
-                        })
-                    }
-                })
-            );
-
-        }
-    };
-
-    
     // Load up the image for some object.
     // Loads the image directly into the provided object.
     loadImageUrl(obj: BaseImageObject, defaultPhotoLink: string | undefined = undefined): Observable<void> {

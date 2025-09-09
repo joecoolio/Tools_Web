@@ -4,10 +4,9 @@ import { DataService, Neighbor, Tool } from '../services/data.service';
 import { SafeUrl } from '@angular/platform-browser';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { ConfirmationService } from '../services/confirmation.service';
-import { ToolPlusOwner } from '../browsetools/browsetools.component';
 
 export interface ToolCardDialogData {
-  tool: ToolPlusOwner,
+  tool: Tool,
   fnBorrow: (id: number) => void,
 }
 
@@ -31,7 +30,7 @@ export class ToolCardComponent implements OnInit {
   }
 
   // Stuff passed in the constructor
-  tool!: ToolPlusOwner;
+  tool!: Tool;
   fnBorrow!: (id: number) => void;
 
   ngOnInit(): void {

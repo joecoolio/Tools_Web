@@ -52,79 +52,11 @@
   background-color: #fffaf0;
 }
 
-.tool-card {
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.tool-card-placeholder {
+  height: 226px;
 }
-
-.title-row {
-  font-weight: bolder;
-  display: flex;
-  width: 100%;
-  align-items: top;
-}
-
-.title-row > div:first-of-type {
-  flex-grow: 1;
-  margin-right: 10px;
-}
-
-.title-row > div:last-of-type {
-  flex-grow: 0;
-}
-
-.tool-owner {
-  flex-grow: 0;
-  width: 30px;
-  height: 30px;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-.tool-details {
-  display: flex;
-  align-items: center;
-}
-
-.tool-details > div:first-of-type {
-  flex-grow: 1;
-  margin-right: 10px;
-}
-
-.tool-details > div:last-of-type {
-  flex-grow: 0;
-}
-
-.tool-details h3 {
-  color: #333;
-  text-align: left;
-}
-
-.tool-image {
-  width: 90px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: 25%;
-  border: 2px solid #eee;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.tool-link {
-  display: inline-block;
-  margin-top: 4px;
-  color: #1976d2;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.tool-link:hover {
-  color: #0d47a1;
+.tool-card-placeholder > img {
+  height: 100%;
 }
 
 @keyframes blinkBorder {

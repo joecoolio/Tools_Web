@@ -11,6 +11,7 @@ import { ImageService } from "../../services/image.service";
 import { HttpErrorResponse } from "@angular/common/http";
 import { catchError, EMPTY } from "rxjs";
 import { MessageService } from "../../services/message.service";
+import { BrowseToolsToolCardComponent } from "../../browsetools/toolcard.component";
 
 export function moneyValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
@@ -23,13 +24,14 @@ export function moneyValidator(control: AbstractControl): ValidationErrors | nul
     templateUrl: './mytools.component.html',
     styleUrl: './mytools.component.scss',
     imports: [
-        MatCardModule,
-        MatSelectModule,
-        MatIconModule,
-        MatTooltipModule,
-        ReactiveFormsModule,
-        FontAwesomeModule,
-    ]
+    MatCardModule,
+    MatSelectModule,
+    MatIconModule,
+    MatTooltipModule,
+    ReactiveFormsModule,
+    FontAwesomeModule,
+    BrowseToolsToolCardComponent
+]
 })
 export class MyToolsComponent implements OnInit {
     @ViewChild('photoInput', { static: false }) fileInput!: ElementRef;
@@ -76,13 +78,10 @@ export class MyToolsComponent implements OnInit {
 
     // Get all the tools I'm sharing
     private refreshToolList() {
-        this.dataService.getMyTools()
-        .subscribe(tools => {
-            this.tools = tools;
-
-            // Get all the tool pictures
-            tools.forEach(tool => this.dataService.loadImageUrl(tool, "default-tool.svg").subscribe());
-        });
+        this.dataService.getMyTools().subscribe(
+            // Sort the list by ID so it's always in the same order
+            tools => this.tools = tools.sort((a,b) => a.id - b.id)
+        );
     }
 
     addNew() {
@@ -102,7 +101,13 @@ export class MyToolsComponent implements OnInit {
             longitude: 0,
             distance_m: 0,
             photo_link: '',
-            imageUrl: undefined
+            imageUrl: undefined,
+            imageLoaded: false,
+            loaded: false,
+            ownerLoaded: false,
+            ownerName: "",
+            ownerimageUrl: undefined,
+            ownerImageLoaded: false,
         };
 
         // Update the form fields
@@ -119,8 +124,8 @@ export class MyToolsComponent implements OnInit {
         this.resetPhoto();
     }
 
-    selectTool(id: number) {
-        this.selectedTool = this.tools.find(tool => tool.id === id);
+    selectTool(index: number) {
+        this.selectedTool = this.tools[index];
 
         // Update the form fields
         this.settingsForm.patchValue({

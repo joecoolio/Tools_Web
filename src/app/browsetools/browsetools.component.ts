@@ -7,30 +7,25 @@ import { Router, RouterModule } from "@angular/router";
 import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../shared/browseobjects.component"
 import { ToolCardComponent } from "../tool-card/tool-card.component";
-import { SafeUrl } from "@angular/platform-browser";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { ResizeDirective } from "../shared/resize-directive";
 import { GlobalValuesService } from "../shared/global-values";
 import { FormsModule } from "@angular/forms";
-
-// A Tool with the owner's info appended
-export interface ToolPlusOwner extends Tool {
-    ownerName: string | undefined,
-    ownerimageUrl: SafeUrl | undefined,
-}
+import { BrowseToolsToolCardComponent } from "./toolcard.component";
 
 @Component({
     standalone: true,
     selector: 'app-browse-tools',
     imports: [
-        RouterModule,
-        MapComponent,
-        MatCardModule,
-        MatDialogModule,
-        MatTooltipModule,
-        ResizeDirective,
-        FormsModule,
-    ],
+    RouterModule,
+    MapComponent,
+    MatCardModule,
+    MatDialogModule,
+    MatTooltipModule,
+    ResizeDirective,
+    FormsModule,
+    BrowseToolsToolCardComponent
+],
     templateUrl: './browsetools.component.html',
     styleUrl: './browsetools.component.scss',
 })
@@ -65,7 +60,7 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
     // Get all data into this.markerData
     protected getAllData(): Observable<MarkerData[]> {
         return forkJoin([
-            this.dataService.getAllTools(),    
+            this.dataService.listTools(),    
             this.dataService.getMyInfo(),
         ])
         .pipe(
@@ -116,40 +111,7 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
 
     // Called by the map whenever an ID is put it in the list of visible markers
     public idToObject(id: number): Tool {
-        const tool: ToolPlusOwner = {
-            id: id,
-            owner_id: 0,
-            short_name: "",
-            brand: "",
-            name: "",
-            product_url: "",
-            replacement_cost: 0,
-            category_id: 0,
-            category: "",
-            category_icon: "",
-            latitude: 0,
-            longitude: 0,
-            distance_m: 0,
-            photo_link: "",
-            imageUrl: undefined,
-            ownerName: undefined,
-            ownerimageUrl: undefined
-        };
-
-        this.dataService.getTool(id, imageUrl => { tool.imageUrl = imageUrl }).subscribe(t => {
-            Object.assign(tool, t);
-
-            this.dataService.getNeighbor(t.owner_id, imageUrl => { tool.ownerimageUrl = imageUrl }).subscribe({
-                error(err) {
-                    console.log("ERROR in browse/idToObject: " + JSON.stringify(err));
-                },
-                next(neighbor) {
-                    tool.ownerName = neighbor.name;
-                }
-            });
-        });
-
-        return tool;
+        return this.dataService.getOrCreateTool(id);
     }
 
     // Called by the neighbor list when a neighbor is clicked
@@ -157,7 +119,7 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
         const mo: MappableObject | undefined = this.allVisibleObjects.get(index);
 
         if (mo) {
-            const tool: ToolPlusOwner = mo as ToolPlusOwner;
+            const tool: Tool = mo as Tool;
 
             // Center and zoom the map on the clicked item
             this.map.setMapView([ tool.latitude, tool.longitude ], 18);
@@ -177,11 +139,6 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
     public borrow(id: number) {
         console.log("Borrowing: " + id);
         //TODO
-    }
-
-    // All objects in this component are Tools
-    public asTool(obj: MappableObject): ToolPlusOwner {
-        return obj as ToolPlusOwner;
     }
 
     // Runs when the select changes

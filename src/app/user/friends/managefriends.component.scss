@@ -51,76 +51,11 @@
   background-color: #fffaf0;
 }
 
-.person-card {
-  display: flex;
-  flex-direction: column;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.neighbord-card-placeholder {
+  height: 188px;
 }
-
-.person-name {
-  font-size: 1.5rem;
-  margin-top: 0px;
-  margin-bottom: 12px;
-  color: #333;
-  text-align: left;
-}
-
-.person-body {
-  display: flex;
-  align-items: center;
-}
-
-.person-image {
-  width: 90px;
-  height: 90px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-right: 20px;
-}
-
-.person-info {
-  flex: 1;
-}
-
-.person-address {
-  margin: 0;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.person-toolcount {
-  font-style: italic;
-}
-
-.neighbor-type {
-  padding: 5px 10px;
-  border-radius: 12px;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-  text-transform: uppercase;
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-}
-.friend-tag {
-  background-color: #013220;
-  color: white;
-  padding: 4px 8px;
-  font-size: 0.75rem;
-  border-radius: 12px;
-  font-weight: bold;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-}
-.friend-tag.friend-of-friend-tag {
-  background-color: #228b22 !important;
-}
-.friend-tag.friend-request-tag {
-  background-color: #B22222 !important;
+.neighbord-card-placeholder > img {
+  height: 100%;
 }
 
 @keyframes blinkBorder {
