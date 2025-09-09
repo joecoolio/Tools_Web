@@ -1,8 +1,8 @@
 import { Component, ChangeDetectorRef } from "@angular/core";
-import { DataService, MappableObject, Neighbor } from "../../services/data.service";
+import { DataService, MappableObject, MyInfo, Neighbor } from "../../services/data.service";
 import { MapComponent, MarkerData } from "../../map/map.component";
 import { MatCardModule } from "@angular/material/card";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import { MatDialog, MatDialogConfig, MatDialogModule } from "@angular/material/dialog";
 import { FriendCardComponent, FriendCardDialogData } from "../../friend-card/friend-card.component";
 import { forkJoin, map, Observable } from "rxjs";
@@ -10,6 +10,8 @@ import { BrowseObjectsComponent, MarkerDataWithDistance } from "../../shared/bro
 import { ResizeDirective } from "../../shared/resize-directive";
 import { MessageService } from "../../services/message.service";
 import { NeighborCardComponent } from "./neighborcard.component";
+import { GlobalValuesService } from "../../shared/global-values";
+import { FormsModule } from "@angular/forms";
 
 @Component({
     standalone: true,
@@ -20,7 +22,8 @@ import { NeighborCardComponent } from "./neighborcard.component";
     MatCardModule,
     MatDialogModule,
     ResizeDirective,
-    NeighborCardComponent
+    NeighborCardComponent,
+    FormsModule,
 ],
     templateUrl: './managefriends.component.html',
     styleUrl: './managefriends.component.scss',
@@ -32,14 +35,28 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
         protected override dialog: MatDialog,
         protected override changeDetectorRef: ChangeDetectorRef,
         private messageService: MessageService,
+        private router: Router,
+        public globalValuesService: GlobalValuesService,
     ) {
         super(dataService, dialog, changeDetectorRef);
+
+        // Get the provided radius (if it was provided)
+        const nav = this.router.getCurrentNavigation();
+        if (nav?.extras.state?.['radius']) {
+            this.radius = nav?.extras.state?.['radius'];
+        } else {
+            // Default 1 mile
+            this.radius = 1;
+        }
     }
     // Stuff for the map
     private readonly layerGroupNameFriends: string = "Friends"; // My friends (and friends-of-friends)
     private readonly layerGroupNameNonFriends: string = "Others"; // Other neighbors
     readonly layerGroupNames: string[] = [ this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
     
+    // Radius in which to search
+    radius!: number;
+
     // All the neighbors - in sync with what's provided in this.markerData.
     private neighbors: Neighbor[] = [];
 
@@ -47,11 +64,12 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
     // Also put all the neighbor objects in this.neighbors.
     protected getAllData(): Observable<MarkerData[]> {
         return forkJoin([
-            this.dataService.getFriends(),
-            this.dataService.listNeighbors(),    
+            this.dataService.getFriends(this.radius),
+            this.dataService.listNeighbors(this.radius),
+            this.dataService.getMyInfo(),
         ])
         .pipe(
-            map(([friends, neighbors]) => {
+            map(([friends, neighbors, myinfoSignal]) => {
                 let markerArray: MarkerData[] = [];
 
                 // Process friends
@@ -90,6 +108,24 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
                         markerArray.push(markerData);
                     }
                 });
+
+                // Add the search radius circle centered on my location
+                let myInfo: MyInfo = myinfoSignal();
+                let circle: MarkerDataWithDistance = {
+                    markerType: "circle",
+                    id: -1,
+                    latitude: myInfo.latitude,
+                    longitude: myInfo.longitude,
+                    distance_m: 0,
+                    color: "orange",
+                    radius: this.radius * 1609.344,
+                    layerGroupName: undefined, // This should be drawn directly on the map, not in a layer group
+                    // Extra stuff that is ignored for circles
+                    icon: "",
+                    popupText: "",
+                    onclick: function (id: number): void {},
+                };
+                markerArray.push(circle);
 
                 this.neighbors = neighbors;
                 return markerArray;
@@ -167,5 +203,12 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
                 this.refreshData();
             });
         });
+    }
+
+   
+    // Runs when the select changes
+    public radiusChange(radius: number): void {
+        this.radius = radius;
+        this.refreshData();
     }
 }

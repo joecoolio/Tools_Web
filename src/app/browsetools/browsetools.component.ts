@@ -60,18 +60,15 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
     // Get all data into this.markerData
     protected getAllData(): Observable<MarkerData[]> {
         return forkJoin([
-            this.dataService.listTools(),    
+            this.dataService.listTools(this.radius),    
             this.dataService.getMyInfo(),
         ])
         .pipe(
             map(([tools, myinfoSignal]) => {
                 let markerArray: MarkerData[] = [];
 
-                // Filter tools by radius (convert miles to meters)
-                const filteredTools = tools.filter(tool => tool.distance_m <= this.radius * 1609.344);
-
                 // Process tools
-                filteredTools.forEach(tool => {
+                tools.forEach(tool => {
                     let markerData: MarkerDataWithDistance = {
                         layerGroupName: this.layerGroupNameTools,
                         id: tool.id,
