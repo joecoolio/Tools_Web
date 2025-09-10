@@ -25,6 +25,8 @@ const URL_GET_PICTURE = API_URL + 'v1/getImage';
 const URL_GET_TOOL_CATEGORIES = API_URL + 'v1/gettoolcategories';
 const URL_UPDATE_TOOL = API_URL + 'v1/updatetool';
 const URL_CREATE_TOOL = API_URL + 'v1/createtool';
+const URL_BORROW_TOOL = API_URL + 'v1/requestborrow';
+const URL_CANCEL_BORROW_TOOL = API_URL + 'v1/deleteborrowrequest';
 const URL_GET_NOTIFICATIONS = API_URL + 'v1/getnotifications';
 const URL_RESOLVE_NOTIFICATION = API_URL + 'v1/resolvenotification';
 
@@ -92,6 +94,7 @@ export interface Notification {
     from_neighbor?: number,
     type: string,
     message: string,
+    data: any,
     created_ts: Date,
     read: boolean,
 }
@@ -112,6 +115,7 @@ export interface Tool extends DbSourceObject, MappableObject, BaseImageObject {
     ownerimageUrl: SafeUrl | undefined,
     ownerLoaded: boolean,
     ownerImageLoaded: boolean,
+    status: "unknown" | "owned" | "available"
 }
 
 // A tool category
@@ -335,6 +339,7 @@ export class DataService {
                 // Do not return the new object, copy everything into the cached copy
                 map(dbNeighbor => {
                     Object.assign(cachedNeighbor, dbNeighbor); // Update attributes from db
+                    cachedNeighbor.loaded = true;
                     // console.log("getNeighbor: Image from db: " + cachedNeighbor.id);
                     this.loadImageUrl(cachedNeighbor, "default_neighbor.svg").subscribe({
                         error: (err) => {
@@ -468,7 +473,8 @@ export class DataService {
         ).pipe(
             map(notifications => notifications.map(n => ({
                 ...n,
-                created_ts: new Date(n.created_ts)
+                created_ts: new Date(n.created_ts),
+                data: n.data ? JSON.parse(n.data) : undefined,
             })))
         )
     }
@@ -557,7 +563,8 @@ export class DataService {
                 loaded: false,
                 imageLoaded: false,
                 ownerLoaded: false,
-                ownerImageLoaded: false
+                ownerImageLoaded: false,
+                status: 'unknown'
             };
             this.toolCache.set(id, tool);
             return tool;
@@ -571,7 +578,7 @@ export class DataService {
     // If imageLoadedFunction is supplied, that's called after the image is loaded.
     getTool(id: number, loadOwner: boolean, imageLoadedFunction?: (imageUrl: SafeUrl) => void): Observable<Tool> {
         // Id <= 0 indicates a non-tool (e.g. the "Me" marker)
-        if (id <= 0) {
+        if (!id || id <= 0) {
             return EMPTY;
         }
 
@@ -583,13 +590,14 @@ export class DataService {
             // console.log("getTool: Tool from db: " + id);
             return this.http.post<Tool>(
                 URL_GET_TOOL,
-                { id: id },
+                { id: cachedTool.id },
                 {}
             )
             .pipe(
                 // Do not return the new object, copy everything into the cached copy
                 map(dbTool => {
                     Object.assign(cachedTool, dbTool); // Update attributes from db
+                    cachedTool.loaded = true;
 
                     this._updateToolDeep(cachedTool, loadOwner, imageLoadedFunction);
 
@@ -662,6 +670,33 @@ export class DataService {
                 map((sr: SuccessResult) => sr.result)
             );
         }
+    }
+
+    // Request to borrow a tool
+    borrowTool(id: number, message: string): Observable<void> {
+        const body = {
+            toolId: id,
+            message: message,
+        };
+
+        return this.http.post<void>(
+            URL_BORROW_TOOL,
+            body,
+            {}
+        );
+    }
+
+    // Delete existing borrow request
+    cancelBorrowRequest(id: number) {
+        const body = {
+            toolId: id,
+        };
+
+        return this.http.post<void>(
+            URL_CANCEL_BORROW_TOOL,
+            body,
+            {}
+        );
     }
 
     // Load up the image for some object.

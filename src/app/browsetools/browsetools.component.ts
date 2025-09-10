@@ -6,13 +6,14 @@ import { MatCardModule } from "@angular/material/card";
 import { Router, RouterModule } from "@angular/router";
 import { forkJoin, map, Observable } from "rxjs";
 import { BrowseObjectsComponent, MarkerDataWithDistance } from "../shared/browseobjects.component"
-import { ToolCardComponent } from "../tool-card/tool-card.component";
+import { ToolCardComponent, ToolCardDialogData } from "../tool-card/tool-card.component";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { ResizeDirective } from "../shared/resize-directive";
 import { GlobalValuesService } from "../shared/global-values";
 import { FormsModule } from "@angular/forms";
 import { BrowseToolsToolCardComponent } from "./toolcard.component";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MessageService } from "../services/message.service";
 
 @Component({
     standalone: true,
@@ -37,6 +38,7 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
         protected override dataService: DataService,
         protected override dialog: MatDialog,
         protected override changeDetectorRef: ChangeDetectorRef,
+        private messageService: MessageService,
         private router: Router,
         public globalValuesService: GlobalValuesService,
     ) {
@@ -55,6 +57,9 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
     // Radius in which to search
     radius!: number;
     
+    // All the neighbors - in sync with what's provided in this.markerData.
+    private tools: Tool[] = [];
+
     // Stuff for the map
     private readonly layerGroupNameTools: string = "Tools"; // All the tools
     readonly layerGroupNames: string[] = [ this.layerGroupNameTools ];
@@ -103,6 +108,8 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
                 };
                 markerArray.push(circle);
 
+                this.tools = tools;
+
                 return markerArray;
             })
         );
@@ -125,19 +132,43 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
 
             const dialogConfig = new MatDialogConfig();
             dialogConfig.autoFocus = true;
-            dialogConfig.data = {
+            const data: ToolCardDialogData = {
                 tool: tool,
                 fnBorrow: this.borrow.bind(this),
+                fnCancelBorrow: this.cancelBorrow.bind(this),
             }
+            dialogConfig.data = data;
 
             this.dialog.open(ToolCardComponent, dialogConfig);
         }
     }
 
     // Borrow a tool
-    public borrow(id: number) {
+    public borrow(id: number, message: string): void {
         console.log("Borrowing: " + id);
-        //TODO
+        this.dataService.borrowTool(id, message).subscribe(() => {
+            const tool: Tool | undefined = this.tools.find(t => t.id == id);
+            if (tool) {
+                this.messageService.send('info', "Borrow request sent to " + tool.ownerName + "!");
+            }
+
+            // Refresh the map data (to flag the newly requested friend)
+            this.refreshData();
+        })
+    }
+
+    // Cancel a request to borrow a tool
+    public cancelBorrow(id: number): void {
+        console.log("Cancelling borrow: " + id);
+        this.dataService.cancelBorrowRequest(id).subscribe(() => {
+            const tool: Tool | undefined = this.tools.find(t => t.id == id);
+            if (tool) {
+                this.messageService.send('info', "Cancelled request to borrow " + tool.ownerName + "'s " + tool.short_name);
+            }
+
+            // Refresh the map data (to flag the newly requested friend)
+            this.refreshData();
+        })
     }
 
     // Runs when the select changes

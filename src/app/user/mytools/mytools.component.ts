@@ -108,6 +108,7 @@ export class MyToolsComponent implements OnInit {
             ownerName: "",
             ownerimageUrl: undefined,
             ownerImageLoaded: false,
+            status: "unknown",
         };
 
         // Update the form fields
