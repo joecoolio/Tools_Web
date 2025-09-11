@@ -9,24 +9,62 @@
   <div class="inbox-panel">
     <h3>Notifications</h3>
     @for(notification of notifications; track notification.id) {
-      <div class="message-card" [class.unread]="!notification.read">
-          <img [src]="notification.from_neighbor?.imageUrl || 'system_photo.png'" class="avatar" />
-          
-          <div class="message-content">
-            <h4>{{ notification.header }}</h4>
-            @if (notification.subheader) {
-              <h5>{{ notification.subheader }}</h5>
-            }
-            <p>{{ notification.message }}</p>
-            <small>{{ notification.created_ts| date:'short' }}</small>
-          </div>
-
-          <span class="buttons">
-            @for(opt of notification.resolutionOptions; track opt.buttonText) {
-              <button mat-button (click)="$event.stopPropagation(); runFunction(opt, notification)">{{ opt.buttonText }}</button>
-            }
-          </span>
+    <div class="message-card" [class.unread]="!notification.read">
+      <div class="col">
+        <img [src]="notification.from_neighbor?.imageUrl || 'system_photo.png'" class="avatar" />
       </div>
+
+      <div class="col">
+        <div class="message-content">
+          <h4>{{ notification.header }}</h4>
+          @if (notification.subheader) {
+          <h5>{{ notification.subheader }}</h5>
+          }
+          <p>{{ notification.message }}</p>
+          <small>{{ notification.created_ts| date:'short' }}</small>
+        </div>
+
+        <!-- If there are any data requirements, don't show the resolution buttons
+            Instead show the single "respond" button.  When pressed, that draws
+            the data form fields.
+        -->
+        @let showButtons = isButtonsVisible(notification.id);
+        @let formGroup = this.formMap[notification.id];
+
+        @if (showButtons) {
+          @if (formGroup) {
+            <div class="form">
+              <form [formGroup]="formGroup" mat-dialog-content>
+                <ng-container>
+                  @for(dr of notification.dataRequirements; track dr.name) {
+                    <mat-form-field>
+                      <mat-label>{{ dr.label }}</mat-label>
+                      <textarea matInput type="textarea" [formControlName]="dr.name" (click)="$event.stopPropagation()"></textarea>
+                    </mat-form-field>
+                  }
+                </ng-container>
+              </form>
+            </div>
+          }
+        }
+      </div>
+
+      <span class="buttons">
+        @if (! showButtons) {
+          <button mat-button (click)="$event.stopPropagation(); toggleShowButtons(notification.id)">Resolve</button>
+        }
+    
+        <!-- Resolution buttons -->
+        @if (showButtons) {
+          @if (formGroup) {
+            <button mat-button (click)="$event.stopPropagation(); toggleShowButtons(notification.id)">Collapse</button>
+          }
+          @for(opt of notification.resolutionOptions; track opt.buttonText) {
+            <button mat-button (click)="$event.stopPropagation(); runFunction(opt, notification)">{{ opt.buttonText }}</button>
+          }
+        }
+      </span>
+    </div>
     }
 
     @if (notifications.length == 0) {

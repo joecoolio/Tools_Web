@@ -27,6 +27,8 @@ const URL_UPDATE_TOOL = API_URL + 'v1/updatetool';
 const URL_CREATE_TOOL = API_URL + 'v1/createtool';
 const URL_BORROW_TOOL = API_URL + 'v1/requestborrow';
 const URL_CANCEL_BORROW_TOOL = API_URL + 'v1/deleteborrowrequest';
+const URL_ACCEPT_BORROW_TOOL = API_URL + 'v1/acceptborrow';
+const URL_REJECT_BORROW_TOOL = API_URL + 'v1/rejectborrow';
 const URL_GET_NOTIFICATIONS = API_URL + 'v1/getnotifications';
 const URL_RESOLVE_NOTIFICATION = API_URL + 'v1/resolvenotification';
 
@@ -69,6 +71,8 @@ export interface MyInfo extends DbSourceObject, MappableObject, BaseImageObject 
     name: string,
     nickname: string,
     home_address: string,
+    phone_number: string,
+    email: string,
 }
 
 // Data for a neighbor
@@ -99,6 +103,18 @@ export interface Notification {
     read: boolean,
 }
 
+export enum ToolStatus {
+    Unknown = "unknown",            // default value
+        // Statuses for tools that I own
+    Owned = "owned",                // I own the tool and it's not lent out right now
+    Held = "held",                  // I own the tool but nobody can borrow it (e.g. I'm using it)
+    Lent = "lent",                  // I own the tool and it's lent out
+        // Statuses for tools that others own
+    Available = "available",        // Available for me to borrow
+    Unavailable = "unavailable",    // Not available for me to borrow (e.g. held or lent to someone else)
+    Requested = "requested",        // I asked to borrow this but the owner hasn't answered yet
+                                    // or it's mine and someone has requested it
+}
 
 // Data for a tool
 export interface Tool extends DbSourceObject, MappableObject, BaseImageObject {
@@ -115,7 +131,7 @@ export interface Tool extends DbSourceObject, MappableObject, BaseImageObject {
     ownerimageUrl: SafeUrl | undefined,
     ownerLoaded: boolean,
     ownerImageLoaded: boolean,
-    status: "unknown" | "owned" | "available"
+    status: ToolStatus
 }
 
 // A tool category
@@ -163,7 +179,9 @@ export class DataService {
         nickname: '',
         home_address: '',
         loaded: false,
-        imageLoaded: false
+        imageLoaded: false,
+        phone_number: '',
+        email: ''
     };
 
     // Signals for my info.  Use this to get the current logged in guy & his picture.
@@ -564,7 +582,7 @@ export class DataService {
                 imageLoaded: false,
                 ownerLoaded: false,
                 ownerImageLoaded: false,
-                status: 'unknown'
+                status: ToolStatus.Unknown,
             };
             this.toolCache.set(id, tool);
             return tool;
@@ -719,5 +737,34 @@ export class DataService {
         );
     }
 
+    // Accept a borrow request
+    acceptBorrowRequest(neighborId: number, toolId: number, notificationId: number, message: string) : Observable<void> {
+        const body = {
+            toolId: toolId,
+            notificationId: notificationId,
+            message: message
+        };
+
+        return this.http.post<void>(
+            URL_ACCEPT_BORROW_TOOL,
+            body,
+            {}
+        );
+    }
+
+    // Accept a borrow request
+    rejectBorrowRequest(neighborId: number, toolId: number, notificationId: number, message: string) : Observable<void> {
+        const body = {
+            toolId: toolId,
+            notificationId: notificationId,
+            message: message
+        };
+
+        return this.http.post<void>(
+            URL_ACCEPT_BORROW_TOOL,
+            body,
+            {}
+        );
+    }
 }
 

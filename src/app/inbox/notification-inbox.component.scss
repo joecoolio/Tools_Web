@@ -38,6 +38,7 @@
 .message-card {
   color: black;
   display: flex;
+  flex-direction: row;
   align-items: flex-start;
   margin-bottom: 1rem;
   padding: 0.5rem;
@@ -45,6 +46,11 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   background-color: #d7d7d7;
   position: relative;
+
+  .col {
+    display: flex;
+    flex-direction: column;
+  }
 
   &.unread {
     background-color: #f9f9f9;
@@ -59,6 +65,17 @@
 
   .message-content {
     flex: 1;
+  }
+
+  .form {
+    flex: 1;
+    width: 100%;
+    margin-left: 0px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+  .form > form > mat-form-field {
+    width: 100%;
   }
 
   .buttons {

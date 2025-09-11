@@ -21,8 +21,8 @@ export class ConfirmDialogComponent {
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<ConfirmDialogComponent>,
 
-    @Inject(MAT_DIALOG_DATA) public data: { title: string; message: string, fields: FieldConfig[], initialData: any })
-  {
+    @Inject(MAT_DIALOG_DATA) public data: { title: string; message: string, fields: FieldConfig[], initialData: any }
+  ) {
     this.form = this.fb.group({});
     data.fields.forEach(field => {
       this.form.addControl(field.name, this.fb.control(data.initialData[field.name] || ''));

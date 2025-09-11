@@ -15,8 +15,12 @@
   </div>
   <section class="button-section">
     <!-- TODO: Put the right buttons on the screen -->
+    @if(tool.status == "available") {
       <button class="btn friend" (click)="borrow()">Borrow</button>
+    }
+    @else if (tool.status == "requested") {
       <button class="btn" (click)="cancelrequest()">Cancel</button>
+    }
   </section>
 
 </div>

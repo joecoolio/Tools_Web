@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnInit, ViewChild } from "@angular/core";
-import { DataService, Tool, ToolCategory } from "../../services/data.service";
+import { DataService, Tool, ToolCategory, ToolStatus } from "../../services/data.service";
 import { MatCardModule } from "@angular/material/card";
 import { MatSelectModule } from "@angular/material/select";
 import { MatIconModule } from "@angular/material/icon";
@@ -24,14 +24,14 @@ export function moneyValidator(control: AbstractControl): ValidationErrors | nul
     templateUrl: './mytools.component.html',
     styleUrl: './mytools.component.scss',
     imports: [
-    MatCardModule,
-    MatSelectModule,
-    MatIconModule,
-    MatTooltipModule,
-    ReactiveFormsModule,
-    FontAwesomeModule,
-    BrowseToolsToolCardComponent
-]
+        MatCardModule,
+        MatSelectModule,
+        MatIconModule,
+        MatTooltipModule,
+        ReactiveFormsModule,
+        FontAwesomeModule,
+        BrowseToolsToolCardComponent
+    ]
 })
 export class MyToolsComponent implements OnInit {
     @ViewChild('photoInput', { static: false }) fileInput!: ElementRef;
@@ -108,7 +108,7 @@ export class MyToolsComponent implements OnInit {
             ownerName: "",
             ownerimageUrl: undefined,
             ownerImageLoaded: false,
-            status: "unknown",
+            status: ToolStatus.Unknown,
         };
 
         // Update the form fields
