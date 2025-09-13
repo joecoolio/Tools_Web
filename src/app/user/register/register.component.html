@@ -8,6 +8,7 @@
             <fieldset class="section" formGroupName="login">
                 @let userid = settingsForm.get("login")?.get("userid");
                 @let password = settingsForm.get("login")?.get("password");
+                @let passwordVerify = settingsForm.get("login")?.get("passwordVerify");
 
                 <legend>Login Information (1/3)</legend>
                 <div class="form-row">
@@ -19,13 +20,25 @@
                                 Enter a valid userid.
                             </mat-error>
                         }
-                        @if (userid?.hasError("alreadyInUse")) {
+                        @else if (userid?.hasError("alreadyInUse")) {
                             <mat-error>
                                 That userid is not available.
                             </mat-error>
                         }
-                        @if (userid?.valid) {
+                        @else if (userid?.hasError("apiError")) {
+                            <mat-error>
+                                Unable to validate the userid.
+                            </mat-error>
+                        }
+                        @else if (userid?.valid) {
                             <mat-icon matSuffix class="valid-check">check_circle</mat-icon>
+                        }
+                        @if (validatingUserid) {
+                            <mat-progress-spinner matSuffix
+                                mode="indeterminate"
+                                diameter="32"
+                                color="accent">
+                            </mat-progress-spinner>
                         }
                     </mat-form-field>
                 </div>
@@ -38,6 +51,19 @@
                             Enter a valid password.
                         </mat-error>
                         @if (password?.valid) {
+                            <mat-icon matSuffix class="valid-check">check_circle</mat-icon>
+                        }
+                    </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                    <mat-form-field>
+                        <mat-label>Password (again)</mat-label>
+                        <input matInput id="passwordVerify" formControlName="passwordVerify" type="password" />
+                        <mat-error>
+                            The passwords don't match.
+                        </mat-error>
+                        @if (passwordVerify?.valid) {
                             <mat-icon matSuffix class="valid-check">check_circle</mat-icon>
                         }
                     </mat-form-field>
@@ -90,13 +116,25 @@
                                 Address is required.
                             </mat-error>
                         }
-                        @else if (address?.invalid) {
+                        @else if (address?.hasError("invalidAddress")) {
                             <mat-error>
                                 We're unable to find your address, try again?
                             </mat-error>
                         }
-                        @if (address?.valid) {
+                        @else if (address?.hasError("apiError")) {
+                            <mat-error>
+                                Unable to validate the address.
+                            </mat-error>
+                        }
+                        @else if (address?.valid) {
                             <mat-icon matSuffix class="valid-check">check_circle</mat-icon>
+                        }
+                        @if (validatingAddress) {
+                            <mat-progress-spinner matSuffix
+                                mode="indeterminate"
+                                diameter="32"
+                                color="accent">
+                            </mat-progress-spinner>
                         }
                     </mat-form-field>
                 </div>
@@ -155,6 +193,16 @@
             </fieldset>
         }
 
+        @if (errorMessage) {
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <div class="error-message">
+                    <h3>Oops! Something went wrong.</h3>
+                    <p>{{ errorMessage }}</p>
+                </div>
+            </div>
+        }
+
         <div class="buttons">
             @if (currentStep > 1) {
                 <button type="button" mat-raised-button (click)="previousStep()">Previous Step</button>
@@ -164,8 +212,18 @@
             }
             @if (currentStep == 3) {
                 <button mat-raised-button type="submit"
-                    [disabled]="settingsForm.invalid">
-                    <span [ngClass]="{ 'spinner-border spinner-border-sm': loading }"></span> Register
+                    [disabled]="settingsForm.invalid || loading">
+                    @if (loading) {
+                        <mat-progress-spinner
+                            diameter="20"
+                            mode="indeterminate"
+                            color="accent"
+                            class="spinner-inline">
+                        </mat-progress-spinner>
+                    }
+                    @else {
+                        <span [ngClass]="{ 'spinner-border spinner-border-sm': loading }"></span> Register
+                    }
                 </button>
             }
         </div>

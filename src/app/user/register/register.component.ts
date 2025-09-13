@@ -2,7 +2,7 @@ import { Component, ElementRef, NgZone, ViewChild } from '@angular/core';
 import { Validators, FormGroup, ReactiveFormsModule, FormBuilder, AbstractControl, ValidationErrors } from '@angular/forms';
 import { NavigationExtras, Router, RouterLinkWithHref } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { AuthService, RegisterData } from '../../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 import { TokenService } from '../../services/token.service';
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -13,8 +13,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { CommonModule } from '@angular/common';
-import { EMPTY, finalize, map, Observable } from 'rxjs';
+import { catchError, EMPTY, finalize, map, Observable, of } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 
 @Component({
   selector: 'app-register',
@@ -31,7 +32,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatTooltipModule,
     FontAwesomeModule,
     MatIconModule,
-  ]
+    MatProgressSpinnerModule
+]
 })
 export class RegisterComponent {
   @ViewChild('photoInput', { static: false }) fileInput!: ElementRef;
@@ -64,6 +66,7 @@ export class RegisterComponent {
           updateOn: 'blur'
         }],
         password: ['', Validators.required],
+        passwordVerify: ['', [Validators.required, this.validatePasswordMatch]],
       }),
       personal: this.fb.group({
         name: ['', Validators.required],
@@ -100,13 +103,30 @@ export class RegisterComponent {
     this.validatingUserid = true;
     const value: string = control.value;
     if (value && value.length > 1) {
+      let apiError = false;
       return this.dataService.useridIsAvailable(control.value).pipe(
-        map(valid => valid ? null : { alreadyInUse: true }),
-        finalize(() => this.validatingUserid = false)
+        catchError(error => {
+          console.error('API error validating the userid:', error);
+          apiError = true;
+          return of(false);
+        }),
+        map(valid => {
+          if (valid) return null;
+          else {
+            if (apiError) return { apiError: true }
+            else return { alreadyInUse: true }
+          }
+        }),
+        finalize(() => this.validatingUserid = false),
       );
     } else {
       return EMPTY;
     }
+  }
+
+  validatePasswordMatch(control: AbstractControl): ValidationErrors | null {
+    const password = control.parent?.get('password')?.value;
+    return control.value === password ? null : { notSame: true };
   }
 
   // Make sure that an address lookup works for this guy.
@@ -115,8 +135,20 @@ export class RegisterComponent {
     this.validatingAddress = true;
     const value: string = control.value;
     if (value && value.length > 1) {
+      let apiError = false;
       return this.dataService.validateAddress(control.value).pipe(
-        map(valid => valid ? null : { invalidAddress: true }),
+        catchError(error => {
+          console.error('API error validating the address:', error);
+          apiError = true;
+          return of(false);
+        }),
+        map(valid => {
+          if (valid) return null;
+          else {
+            if (apiError) return { apiError: true }
+            else return { invalidAddress: true }
+          }
+        }),
         finalize(() => this.validatingAddress = false)
       );
     } else {
@@ -160,6 +192,9 @@ export class RegisterComponent {
 
   onSubmit(): void {
     if (this.settingsForm.valid) {
+      // Reset the error message
+      this.errorMessage = "";
+
       const formData = new FormData();
       Object.entries(this.settingsForm.get('login')?.value).forEach(([key, value]) => {
         formData.append(key, value as string | Blob);
@@ -177,8 +212,6 @@ export class RegisterComponent {
       .subscribe({
         // Success
         next: (resp) => {
-          this.loading = false;
-
           // Redirect to the main page
           const navigationExtras: NavigationExtras = {state: {data: 'Login Successful!'}};
           this.router.navigate(['home']);
@@ -190,6 +223,8 @@ export class RegisterComponent {
           // This will ensure my info is cached as well as the picture.
           this.dataService.expireMyInfo.set(true);
           this.dataService.getMyInfo();
+
+          this.loading = false;
         },
         // Failure
         error: (err) => {

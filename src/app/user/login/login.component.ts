@@ -9,6 +9,8 @@ import { MatCardModule } from '@angular/material/card';
 import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { MessageService } from '../../services/message.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   standalone: true,
@@ -23,6 +25,8 @@ import { MessageService } from '../../services/message.service';
     MatInputModule,
     MatButtonModule,
     RouterLinkWithHref,
+    MatIconModule,
+    MatProgressSpinnerModule
   ]
 })
 export class LoginComponent {
@@ -35,23 +39,10 @@ export class LoginComponent {
   ) {
     this.errorMessage = "";
     this.loading = false;
-
-    // Get navigation data including any message
-    const navigation = this.router.getCurrentNavigation();
-    if (navigation == null || navigation.extras.state == null) {
-      this.routerMessage = null;
-    } else {
-      const state = navigation.extras.state as {data: string};
-      this.routerMessage = state.data;
-      console.log("Reset message: " + this.routerMessage);
-    }
   }
 
   ngOnInit() {
   }
-
-  // If sent here from elsewhere, show the message explaining why
-  routerMessage: string | null;
 
   // Form fields
   userid: FormControl = new FormControl('', [Validators.required ]);
@@ -74,14 +65,15 @@ export class LoginComponent {
 
   // Login an existing user
   login(): void {
+    // Reset the error message
+    this.errorMessage = "";
+
     this.loading = true;
 
     this.authService.login(this.userid.value, this.password.value)
     .subscribe({
       // Success
       next: (resp) => {
-        this.loading = false;
-
         // Redirect to the main page
         const navigationExtras: NavigationExtras = {state: {data: 'Login Successful!'}};
         this.router.navigate(['home']);
@@ -93,6 +85,8 @@ export class LoginComponent {
         // This will ensure my info is cached as well as the picture.
         this.dataService.expireMyInfo.set(true);
         this.dataService.getMyInfo();
+
+        this.loading = false;
       },
       // Failure
       error: (err) => {

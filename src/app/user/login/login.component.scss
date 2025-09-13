@@ -42,7 +42,7 @@ mat-card {
 }
 
 mat-form-field {
-    width: 100%;
+    width: 300px;
     min-width: 300px;
     display: block;
 }
@@ -56,4 +56,44 @@ mat-form-field {
 
 .donthavea {
     font-style: italic;
+}
+
+.error-container {
+  display: flex;
+  align-items: flex-start;
+  background-color: #ffe6e6;
+  border: 1px solid #ff4d4d;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 12px 0;
+  box-shadow: 0 2px 6px rgba(255, 77, 77, 0.2);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.error-icon {
+  font-size: 24px;
+  margin-right: 12px;
+  color: #d8000c;
+}
+
+.error-message h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #d8000c;
+}
+
+.error-message p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.spinner-inline {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
