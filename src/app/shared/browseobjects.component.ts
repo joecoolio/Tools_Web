@@ -5,7 +5,7 @@ import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatCardModule } from "@angular/material/card";
 import { RouterModule } from "@angular/router";
 import { SortedArray } from "../services/sortedarray";
-import { forkJoin, map, Observable } from "rxjs";
+import { forkJoin, map, Observable, Subject } from "rxjs";
 import { latLng, LatLng } from "leaflet";
 
 // Extend the leaflet Marker to include a distance (in meters) from me.
@@ -75,12 +75,19 @@ export abstract class BrowseObjectsComponent implements OnInit {
 
     // Called by subclasses to refresh the whole set of data
     // and redraw it on the screen.
-    protected refreshData(): void {
-        // Refresh the map data (to flag the newly requested friend)
+    // Fires the observable when it's done, just in case someone needs to know.
+    protected refreshData(): Observable<void> {
+        const dataLoadFinished$ = new Subject<void>();
+
         this._getAllData().subscribe((markerData: MarkerData[]) => {
             this.markerData = markerData;
             this.map.markerData = this.markerData;
+
+            dataLoadFinished$.next();
+            dataLoadFinished$.complete();
         });
+
+        return dataLoadFinished$;
     }
 
     // Get all data from subclasses + the "Me" layer.

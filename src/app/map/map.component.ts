@@ -55,7 +55,6 @@ Marker.prototype.options.icon = iconDefault;
     LeafletDirective,
     LeafletModule,
     LeafletMarkerClusterModule,
-    // CardComponent,
   ],
   templateUrl: './map.component.html',
   styleUrl: './map.component.scss',
@@ -288,5 +287,13 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
   // This is just a passthrough to the map.
   public setMapView(center: L.LatLngExpression, zoom?: number, options?: L.ZoomPanOptions) {
     this.map.setView(center, zoom, options);
+  }
+
+  // Reset the map to fit the bounds of the provided Layer.
+  public setMapBounds(latitude: number, longitude: number, radiusMiles: number) {
+    const circle = L.circle([latitude, longitude], { radius: radiusMiles * 1609.344 });
+    this.map.addLayer(circle);
+    this.map.fitBounds(circle.getBounds());
+    this.map.removeLayer(circle);
   }
 }

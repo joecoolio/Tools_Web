@@ -174,6 +174,9 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
     // Runs when the select changes
     public radiusChange(radius: number): void {
         this.radius = radius;
-        this.refreshData();
+        this.refreshData().subscribe(() => {
+            // Reset the map to recenter & show the provided radius
+            this.map.setMapBounds(this.dataService.myInfoSignal().latitude, this.dataService.myInfoSignal().longitude, this.radius);
+        });
     }
 }

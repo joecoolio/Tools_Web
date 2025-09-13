@@ -4,7 +4,7 @@
             <div class="header">
                 <h2><span [class.bounce]="objectCountBounceFlag()">🔍</span> <span [class.bounce]="objectCountBounceFlag()">{{ allVisibleObjectsCount() }}</span> Tools</h2>
                 <span>Search radius:</span>
-                <select #radiusSelect [(ngModel)]="this.radius" (click)="radiusChange(+radiusSelect.value)">
+                <select #radiusSelect [(ngModel)]="this.radius" (change)="radiusChange(+radiusSelect.value)">
                     @for (radius of this.globalValuesService.browseRadii; track radius.value) {
                         <option [value]="radius.value">{{ radius.text }}</option>
                     }
