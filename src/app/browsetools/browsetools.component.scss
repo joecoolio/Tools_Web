@@ -31,11 +31,21 @@
 }
 
 .left-section {
+  display: flex;
+  flex-direction: column;
   flex: 1 5 30%;
   min-width: 20%;
   overflow-y: auto;
   background-color: #f0f8ff;
   border-right: 2px solid #ccc;
+
+  .top-section {
+    flex: 0 0 auto; /* prevent it from growing or shrinking */
+  }
+  .bottom-section {
+    flex: 1 1 auto; /* take remaining space */
+    overflow-y: auto;
+  }
 }
 
 .grabber{
