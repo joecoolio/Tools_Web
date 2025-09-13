@@ -15,9 +15,13 @@ const httpOptions = {
 
 export interface RegisterData {
     userid: string,
-    name: string,
     password: string,
+    name: string,
+    nickname: string,
     address: string,
+    phone_number: string,
+    email: string,
+    photo: Blob,
 }
 
 export interface LoginResult {
@@ -36,8 +40,7 @@ export class AuthService {
     // Register
     register(formData: FormData): Observable<HttpResponse<LoginResult>> {
         const userid: string = (formData.get('userid') as string) ?? '';
-        console.log('Authservice Register: ' + userid);
-        
+
         return this.http.post<LoginResult>(
             API_URL + 'v1/auth/register',
             formData,

@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment'
 
 // URLs
 const API_URL = environment.baseUrl;
+const URL_USERID_AVAILABLE = API_URL + 'v1/auth/useridavailable';
 const URL_MY_INFO = API_URL + 'v1/myinfo';
 const URL_VALIDATE_ADDRESS = API_URL + 'v1/validateaddress';
 const URL_UPDATE_MY_INFO = API_URL + 'v1/updateinfo';
@@ -189,6 +190,20 @@ export class DataService {
     // Public signals
     public readonly myInfoSignal: Signal<MyInfo>;
     public expireMyInfo: WritableSignal<boolean>; // If true, we need to discard MyInfo
+
+    // Check if a given userid is available
+    useridIsAvailable(userid: string): Observable<boolean> {
+        const body = {
+            userid: userid
+        };
+        return this.http.post<SuccessResult>(
+            URL_USERID_AVAILABLE,
+            body,
+            {},
+        ).pipe(
+            map((sr: SuccessResult) => sr.result)
+        );
+    }
 
     // Get my info
     getMyInfo(): Observable<Signal<MyInfo>> {

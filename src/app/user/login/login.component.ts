@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
@@ -7,8 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { NavigationExtras, Router, RouterLinkWithHref } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
-import { AuthService, LoginResult } from '../../services/auth.service';
-import { TokenService } from '../../services/token.service';
+import { AuthService } from '../../services/auth.service';
 import { DataService } from '../../services/data.service';
 import { MessageService } from '../../services/message.service';
 
@@ -24,7 +22,6 @@ import { MessageService } from '../../services/message.service';
     ReactiveFormsModule,
     MatInputModule,
     MatButtonModule,
-    
     RouterLinkWithHref,
   ]
 })
@@ -37,7 +34,7 @@ export class LoginComponent {
     private messageService: MessageService,
   ) {
     this.errorMessage = "";
-    this.loginRunning = false;
+    this.loading = false;
 
     // Get navigation data including any message
     const navigation = this.router.getCurrentNavigation();
@@ -73,22 +70,22 @@ export class LoginComponent {
   errorMessage: string;
 
   // Flags to indicate that buttons were pushed causing an API call to be running
-  loginRunning: boolean;
+  loading: boolean;
 
   // Login an existing user
   login(): void {
-    this.loginRunning = true;
+    this.loading = true;
 
     this.authService.login(this.userid.value, this.password.value)
     .subscribe({
       // Success
-      next: ((resp: HttpResponse<LoginResult>) => {
-        this.loginRunning = false;
+      next: (resp) => {
+        this.loading = false;
 
-        // Redirect to the user settings page
+        // Redirect to the main page
         const navigationExtras: NavigationExtras = {state: {data: 'Login Successful!'}};
         this.router.navigate(['home']);
-      }),
+      },
       complete: () => {
         this.messageService.send('info', "Welcome back!");
 
@@ -101,7 +98,7 @@ export class LoginComponent {
       error: (err) => {
         this.errorMessage = "Login failed, try again?"
         console.log("LoginComponent: Login failure", err);
-        this.loginRunning = false;
+        this.loading = false;
       }
     });
   }
