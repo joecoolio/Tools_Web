@@ -33,8 +33,24 @@
                 </h2>
                 <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()">
                     <div class="form-row">
+                        <label for="brand">Brand</label>
+                        <input id="brand" formControlName="brand" type="text" (change)="getSuggestedCategory()"/>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="short_name">Short Name</label>
+                        <input id="short_name" formControlName="short_name" type="text"
+                            matTooltip="A brief name e.g. 'Car Jack' or 'Shovel'." (change)="getSuggestedCategory()"/>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="name">Name</label>
+                        <input id="name" formControlName="name" type="text" matTooltip="The tool's full name." (change)="getSuggestedCategory()"/>
+                    </div>
+
+                    <div class="form-row">
                         <label for="category">Category</label>
-                        <mat-select formControlName="category">
+                        <mat-select matInput formControlName="category">
                             <mat-option disabled>Select a category</mat-option>
 
                             @for(cat of toolCategories; track cat.id; let i = $index) {
@@ -43,26 +59,16 @@
                                 </mat-option>
                             }
                         </mat-select>
+                        @if (toolCategoryLoading) {
+                            <mat-progress-spinner matSuffix
+                                mode="indeterminate"
+                                diameter="32"
+                                color="accent">
+                            </mat-progress-spinner>
+                        }
                         @if(settingsForm.get('category')?.hasError('required')) {
                             <mat-error>🛠 Please select a category</mat-error>
                         }
-
-                    </div>
-
-                    <div class="form-row">
-                        <label for="brand">Brand</label>
-                        <input id="brand" formControlName="brand" type="text" />
-                    </div>
-
-                    <div class="form-row">
-                        <label for="short_name">Short Name</label>
-                        <input id="short_name" formControlName="short_name" type="text"
-                            matTooltip="A brief name e.g. 'Car Jack' or 'Shovel'." />
-                    </div>
-
-                    <div class="form-row">
-                        <label for="name">Name</label>
-                        <input id="name" formControlName="name" type="text" matTooltip="The tool's full name." />
                     </div>
 
                     <div class="form-row">

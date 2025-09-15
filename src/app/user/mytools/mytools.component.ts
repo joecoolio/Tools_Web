@@ -12,6 +12,7 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { catchError, EMPTY } from "rxjs";
 import { MessageService } from "../../services/message.service";
 import { BrowseToolsToolCardComponent } from "../../browsetools/toolcard.component";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 
 export function moneyValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
@@ -30,7 +31,8 @@ export function moneyValidator(control: AbstractControl): ValidationErrors | nul
         MatTooltipModule,
         ReactiveFormsModule,
         FontAwesomeModule,
-        BrowseToolsToolCardComponent
+        BrowseToolsToolCardComponent,
+        MatProgressSpinnerModule,
     ]
 })
 export class MyToolsComponent implements OnInit {
@@ -40,6 +42,7 @@ export class MyToolsComponent implements OnInit {
     faCirclePlus = faCirclePlus;
     loading: boolean = true; // Is data currently loading or not
     toolCategories: ToolCategory[] = []; // List of tool categories
+    toolCategoryLoading: boolean = false; // True when guessing the category
     tools: Tool[] = []; // List of my tools
     selectedTool: Tool | undefined; // Selected tool for editing
     settingsForm!: FormGroup; // Web form
@@ -123,6 +126,28 @@ export class MyToolsComponent implements OnInit {
         });
 
         this.resetPhoto();
+    }
+
+    // Get a guess of the tool category.
+    getSuggestedCategory() {
+        let desc: string =
+            this.settingsForm.get('brand')?.value + " " +
+            this.settingsForm.get('short_name')?.value + " " +
+            this.settingsForm.get('name')?.value;
+
+        if (desc.length > 0) {
+            this.toolCategoryLoading = true;
+            this.dataService.getSuggestedCategory(desc).subscribe({
+                next: value => {
+                    if (value) {
+                        console.log(JSON.stringify(value));
+                        this.settingsForm.patchValue({ category: value.id });
+                    }
+                },
+                complete: () => this.toolCategoryLoading = false,
+                error: err => this.toolCategoryLoading = false
+            });
+        }
     }
 
     selectTool(index: number) {

@@ -1,5 +1,5 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { EMPTY, iif, map, Observable, of, tap } from 'rxjs';
+import { catchError, EMPTY, iif, map, Observable, of, tap } from 'rxjs';
 import { effect, Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { BoundedMap } from './boundedmap';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -21,6 +21,7 @@ const URL_CANCEL_FRIENDSHIP_REQ = API_URL + 'v1/deletefriendshiprequest';
 const URL_REMOVE_FRIENDSHIP = API_URL + 'v1/removefriendship';
 const URL_MY_TOOLS = API_URL + 'v1/getmytools'
 const URL_ALL_TOOLS = API_URL + 'v1/getalltools';
+const URL_GET_TOOL_CATEGORY = API_URL + 'v1/toolcategory';
 const URL_GET_TOOL = API_URL + 'v1/gettool';
 const URL_GET_PICTURE = API_URL + 'v1/getImage';
 const URL_GET_TOOL_CATEGORIES = API_URL + 'v1/gettoolcategories';
@@ -32,6 +33,7 @@ const URL_ACCEPT_BORROW_TOOL = API_URL + 'v1/acceptborrow';
 const URL_REJECT_BORROW_TOOL = API_URL + 'v1/rejectborrow';
 const URL_GET_NOTIFICATIONS = API_URL + 'v1/getnotifications';
 const URL_RESOLVE_NOTIFICATION = API_URL + 'v1/resolvenotification';
+
 
 // Timeout for remote calls
 const HTTP_TIMEOUT: number = 5000;
@@ -602,6 +604,21 @@ export class DataService {
             this.toolCache.set(id, tool);
             return tool;
         }
+    }
+
+    // Get the suggested category for a tool.
+    getSuggestedCategory(description: string): Observable<ToolCategory | undefined> {
+        return this.http.post<ToolCategory>(
+            URL_GET_TOOL_CATEGORY,
+                { tooldescription: description },
+                {}
+            )
+        .pipe(
+            catchError(err => {
+                console.log("Can't guess tool category: " + err);
+                return of(undefined)
+            })
+        )
     }
 
     // Get a single tool.  If not loaded, load it immediately.
