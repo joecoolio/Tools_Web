@@ -50,14 +50,30 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
             // Default 1 mile
             this.radius = 1;
         }
+
+        // Get the provided search terms (if it was provided)
+        if (nav?.extras.state?.['searchCriteria']) {
+            this.searchCriteria = nav?.extras.state?.['searchCriteria'];
+        } else {
+            // Default 1 mile
+            this.searchCriteria = "";
+        }
+
     }
     // Stuff for the map
     private readonly layerGroupNameFriends: string = "Friends"; // My friends (and friends-of-friends)
     private readonly layerGroupNameNonFriends: string = "Others"; // Other neighbors
     readonly layerGroupNames: string[] = [ this.layerGroupNameFriends, this.layerGroupNameNonFriends ];
     
-    // Radius in which to search
-    radius!: number;
+    /////
+    // Search Criteria
+    /////
+
+    radius!: number; // Radius in which to search
+    searchCriteria!: string; // Keyword search criteria
+    searchWithAnd: string = "N"; // Y = use (a & b), N = (a | b)
+    
+    /////
 
     // All the neighbors - in sync with what's provided in this.markerData.
     private neighbors: Neighbor[] = [];
@@ -65,9 +81,14 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
     // Get all data into this.markerData.
     // Also put all the neighbor objects in this.neighbors.
     protected getAllData(): Observable<MarkerData[]> {
+        const searchArray: string[] = [];
+        if (this.searchCriteria)
+            searchArray.push(... this.searchCriteria.split(/\W+/).filter(Boolean));
+        const searchAnd: boolean = this.searchWithAnd === "Y";
+
         return forkJoin([
-            this.dataService.getFriends(this.radius),
-            this.dataService.listNeighbors(this.radius),
+            this.dataService.getFriends(999, this.radius, searchArray, searchAnd),
+            this.dataService.listNeighbors(this.radius, searchArray, searchAnd),
             this.dataService.getMyInfo(),
         ])
         .pipe(
@@ -207,12 +228,16 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
         });
     }
    
-    // Runs when the select changes
-    public radiusChange(radius: number): void {
+    // Runs when the input changes
+    public searchCriteriaChange(radius: number, searchText: string, searchWithAnd: string): void {
         this.radius = radius;
+        this.searchCriteria = searchText;
+        this.searchWithAnd = searchWithAnd;
+
         this.refreshData().subscribe(() => {
             // Reset the map to recenter & show the provided radius
             this.map.setMapBounds(this.dataService.myInfoSignal().latitude, this.dataService.myInfoSignal().longitude, this.radius);
         });
     }
+
 }

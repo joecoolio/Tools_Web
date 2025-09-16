@@ -2,14 +2,35 @@
     <div class="left-section" #leftSection>
         @if(allVisibleObjects) {
             <div class="top-section">
-                <div class="neighbor-header">
+                <div class="header">
                     <h2><span [class.bounce]="objectCountBounceFlag()">🔍</span> <span [class.bounce]="objectCountBounceFlag()">{{ allVisibleObjectsCount() }}</span> Neighbors</h2>
-                    <span>Search radius:</span>
-                    <select #radiusSelect [(ngModel)]="this.radius" (change)="radiusChange(+radiusSelect.value)">
-                        @for (radius of this.globalValuesService.browseRadii; track radius.value) {
-                            <option [value]="radius.value">{{ radius.text }}</option>
-                        }
-                    </select>
+                    <div class="searchbox">
+                        <div>
+                            <div>
+                                <span>Search Radius:</span>
+                                <select #radiusSelect [(ngModel)]="this.radius" (change)="searchCriteriaChange(+radiusSelect.value, searchCriteria.value, searchWithAnd.value)">
+                                    @for (radius of this.globalValuesService.browseRadii; track radius.value) {
+                                        <option [value]="radius.value">{{ radius.text }}</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div>
+                                <span>Search Type:</span>
+                                <select #searchWithAnd [(ngModel)]="this.searchWithAnd" (change)="searchCriteriaChange(+radiusSelect.value, searchCriteria.value, searchWithAnd.value)">
+                                    <option value="Y">Match All Values</option>
+                                    <option value="N">Match Any Value</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div>
+                                <span>Search criteria:</span>
+                                <input #searchCriteria [(ngModel)]="this.searchCriteria" (change)="searchCriteriaChange(+radiusSelect.value, searchCriteria.value, searchWithAnd.value)">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

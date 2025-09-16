@@ -70,6 +70,8 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
     searchCriteria!: string; // Keyword search criteria
     searchWithAnd: string = "N"; // Y = use (a & b), N = (a | b)
     
+    /////
+
     // All the neighbors - in sync with what's provided in this.markerData.
     private tools: Tool[] = [];
 

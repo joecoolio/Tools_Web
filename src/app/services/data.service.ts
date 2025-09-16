@@ -285,19 +285,13 @@ export class DataService {
     // Get my friends.
     // If the friend is already in the cache, return that object but updated.
     // Put anything new in the neighbor cache.
-    getFriends(depth: number = 999): Observable<Neighbor[]> {
-        const body = {
-            depth: depth
-        };
-        return this._getNeighbors(URL_FRIENDS, body);
+    getFriends(depth: number = 999, radiusMiles: number = 100, searchCriteria: string[] = [], searchWithAnd: boolean = false): Observable<Neighbor[]> {
+        return this._getNeighbors(URL_FRIENDS, { depth: depth, radius_miles: radiusMiles, search_terms: searchCriteria, search_with_and: searchWithAnd });
     }
 
     // List all neighbors within some radius of me
-    listNeighbors(radiusMiles: number = 100): Observable<Neighbor[]> {
-        const body = {
-            radius_miles: radiusMiles
-        };
-        return this._getNeighbors(URL_ALL_NEIGHBORS, body);
+    listNeighbors(radiusMiles: number = 100, searchCriteria: string[] = [], searchWithAnd: boolean = false): Observable<Neighbor[]> {
+        return this._getNeighbors(URL_ALL_NEIGHBORS, { radius_miles: radiusMiles, search_terms: searchCriteria, search_with_and: searchWithAnd });
     }
 
     // Get my set of neighbors.

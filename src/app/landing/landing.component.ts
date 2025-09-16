@@ -38,11 +38,21 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
     searchTools(): void {
         // Get the selected radius.  Default 1 mile.
-        const inputElement = document.getElementById('searchTermsInput') as HTMLInputElement;
+        const inputElement = document.getElementById('searchTermsInputTools') as HTMLInputElement;
         const value = inputElement.value ? inputElement.value : "";
 
         // Redirect to browse tools component
         const navigationExtras: NavigationExtras = {state: {searchCriteria: value}};
         this.router.navigate(['browse'], navigationExtras);
+    }
+
+    searchNeighbors(): void {
+        // Get the selected radius.  Default 1 mile.
+        const inputElement = document.getElementById('searchTermsInputNeighbors') as HTMLInputElement;
+        const value = inputElement.value ? inputElement.value : "";
+
+        // Redirect to browse tools component
+        const navigationExtras: NavigationExtras = {state: {searchCriteria: value}};
+        this.router.navigate(['friends'], navigationExtras);
     }
 }

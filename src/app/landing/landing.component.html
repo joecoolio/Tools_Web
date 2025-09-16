@@ -5,7 +5,7 @@
       <h2>Search for Tools</h2>
       <img src="/search_for_tools.png">
       <div class="card-controls">
-        <input id="searchTermsInput" type="text" placeholder="Search tools..." />
+        <input id="searchTermsInputTools" type="text" placeholder="Search tools..." />
         <button class="card-button" (click)="searchTools()">Go</button>
       </div>
     </section>
@@ -27,7 +27,10 @@
     <section class="search-neighbors">
       <h2>Search for Friends</h2>
       <img src="/search_for_friends.png">
-      <input type="text" placeholder="Search neighbors..." />
+      <div class="card-controls">
+        <input id="searchTermsInputNeighbors" type="text" placeholder="Search neighbors..." />
+        <button class="card-button" (click)="searchNeighbors()">Go</button>
+      </div>
     </section>
   </div>
 
