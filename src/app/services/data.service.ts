@@ -22,6 +22,7 @@ const URL_REMOVE_FRIENDSHIP = API_URL + 'v1/removefriendship';
 const URL_MY_TOOLS = API_URL + 'v1/getmytools'
 const URL_ALL_TOOLS = API_URL + 'v1/getalltools';
 const URL_GET_TOOL_CATEGORY = API_URL + 'v1/toolcategory';
+const URL_GET_TOOL_KEYWORDS = API_URL + 'v1/toolkeywords';
 const URL_GET_TOOL = API_URL + 'v1/gettool';
 const URL_GET_PICTURE = API_URL + 'v1/getImage';
 const URL_GET_TOOL_CATEGORIES = API_URL + 'v1/gettoolcategories';
@@ -134,7 +135,8 @@ export interface Tool extends DbSourceObject, MappableObject, BaseImageObject {
     ownerimageUrl: SafeUrl | undefined,
     ownerLoaded: boolean,
     ownerImageLoaded: boolean,
-    status: ToolStatus
+    status: ToolStatus,
+    search_terms: string[],
 }
 
 // A tool category
@@ -600,6 +602,7 @@ export class DataService {
                 ownerLoaded: false,
                 ownerImageLoaded: false,
                 status: ToolStatus.Unknown,
+                search_terms: [],
             };
             this.toolCache.set(id, tool);
             return tool;
@@ -615,7 +618,22 @@ export class DataService {
             )
         .pipe(
             catchError(err => {
-                console.log("Can't guess tool category: " + err);
+                console.log("Can't guess tool category: " + JSON.stringify(err));
+                return of(undefined)
+            })
+        )
+    }
+
+    // Get the suggested keywords for a tool.
+    getSuggestedKeywords(description: string): Observable<string[] | undefined> {
+        return this.http.post<string[]>(
+            URL_GET_TOOL_KEYWORDS,
+                { tooldescription: description },
+                {}
+            )
+        .pipe(
+            catchError(err => {
+                console.log("Can't guess tool keywords: " + err);
                 return of(undefined)
             })
         )

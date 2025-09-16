@@ -34,54 +34,137 @@
                 <form [formGroup]="settingsForm" (ngSubmit)="onSubmit()">
                     <div class="form-row">
                         <label for="brand">Brand</label>
-                        <input id="brand" formControlName="brand" type="text" (change)="getSuggestedCategory()"/>
+                        <div class="wide">
+                            <div class="field">
+                                <mat-form-field class="outline" subscriptSizing="dynamic">
+                                    <input matInput id="brand" formControlName="brand" type="text"/>
+                                    <mat-error>
+                                        Enter a valid value.
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-row">
                         <label for="short_name">Short Name</label>
-                        <input id="short_name" formControlName="short_name" type="text"
-                            matTooltip="A brief name e.g. 'Car Jack' or 'Shovel'." (change)="getSuggestedCategory()"/>
+                        <div class="wide">
+                            <div class="field">
+                                <mat-form-field class="outline" subscriptSizing="dynamic">
+                                    <input matInput id="short_name" formControlName="short_name" type="text"
+                                        matTooltip="A brief name e.g. 'Car Jack' or 'Shovel'."/>
+                                    <mat-error>
+                                        Enter a valid value.
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-row">
                         <label for="name">Name</label>
-                        <input id="name" formControlName="name" type="text" matTooltip="The tool's full name." (change)="getSuggestedCategory()"/>
+                        <div class="wide">
+                            <div class="field">
+                                <mat-form-field class="outline" subscriptSizing="dynamic">
+                                    <input matInput id="name" formControlName="name" type="text" matTooltip="The tool's full name."/>
+                                    <mat-error>
+                                        Enter a valid value.
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        @let brand = settingsForm.get('brand');
+                        @let shortName = settingsForm.get('short_name');
+                        @let name = settingsForm.get('name');
+                        <button type="button" mat-raised-button mat-button [disabled]="!brand?.value || !shortName?.value || !name?.value" (click)="getSuggestions()">Suggest Category & Keywords</button>
                     </div>
 
                     <div class="form-row">
                         <label for="category">Category</label>
-                        <mat-select matInput formControlName="category">
-                            <mat-option disabled>Select a category</mat-option>
+                        <mat-form-field class="outline" appearance="outline" subscriptSizing="dynamic">
+                            <mat-select matInput formControlName="category" appearance="outline">
+                                <mat-option disabled>Select a category</mat-option>
 
-                            @for(cat of toolCategories; track cat.id; let i = $index) {
-                                <mat-option [value]="cat.id">
-                                    <mat-icon fontSet="fa" [fontIcon]="cat.icon"></mat-icon> {{ cat.name }}
-                                </mat-option>
+                                @for(cat of toolCategories; track cat.id; let i = $index) {
+                                    <mat-option [value]="cat.id">
+                                        <mat-icon fontSet="fa" [fontIcon]="cat.icon"></mat-icon> {{ cat.name }}
+                                    </mat-option>
+                                }
+                            </mat-select>
+                            @if (toolCategoryLoading) {
+                                <mat-progress-spinner matSuffix
+                                    mode="indeterminate"
+                                    diameter="32"
+                                    color="accent">
+                                </mat-progress-spinner>
                             }
-                        </mat-select>
-                        @if (toolCategoryLoading) {
-                            <mat-progress-spinner matSuffix
-                                mode="indeterminate"
-                                diameter="32"
-                                color="accent">
-                            </mat-progress-spinner>
-                        }
-                        @if(settingsForm.get('category')?.hasError('required')) {
-                            <mat-error>🛠 Please select a category</mat-error>
-                        }
+                            @if(settingsForm.get('category')?.hasError('required')) {
+                                <mat-error>🛠 Please select a category</mat-error>
+                            }
+                        </mat-form-field>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="keywords">Search Keywords</label>
+                        <div class="wide" formArrayName="search_terms">
+                            @for(keyword of search_terms.controls; track keyword; let i = $index) {                                
+                                <div class="field">
+                                    <span class="icon">🡆</span>
+                                    <mat-form-field class="outline" subscriptSizing="dynamic">
+                                        <input matInput id="keyword-{{ i }}" placeholder="Enter up to 5 search keywords" [formControlName]="i">
+                                        @if (toolCategoryLoading) {
+                                            <mat-progress-spinner matSuffix
+                                                mode="indeterminate"
+                                                diameter="32"
+                                                color="accent">
+                                            </mat-progress-spinner>
+                                        }
+                                        <mat-error>Enter a search term.</mat-error>
+                                    </mat-form-field>
+                                    @if (search_terms.length < 5) {
+                                        <span class="icon"><fa-icon [icon]="faCirclePlus" (click)="addKeyword()" matTooltip="Add a search keyword!"></fa-icon></span>
+                                    }
+                                    @if (search_terms.length > 1) {
+                                        <span class="icon"><fa-icon [icon]="faCircleMinus" (click)="removeKeyword(i)" matTooltip="Remove this search keyword!"></fa-icon></span>
+                                    }
+                                </div>
+                            }
+                        </div>
                     </div>
 
                     <div class="form-row">
                         <label for="replacement_cost">Replacement Cost</label>
-                        <input id="replacement_cost" formControlName="replacement_cost" type="text"
-                            matTooltip="How much will it cost to replace this tool if someone loses or breaks it?" />
+                        <div class="wide">
+                            <div class="field">
+                                <mat-form-field class="outline" subscriptSizing="dynamic">
+                                <input matInput appCurrencyFormat id="replacement_cost" formControlName="replacement_cost" type="text"
+                                    matTooltip="How much will it cost to replace this tool if someone loses or breaks it?"
+                                    />
+                                    <mat-error>
+                                        Enter a valid value.
+                                    </mat-error>
+                                </mat-form-field>
+                            </div>
+                        </div>
                     </div>
 
                     @if(selectedTool.id <= 0) {
                         <div class="form-row">
                             <label for="product_url">Product URL</label>
-                            <input id="product_url" formControlName="product_url" type="text"
-                                matTooltip="A link to where you can find more information about this tool." />
+                            <div class="wide">
+                                <div class="field">
+                                    <mat-form-field class="outline" subscriptSizing="dynamic">
+                                        <input matInput id="product_url" formControlName="product_url" type="text"
+                                            matTooltip="A link to where you can find more information about this tool." />
+                                        <mat-error>
+                                            Enter a valid value.
+                                        </mat-error>
+                                    </mat-form-field>
+                                </div>
+                            </div>
                         </div>
                     }
 
@@ -103,7 +186,10 @@
                         <img [src]="photoPreview" alt="Photo preview" />
                     </div>
                     }
-                    <button type="submit" [disabled]="(!settingsForm.dirty && !photoChanged) || settingsForm.invalid">Save
+1: {{settingsForm.dirty}}<br>
+2: {{photoChanged}}<br>
+3: {{settingsForm.invalid}}<br>
+                    <button class="bottom-of-page" mat-raised-button type="submit" [disabled]="(!settingsForm.dirty && !photoChanged) || settingsForm.invalid">Save
                         Changes</button>
                 </form>
             </div>

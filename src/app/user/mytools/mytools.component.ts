@@ -4,20 +4,33 @@ import { MatCardModule } from "@angular/material/card";
 import { MatSelectModule } from "@angular/material/select";
 import { MatIconModule } from "@angular/material/icon";
 import { MatTooltipModule } from "@angular/material/tooltip";
-import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from "@angular/forms";
-import { faTrash, faCirclePlus } from "@fortawesome/free-solid-svg-icons";
+import { AbstractControl, FormArray, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from "@angular/forms";
+import { faTrash, faCirclePlus, faCircleMinus } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
 import { ImageService } from "../../services/image.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { catchError, EMPTY } from "rxjs";
+import { catchError, EMPTY, forkJoin } from "rxjs";
 import { MessageService } from "../../services/message.service";
 import { BrowseToolsToolCardComponent } from "../../browsetools/toolcard.component";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatInputModule } from "@angular/material/input";
+import { MatButtonModule } from "@angular/material/button";
+import { CommonModule } from '@angular/common';
+import { CurrencyFormatDirective } from "../../shared/currencyformat-directive";
 
 export function moneyValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
   const regex = /^\d+(\.\d{1,2})?$/;
   return regex.test(value) ? null : { invalidMoney: true };
+}
+
+export function numericValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const raw = `${control.value}`.replace(/[^\d.-]/g, '');
+        const num = parseFloat(raw);
+        return isNaN(num) ? { numeric: true } : null;
+    };
 }
 
 @Component({
@@ -33,13 +46,19 @@ export function moneyValidator(control: AbstractControl): ValidationErrors | nul
         FontAwesomeModule,
         BrowseToolsToolCardComponent,
         MatProgressSpinnerModule,
-    ]
+        MatFormFieldModule,
+        MatInputModule,
+        MatButtonModule,
+        CurrencyFormatDirective,
+        CommonModule,
+    ],
 })
 export class MyToolsComponent implements OnInit {
     @ViewChild('photoInput', { static: false }) fileInput!: ElementRef;
 
     faTrash = faTrash;
     faCirclePlus = faCirclePlus;
+    faCircleMinus = faCircleMinus;
     loading: boolean = true; // Is data currently loading or not
     toolCategories: ToolCategory[] = []; // List of tool categories
     toolCategoryLoading: boolean = false; // True when guessing the category
@@ -64,9 +83,12 @@ export class MyToolsComponent implements OnInit {
             brand: ['', Validators.required],
             short_name: ['', Validators.required],
             name: ['', Validators.required],
-            replacement_cost: ['', [Validators.required, moneyValidator]],
-            photo: [null, Validators.required],
+            replacement_cost: ['', [Validators.required, numericValidator()]],
+            photo: [null, [Validators.required]], // required for new tool, not for existing
             product_url: ['', Validators.required],
+            search_terms: this.fb.array([
+                this.fb.control('', [Validators.required])
+            ]),
         });
 
         // Get the tool categories for the dropdown
@@ -112,6 +134,7 @@ export class MyToolsComponent implements OnInit {
             ownerimageUrl: undefined,
             ownerImageLoaded: false,
             status: ToolStatus.Unknown,
+            search_terms: [],
         };
 
         // Update the form fields
@@ -124,29 +147,57 @@ export class MyToolsComponent implements OnInit {
             replacement_cost: this.selectedTool?.replacement_cost,
             product_url: this.selectedTool?.product_url,
         });
+        // Search keywords
+        this.clearKeywords();
+        // Add a single placeholder keyword
+        this.addKeyword("");
+
 
         this.resetPhoto();
+
+        // photo is mandatory for new tool
+        this.settingsForm.get('photo')?.clearValidators();
+        this.settingsForm.get('photo')?.addValidators(Validators.required);
+
+        this.settingsForm.markAsPristine();
+        this.search_terms.markAsPristine();
     }
 
-    // Get a guess of the tool category.
-    getSuggestedCategory() {
-        let desc: string =
-            this.settingsForm.get('brand')?.value + " " +
-            this.settingsForm.get('short_name')?.value + " " +
-            this.settingsForm.get('name')?.value;
+    // Get a guess of the tool category & keywords
+    getSuggestions() {
+        if (
+            this.settingsForm.get('brand')?.value
+            && this.settingsForm.get('short_name')?.value
+            && this.settingsForm.get('name')?.value
+        ) {
+            let desc: string =
+                this.settingsForm.get('brand')?.value + " " +
+                this.settingsForm.get('short_name')?.value + " " +
+                this.settingsForm.get('name')?.value;
 
-        if (desc.length > 0) {
-            this.toolCategoryLoading = true;
-            this.dataService.getSuggestedCategory(desc).subscribe({
-                next: value => {
-                    if (value) {
-                        console.log(JSON.stringify(value));
-                        this.settingsForm.patchValue({ category: value.id });
-                    }
-                },
-                complete: () => this.toolCategoryLoading = false,
-                error: err => this.toolCategoryLoading = false
-            });
+            if (desc.length > 0) {
+                this.toolCategoryLoading = true;
+                // Calls all the different AI junk
+                forkJoin([
+                    this.dataService.getSuggestedCategory(desc),
+                    this.dataService.getSuggestedKeywords(desc),
+                ]).subscribe({
+                    next: ([toolCategory, toolKeywords]) => {
+                        // Handle the category first
+                        if (toolCategory) {
+                            this.settingsForm.patchValue({ category: toolCategory.id });
+                        }
+
+                        // Handle the keywords
+                        if (toolKeywords && toolKeywords.length > 0) {
+                            this.clearKeywords();
+                            toolKeywords.forEach(keyword => this.addKeyword(keyword));
+                        }
+                    },
+                    complete: () => this.toolCategoryLoading = false,
+                    error: err => this.toolCategoryLoading = false
+                });
+            }
         }
     }
 
@@ -163,8 +214,20 @@ export class MyToolsComponent implements OnInit {
             replacement_cost: this.selectedTool?.replacement_cost,
             product_url: this.selectedTool?.product_url,
         });
+        // Search keywords
+        this.clearKeywords();
+        this.selectedTool?.search_terms.forEach(st => {
+            this.addKeyword(st);
+        });
+
+        this.settingsForm.markAsPristine();
+        this.search_terms.markAsPristine();
 
         this.resetPhoto();
+
+        // photo is not mandatory for existing tool
+        this.settingsForm.get('photo')?.clearValidators();
+
     }
 
     onPhotoSelected(event: Event): void {
@@ -209,11 +272,39 @@ export class MyToolsComponent implements OnInit {
         }
     }
 
+    /////
+    // Keywords
+    /////
+    get search_terms(): FormArray {
+        return this.settingsForm.get('search_terms') as FormArray;
+    }
+    clearKeywords(): void {
+        this.search_terms.clear();
+        this.settingsForm.markAsDirty();
+    }
+    addKeyword(value: string = ""): void {
+        if (this.search_terms.length < 5) {
+            this.search_terms.push(this.fb.control(value, [Validators.required]));
+            this.settingsForm.markAsDirty();
+        }
+    }
+    removeKeyword(index: number): void {
+        if (this.search_terms.length > 1) {
+            this.search_terms.removeAt(index);
+            this.settingsForm.markAsDirty();
+        }
+    }
+
     onSubmit() {
         if (this.settingsForm.valid) {
             const formData = new FormData();
             Object.entries(this.settingsForm.value).forEach(([key, value]) => {
-                formData.append(key, value as string | Blob);
+                console.log("Key: " + key + " = " + value);
+                if (Array.isArray(value)) {
+                    value.forEach((value, idx) => formData.append(key + '[]', value));
+                } else {
+                    formData.append(key, value as string | Blob);
+                }
             });
 
             // Send the data away
