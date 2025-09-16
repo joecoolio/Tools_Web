@@ -545,8 +545,8 @@ export class DataService {
     }
 
     // List all tools within some radius of me
-    listTools(radiusMiles: number = 100): Observable<Tool[]> {
-        return this._getTools(URL_ALL_TOOLS, { radius_miles: radiusMiles });
+    listTools(radiusMiles: number = 100, searchCriteria: string[] = [], searchWithAnd: boolean = false): Observable<Tool[]> {
+        return this._getTools(URL_ALL_TOOLS, { radius_miles: radiusMiles, search_terms: searchCriteria, search_with_and: searchWithAnd });
     }
 
     // Get a set of tools.

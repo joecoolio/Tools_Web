@@ -54,8 +54,13 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
         }
     }
 
-    // Radius in which to search
-    radius!: number;
+    /////
+    // Search Criteria
+    /////
+
+    radius!: number; // Radius in which to search
+    searchCriteria!: string; // Keyword search criteria
+    searchWithAnd: string = "N"; // Y = use (a & b), N = (a | b)
     
     // All the neighbors - in sync with what's provided in this.markerData.
     private tools: Tool[] = [];
@@ -66,8 +71,13 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
 
     // Get all data into this.markerData
     protected getAllData(): Observable<MarkerData[]> {
+        const searchArray: string[] = [];
+        if (this.searchCriteria)
+            searchArray.push(... this.searchCriteria.split(/\W+/).filter(Boolean));
+        const searchAnd: boolean = this.searchWithAnd === "Y";
+
         return forkJoin([
-            this.dataService.listTools(this.radius),    
+            this.dataService.listTools(this.radius, searchArray, searchAnd),    
             this.dataService.getMyInfo(),
         ])
         .pipe(
@@ -171,9 +181,12 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
         })
     }
 
-    // Runs when the select changes
-    public radiusChange(radius: number): void {
+    // Runs when the input changes
+    public searchCriteriaChange(radius: number, searchText: string, searchWithAnd: string): void {
         this.radius = radius;
+        this.searchCriteria = searchText;
+        this.searchWithAnd = searchWithAnd;
+
         this.refreshData().subscribe(() => {
             // Reset the map to recenter & show the provided radius
             this.map.setMapBounds(this.dataService.myInfoSignal().latitude, this.dataService.myInfoSignal().longitude, this.radius);
