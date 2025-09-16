@@ -565,6 +565,7 @@ export class DataService {
                 Object.assign(cachedTool, tool); // Update attributes from db
                 cachedTool.loaded = true;
                 cachedTool.imageLoaded = false;
+                this.getTool(tool.id, false); // This forces the images to be reloaded 
                 return cachedTool;
             }))
         );
@@ -644,7 +645,7 @@ export class DataService {
     // This is what display components should call.
     // This automatically requests that the image of the tool is loaded.
     // If imageLoadedFunction is supplied, that's called after the image is loaded.
-    getTool(id: number, loadOwner: boolean, imageLoadedFunction?: (imageUrl: SafeUrl) => void): Observable<Tool> {
+    getTool(id: number, loadOwner: boolean, imageLoadedFunction?: (imageUrl: SafeUrl) => void, forceDbReload?: boolean): Observable<Tool> {
         // Id <= 0 indicates a non-tool (e.g. the "Me" marker)
         if (!id || id <= 0) {
             return EMPTY;
@@ -653,8 +654,8 @@ export class DataService {
         // Get the cached neighbor
         const cachedTool = this.getOrCreateTool(id);
 
-        // If data isn't loaded, call the database
-        if (!cachedTool.loaded) {
+        // If data isn't loaded (or by request), call the database
+        if (!cachedTool.loaded || forceDbReload) {
             // console.log("getTool: Tool from db: " + id);
             return this.http.post<Tool>(
                 URL_GET_TOOL,

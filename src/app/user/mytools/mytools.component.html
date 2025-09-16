@@ -125,7 +125,7 @@
                                         <mat-error>Enter a search term.</mat-error>
                                     </mat-form-field>
                                     @if (search_terms.length < 5) {
-                                        <span class="icon"><fa-icon [icon]="faCirclePlus" (click)="addKeyword()" matTooltip="Add a search keyword!"></fa-icon></span>
+                                        <span class="icon"><fa-icon [icon]="faCirclePlus" (click)='addKeyword("", false)' matTooltip="Add a search keyword!"></fa-icon></span>
                                     }
                                     @if (search_terms.length > 1) {
                                         <span class="icon"><fa-icon [icon]="faCircleMinus" (click)="removeKeyword(i)" matTooltip="Remove this search keyword!"></fa-icon></span>
@@ -151,22 +151,20 @@
                         </div>
                     </div>
 
-                    @if(selectedTool.id <= 0) {
-                        <div class="form-row">
-                            <label for="product_url">Product URL</label>
-                            <div class="wide">
-                                <div class="field">
-                                    <mat-form-field class="outline" subscriptSizing="dynamic">
-                                        <input matInput id="product_url" formControlName="product_url" type="text"
-                                            matTooltip="A link to where you can find more information about this tool." />
-                                        <mat-error>
-                                            Enter a valid value.
-                                        </mat-error>
-                                    </mat-form-field>
-                                </div>
+                    <div class="form-row">
+                        <label for="product_url">Product URL</label>
+                        <div class="wide">
+                            <div class="field">
+                                <mat-form-field class="outline" subscriptSizing="dynamic">
+                                    <input matInput id="product_url" formControlName="product_url" type="text"
+                                        matTooltip="A link to where you can find more information about this tool." />
+                                    <mat-error>
+                                        Enter a valid value.
+                                    </mat-error>
+                                </mat-form-field>
                             </div>
                         </div>
-                    }
+                    </div>
 
                     <div class="form-row">
                         <label for="photo" class="narrower">Photo</label>
@@ -186,9 +184,9 @@
                         <img [src]="photoPreview" alt="Photo preview" />
                     </div>
                     }
-1: {{settingsForm.dirty}}<br>
-2: {{photoChanged}}<br>
-3: {{settingsForm.invalid}}<br>
+<!-- 1: form dirty: {{settingsForm.dirty}}<br>
+2: photo chnaged: {{photoChanged}}<br>
+3: form invalid: {{settingsForm.invalid}}<br> -->
                     <button class="bottom-of-page" mat-raised-button type="submit" [disabled]="(!settingsForm.dirty && !photoChanged) || settingsForm.invalid">Save
                         Changes</button>
                 </form>

@@ -137,30 +137,26 @@ export class MyToolsComponent implements OnInit {
             search_terms: [],
         };
 
-        // Update the form fields
-        this.settingsForm.patchValue({
-            id: this.selectedTool?.id,
-            category: this.selectedTool?.category_id,
-            brand: this.selectedTool?.brand,
-            short_name: this.selectedTool?.short_name,
-            name: this.selectedTool?.name,
-            replacement_cost: this.selectedTool?.replacement_cost,
-            product_url: this.selectedTool?.product_url,
-        });
+        // Update the form fields to blank values
+        this.settingsForm.reset();
+
         // Search keywords
         this.clearKeywords();
         // Add a single placeholder keyword
-        this.addKeyword("");
+        this.addKeyword("", true);
 
+        Object.keys(this.settingsForm.controls).forEach(key => {
+            const control = this.settingsForm.get(key);
+            control?.setErrors(null);
+            control?.markAsPristine();
+            control?.markAsUntouched();
+        });
 
         this.resetPhoto();
 
         // photo is mandatory for new tool
         this.settingsForm.get('photo')?.clearValidators();
         this.settingsForm.get('photo')?.addValidators(Validators.required);
-
-        this.settingsForm.markAsPristine();
-        this.search_terms.markAsPristine();
     }
 
     // Get a guess of the tool category & keywords
@@ -191,7 +187,7 @@ export class MyToolsComponent implements OnInit {
                         // Handle the keywords
                         if (toolKeywords && toolKeywords.length > 0) {
                             this.clearKeywords();
-                            toolKeywords.forEach(keyword => this.addKeyword(keyword));
+                            toolKeywords.forEach(keyword => this.addKeyword(keyword, false));
                         }
                     },
                     complete: () => this.toolCategoryLoading = false,
@@ -217,7 +213,7 @@ export class MyToolsComponent implements OnInit {
         // Search keywords
         this.clearKeywords();
         this.selectedTool?.search_terms.forEach(st => {
-            this.addKeyword(st);
+            this.addKeyword(st, true);
         });
 
         this.settingsForm.markAsPristine();
@@ -227,7 +223,6 @@ export class MyToolsComponent implements OnInit {
 
         // photo is not mandatory for existing tool
         this.settingsForm.get('photo')?.clearValidators();
-
     }
 
     onPhotoSelected(event: Event): void {
@@ -280,12 +275,19 @@ export class MyToolsComponent implements OnInit {
     }
     clearKeywords(): void {
         this.search_terms.clear();
-        this.settingsForm.markAsDirty();
+        // this.settingsForm.markAsDirty();
     }
-    addKeyword(value: string = ""): void {
+    addKeyword(value: string = "", clean: boolean): void {
         if (this.search_terms.length < 5) {
-            this.search_terms.push(this.fb.control(value, [Validators.required]));
-            this.settingsForm.markAsDirty();
+            const control = this.fb.control(value, [Validators.required]);
+            if (clean) {
+                control.setErrors(null);
+                control.markAsPristine();
+                control.markAsUntouched();
+            } else {
+                this.settingsForm.markAsDirty();
+            }
+            this.search_terms.push(control);
         }
     }
     removeKeyword(index: number): void {
@@ -299,11 +301,12 @@ export class MyToolsComponent implements OnInit {
         if (this.settingsForm.valid) {
             const formData = new FormData();
             Object.entries(this.settingsForm.value).forEach(([key, value]) => {
-                console.log("Key: " + key + " = " + value);
-                if (Array.isArray(value)) {
-                    value.forEach((value, idx) => formData.append(key + '[]', value));
-                } else {
-                    formData.append(key, value as string | Blob);
+                if (value != null) {
+                    if (Array.isArray(value)) {
+                        value.forEach((value, idx) => formData.append(key + '[]', value));
+                    } else {
+                        formData.append(key, value as string | Blob);
+                    }
                 }
             });
 
@@ -323,6 +326,4 @@ export class MyToolsComponent implements OnInit {
             })
         }
     }
-
-
 }
