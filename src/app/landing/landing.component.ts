@@ -35,4 +35,14 @@ export class LandingComponent implements OnInit, AfterViewInit {
         const navigationExtras: NavigationExtras = {state: {radius: selectedValue}};
         this.router.navigate(['browse'], navigationExtras);
     }
+
+    searchTools(): void {
+        // Get the selected radius.  Default 1 mile.
+        const inputElement = document.getElementById('searchTermsInput') as HTMLInputElement;
+        const value = inputElement.value ? inputElement.value : "";
+
+        // Redirect to browse tools component
+        const navigationExtras: NavigationExtras = {state: {searchCriteria: value}};
+        this.router.navigate(['browse'], navigationExtras);
+    }
 }

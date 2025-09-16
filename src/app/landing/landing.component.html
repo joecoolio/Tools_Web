@@ -4,7 +4,10 @@
     <section>
       <h2>Search for Tools</h2>
       <img src="/search_for_tools.png">
-      <input type="text" placeholder="Search tools..." />
+      <div class="card-controls">
+        <input id="searchTermsInput" type="text" placeholder="Search tools..." />
+        <button class="card-button" (click)="searchTools()">Go</button>
+      </div>
     </section>
 
     <section>

@@ -52,6 +52,14 @@ export class BrowseToolsComponent extends BrowseObjectsComponent {
             // Default 1 mile
             this.radius = 1;
         }
+
+        // Get the provided search terms (if it was provided)
+        if (nav?.extras.state?.['searchCriteria']) {
+            this.searchCriteria = nav?.extras.state?.['searchCriteria'];
+        } else {
+            // Default 1 mile
+            this.searchCriteria = "";
+        }
     }
 
     /////

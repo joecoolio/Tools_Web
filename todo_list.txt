@@ -6,7 +6,6 @@ Look at storing data in the browser cache instead
 
 -- Big functionality
 Create entire borrow request workflow.
-Add search for tools.
 Add search for neighbors.  By address?  By name?
 Some kind of free search thing on the tool list to filter it.
 Eventually, some AI thing that does "if I want to tile my shower, what tools do I need to borrow"
