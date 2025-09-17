@@ -4,6 +4,7 @@ Fix hamburger menu to show only things that are available.
 Go through all the API calls and properly handle errors.
 Look at storing data in the browser cache instead
 In API (starting with requestBorrowTool) make sure you're friends before you borrow.
+Lock friends list to 2 hops instead of 999 or whatever.
 
 -- Big functionality
 Create entire borrow request workflow.

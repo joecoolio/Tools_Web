@@ -1,17 +1,16 @@
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
+import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
+import * as L from 'leaflet';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster.layersupport';
+import 'leaflet-extra-markers';
 import {
   Map, Marker, Layer, tileLayer, MapOptions, icon, marker, LayerGroup, layerGroup, // Default stuff
   ExtraMarkers, // Fancy markers
-  MarkerClusterGroup, MarkerClusterGroupOptions, markerClusterGroup, // Cluster groups
+  MarkerClusterGroup, MarkerClusterGroupOptions, // Cluster groups
   Control
 } from 'leaflet';
-import * as L from 'leaflet';
-import 'leaflet-extra-markers';
-import 'leaflet.markercluster';
-import 'leaflet.markercluster.layersupport';
-import 'leaflet-sidebar-v2';
-import { LeafletControlLayersConfig, LeafletDirective, LeafletModule } from '@bluehalo/ngx-leaflet';
-import { LeafletMarkerClusterModule } from '@bluehalo/ngx-leaflet-markercluster';
 import { SortedArray } from '../services/sortedarray';
 import { HEX } from 'leaflet-extra-markers';
 
@@ -151,7 +150,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
     this.map.on("overlayremove", (e) => this.refreshVisibleMarkers(e.name) );
 
     // Marker cluster setup
-    this.markerClusterGroup = markerClusterGroup.layerSupport();
+    this.markerClusterGroup = L.markerClusterGroup.layerSupport();
     this.markerClusterGroup.addTo(map);
 
     // Add all layer groups to the marker cluster group
@@ -297,3 +296,4 @@ export class MapComponent implements OnInit, AfterViewInit, OnChanges {
     this.map.removeLayer(circle);
   }
 }
+

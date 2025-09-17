@@ -6,11 +6,9 @@
     (leafletMapMoveEnd)="refreshAllVisibleMarkers()"
 >
     <!-- Marker Layer (tools & neighbors together) -->
-    @if (true) {
-        <div
-            [leafletLayersControl]="controlLayerConfig"
-            [leafletLayersControlOptions]="controlLayerOptions"
-            (leafletLayersControlReady)="layerControlReady($event)"
-        ></div>
-    }
+    <div
+        [leafletLayersControl]="controlLayerConfig"
+        [leafletLayersControlOptions]="controlLayerOptions"
+        (leafletLayersControlReady)="layerControlReady($event)"
+    ></div>
 </div>
