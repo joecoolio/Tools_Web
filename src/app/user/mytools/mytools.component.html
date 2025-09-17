@@ -22,10 +22,9 @@
     </div>
 
     <div class="right-section">
-        @if(selectedTool) {
             <div class="settings-container">
                 <h2>
-                    @if(selectedTool.id > 0) {
+                    @if(selectedTool) {
                         🔨 Edit Your Shared Tool
                     } @else {
                         🪚 Share A New Tool   
@@ -185,13 +184,21 @@
                     </div>
                     }
 <!-- 1: form dirty: {{settingsForm.dirty}}<br>
-2: photo chnaged: {{photoChanged}}<br>
-3: form invalid: {{settingsForm.invalid}}<br> -->
+2: photo changed: {{photoChanged}}<br>
+3: form invalid: {{settingsForm.invalid}}<br>
+4: id invalid: {{settingsForm.get('id')?.invalid}}<br>
+4: brand invalid: {{settingsForm.get('brand')?.invalid}}<br>
+4: short name invalid: {{settingsForm.get('short_name')?.invalid}}<br>
+4: name invalid: {{settingsForm.get('name')?.invalid}}<br>
+4: category invalid: {{settingsForm.get('category')?.invalid}}<br>
+4: st invalid: {{settingsForm.get('search_terms')?.invalid}}<br>
+4: replacement invalid: {{settingsForm.get('replacement_cost')?.invalid}}<br>
+4: url invalid: {{settingsForm.get('product_url')?.invalid}}<br>
+4: photo invalid: {{settingsForm.get('photo')?.invalid}}<br> -->
                     <button class="bottom-of-page" mat-raised-button type="submit" [disabled]="(!settingsForm.dirty && !photoChanged) || settingsForm.invalid">Save
                         Changes</button>
                 </form>
             </div>
-        }
     </div>
 
 </div>

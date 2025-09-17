@@ -78,7 +78,7 @@ export class MyToolsComponent implements OnInit {
     ngOnInit(): void {
         // Setup form
         this.settingsForm = this.fb.group({
-            id: ['', Validators.required],
+            id: [''],
             category: ['', Validators.required],
             brand: ['', Validators.required],
             short_name: ['', Validators.required],
@@ -110,40 +110,19 @@ export class MyToolsComponent implements OnInit {
     }
 
     addNew() {
-        // Set selected tool to a new one
-        this.selectedTool = {
-            id: -1,
-            owner_id: -1,
-            short_name: '',
-            brand: '',
-            name: '',
-            product_url: '',
-            replacement_cost: 0,
-            category_id: -1,
-            category: '',
-            category_icon: '',
-            latitude: 0,
-            longitude: 0,
-            distance_m: 0,
-            photo_link: '',
-            imageUrl: undefined,
-            imageLoaded: false,
-            loaded: false,
-            ownerLoaded: false,
-            ownerName: "",
-            ownerimageUrl: undefined,
-            ownerImageLoaded: false,
-            status: ToolStatus.Unknown,
-            search_terms: [],
-        };
-
-        // Update the form fields to blank values
-        this.settingsForm.reset();
+        // Reset selected tool (not used for a new one)
+        this.selectedTool = undefined;
 
         // Search keywords
         this.clearKeywords();
         // Add a single placeholder keyword
         this.addKeyword("", true);
+
+        // Reset the photo
+        this.resetPhoto();
+
+        // Update the form fields to blank values
+        this.settingsForm.reset();
 
         Object.keys(this.settingsForm.controls).forEach(key => {
             const control = this.settingsForm.get(key);
@@ -152,7 +131,10 @@ export class MyToolsComponent implements OnInit {
             control?.markAsUntouched();
         });
 
-        this.resetPhoto();
+        // Set new id to -1
+        this.settingsForm.patchValue({
+            id: -1
+        });
 
         // photo is mandatory for new tool
         this.settingsForm.get('photo')?.clearValidators();
@@ -216,6 +198,13 @@ export class MyToolsComponent implements OnInit {
             this.addKeyword(st, true);
         });
 
+        Object.keys(this.settingsForm.controls).forEach(key => {
+            const control = this.settingsForm.get(key);
+            control?.setErrors(null);
+            control?.markAsPristine();
+            control?.markAsUntouched();
+        });
+
         this.settingsForm.markAsPristine();
         this.search_terms.markAsPristine();
 
@@ -243,32 +232,32 @@ export class MyToolsComponent implements OnInit {
 
     // Reset the photo input to the original value
     resetPhoto(): void {
-        if (this.selectedTool) {
-            if (this.fileInput) {
-                this.fileInput.nativeElement.value = null;
-                this.photoPreview = null;
-            }
-            if (this.selectedTool.photo_link) {
-                this.dataService.getPicture(this.selectedTool.photo_link)
-                .pipe(
-                    catchError(error => {
-                        // Check for invalid photo and load default
-                        if (error instanceof HttpErrorResponse && error.status == 404) {
-                            if (this.selectedTool) {
-                                this.selectedTool.photo_link = "default_tool.svg";
-                                return this.dataService.getPicture(this.selectedTool.photo_link)
-                            }
-                        }
-                        return EMPTY;
-                    })
-                )
-                .subscribe(blob => {
-                    this.photoPreview = URL.createObjectURL(blob);
-                    this.loading = false; // Done loading all data
-                });
-            }
-            this.photoChanged = false;
+        if (this.fileInput) {
+            this.fileInput.nativeElement.value = null;
         }
+        if (this.photoPreview) {
+            this.photoPreview = null;
+        }
+        if (this.selectedTool && this.selectedTool.photo_link) {
+            this.dataService.getPicture(this.selectedTool.photo_link)
+            .pipe(
+                catchError(error => {
+                    // Check for invalid photo and load default
+                    if (error instanceof HttpErrorResponse && error.status == 404) {
+                        if (this.selectedTool) {
+                            this.selectedTool.photo_link = "default_tool.svg";
+                            return this.dataService.getPicture(this.selectedTool.photo_link)
+                        }
+                    }
+                    return EMPTY;
+                })
+            )
+            .subscribe(blob => {
+                this.photoPreview = URL.createObjectURL(blob);
+                this.loading = false; // Done loading all data
+            });
+        }
+        this.photoChanged = false;
     }
 
     /////
@@ -330,4 +319,5 @@ export class MyToolsComponent implements OnInit {
             })
         }
     }
+
 }
