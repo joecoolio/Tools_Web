@@ -1,4 +1,4 @@
-import { Component, effect, OnDestroy, OnInit, Signal } from '@angular/core';
+import { Component, effect, enableProdMode, OnDestroy, OnInit, Signal } from '@angular/core';
 import { MatMenuModule } from "@angular/material/menu";
 import { MatIconModule } from "@angular/material/icon";
 import { MatDividerModule } from "@angular/material/divider";
@@ -13,6 +13,7 @@ import { NotifierModule } from 'gramli-angular-notifier';
 import { NotifierService } from 'gramli-angular-notifier';
 import { Subscription } from 'rxjs';
 import { MessageService } from './services/message.service';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
@@ -40,6 +41,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private notifierService: NotifierService,
   ) {
+    if (environment.production) {
+      enableProdMode();
+    }
+
     // Monitor the loggedIn signal.
     // When it is false, clear myinfo (including picture and whatnot).
     // When it is true, immediately call getMyInfo().

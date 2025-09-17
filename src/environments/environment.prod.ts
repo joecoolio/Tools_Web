@@ -1,4 +1,4 @@
 export const environment = {
-  production: false,
-  baseUrl: 'http://environment.prod.ts:8000/'  
+  production: true,
+  baseUrl: 'https://toolsapi.mikebillings.com/'  
 };
