@@ -229,11 +229,15 @@ export class MyToolsComponent implements OnInit {
         const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
             this.imageService.resizeImageToDataUrl(file, 200, 200)
-            .subscribe(url => {
-                this.settingsForm.patchValue({ photo: url });    
-                this.photoPreview = url;
-                this.photoChanged = true;
-            })
+            .subscribe({
+                next: url => {
+                    this.settingsForm.patchValue({ photo: url });    
+                    this.photoPreview = url;
+                    this.photoChanged = true;
+                },
+                complete: () => console.log("Image load complete"),
+                error: err => console.log("Failed to load image: " + err)
+            });
         }
     }
 
