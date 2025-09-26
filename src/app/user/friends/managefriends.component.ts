@@ -13,6 +13,7 @@ import { NeighborCardComponent } from "./neighborcard.component";
 import { GlobalValuesService } from "../../shared/global-values";
 import { FormsModule } from "@angular/forms";
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { ChatService } from "../../services/chat.service";
 
 @Component({
     standalone: true,
@@ -39,6 +40,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
         private messageService: MessageService,
         private router: Router,
         public globalValuesService: GlobalValuesService,
+        private chatService: ChatService,
     ) {
         super(dataService, dialog, changeDetectorRef);
 
@@ -178,6 +180,7 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
                 fnRequestFriendship: this.requestFriendship.bind(this),
                 fnCancelRequestFriendship: this.cancelFriendshipRequest.bind(this),
                 fnDeleteFriendship: this.deleteFriendship.bind(this),
+                fnChat: this.chat.bind(this),
             }
             dialogConfig.data = data;
 
@@ -226,6 +229,19 @@ export class ManageFriendsComponent extends BrowseObjectsComponent {
                 this.refreshData();
             });
         });
+    }
+
+    // Send a chat message to a neighbor
+    public chat(id: number, message: string) {
+        this.chatService.sendMessage({
+            type: "send_message",
+            to: id,
+            message: message,
+        });
+        const neighbor: Neighbor | undefined = this.neighbors.find(n => n.id == id);
+        if (neighbor) {
+            this.messageService.send('info', "Chat message sent to " + neighbor.name + "!");
+        }
     }
    
     // Runs when the input changes

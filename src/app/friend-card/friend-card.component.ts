@@ -1,7 +1,6 @@
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { DataService, Neighbor, Tool } from '../services/data.service';
-import { SafeUrl } from '@angular/platform-browser';
+import { Neighbor } from '../services/data.service';
 import { DecimalPipe } from '@angular/common';
 import { ConfirmationService } from '../services/confirmation.service';
 
@@ -10,6 +9,7 @@ export interface FriendCardDialogData {
   fnRequestFriendship: (id: number, message: string) => void,
   fnCancelRequestFriendship: (id: number) => void,
   fnDeleteFriendship: (id: number) => void,
+  fnChat: (id: number, message: string) => void,
 }
 
 @Component({
@@ -35,12 +35,14 @@ export class FriendCardComponent implements OnInit {
   fnRequestFriendship!: (id: number, message: string) => void;
   fnCancelRequestFriendship!: (id: number) => void;
   fnDeleteFriendship!: (id: number) => void;
+  fnChat!: (id: number, message: string) => void;
 
   ngOnInit(): void {
     this.neighbor = this.dialogData.neighbor;
     this.fnRequestFriendship = this.dialogData.fnRequestFriendship;
     this.fnCancelRequestFriendship = this.dialogData.fnCancelRequestFriendship;
     this.fnDeleteFriendship = this.dialogData.fnDeleteFriendship;
+    this.fnChat = this.dialogData.fnChat;
   }
 
   convertMetersToMiles(meters: number): number {
@@ -94,4 +96,27 @@ export class FriendCardComponent implements OnInit {
       }
     });
   }
+
+  // Send a chat message
+  chat() {
+    this.confirmationService.confirm(
+      'Start a Conversation',
+      'Send a chat message to ' + this.neighbor.name + '.',
+      [
+        { name: 'message', label: 'Chat with ' + this.neighbor.name, type: 'textarea', required: true },
+      ],
+      {
+        message: "How about those Carolina Panthers?!?!",
+      }
+    )
+    .subscribe(result => {
+      if (result) {
+        console.log("Sending chat to: " + this.neighbor.name);
+        this.fnChat(this.neighbor.id, result["message"]);
+
+        this.dialogRef.close();
+      }
+    });
+  }
+
 }

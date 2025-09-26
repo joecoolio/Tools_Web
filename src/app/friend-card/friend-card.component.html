@@ -1,6 +1,7 @@
 <div class="neighbor-card">
   <div class="card-header">
     <h2 class="neighbor-name">{{ neighbor.name }}</h2>
+    <button type="button" class="" (click)="chat()">▲</button>
     <span class="neighbor-type">
       @if(neighbor.is_friend) {
           @if(neighbor.depth == 1) {

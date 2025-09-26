@@ -1,4 +1,4 @@
-.envelope-button {
+.chat-button {
   background-color: transparent !important;
   color: white;
   width: 35px;
@@ -8,6 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 }
 
 .mail-icon {
@@ -35,21 +36,25 @@
   padding: 1rem;
 }
 
-.message-card {
+.chat-container {
   color: black;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: flex-start;
+  max-width: 400px;
   margin-bottom: 1rem;
   padding: 0.5rem;
   border-bottom: 1px solid #eee;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   background-color: #d7d7d7;
   position: relative;
+  gap: 10px;
 
   .chat {
     display: flex;
     flex-direction: column;
+    flex: 1 0 auto;
+    width: 100%;
   }
 
   .col {

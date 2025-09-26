@@ -2,11 +2,12 @@
 .thread-container {
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  flex: 1 0 auto;
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
   overflow-y: auto;
   max-height: 100%;
-
-  margin: 20px auto;
   background: #f9f9fb;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);

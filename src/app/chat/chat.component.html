@@ -1,14 +1,4 @@
-<!-- <br><br>
-<button (click)="send()">PUSH ME</button>
-Connected?  {{ chatService.connected() }}<br>
-@for(chat of chats; track chat.id; let i = $index) {
-    Chat: {{ chat.id }}<br>
-    @for(message of chat.messages; track message.id) {
-        >> Message: {{ message.id }}<br>
-    }
-} -->
-
-<span class="envelope-button" [matMenuTriggerFor]="mailMenu">
+<span class="chat-button" [matMenuTriggerFor]="mailMenu">
   <fa-icon [icon]="faComments" class="mail-icon"></fa-icon>
   @if( numNewMessages ) {
     <span class="badge">{{ numNewMessages }}</span>
@@ -21,9 +11,9 @@ Connected?  {{ chatService.connected() }}<br>
 Connected?  {{ chatService.connected() }}<br>
 
     <h3>Chats</h3>
-    <div class="message-card">
+    <div class="chat-container">
       @for(chat of chats; track chat.id; let i = $index) {
-            <app-chat-thread [chat]="chat"></app-chat-thread>
+            <app-chat-thread class="chat" [chat]="chat" [loadFunction]="getMessagesForChat.bind(this, chat.id)"></app-chat-thread>
       }
     </div>
 

@@ -20,6 +20,7 @@ export interface Message {
 export interface Chat {
     id: string,
     started_ts: Date,
+    latest_message_ts: Date,
     neighbor: Neighbor | undefined,
     messages: Message[],
 }
@@ -61,7 +62,8 @@ export class ChatComponent implements OnInit, OnDestroy {
                         chatArray.forEach(ca => {
                             const newChat: Chat = {
                                 id: ca['id'],
-                                started_ts: ca['started_ts'],
+                                started_ts: new Date(ca['started_ts']),
+                                latest_message_ts: new Date(ca['latest_message_ts']),
                                 neighbor: undefined,
                                 messages: []
                             }
@@ -69,9 +71,8 @@ export class ChatComponent implements OnInit, OnDestroy {
                             this.dataService.getNeighbor(ca['other_members'][0]).subscribe(n => newChat.neighbor = n);
                             newChats.push(newChat);
                         })
-                        this.chats = newChats;
-                        // Request the individual messages for each chat
-                        this.chats.forEach(chat => this.chatService.sendMessage({ type: 'get_messages', chat_id: chat.id }));
+                        // Sort the chats by latest message received first
+                        this.chats = newChats.sort((a, b) => { return b.latest_message_ts.getTime() - a.latest_message_ts.getTime() });
                         break;
                     case 'get_messages_result':
                         // Load the messages into the individual chats
@@ -109,5 +110,10 @@ export class ChatComponent implements OnInit, OnDestroy {
             type: 'get_chats',
             // chat_id: "fffc6f47-b30a-4d2f-92a9-5bc7e15865ad",
         });
+    }
+
+    // Ask the server for a chat's messages
+    getMessagesForChat(chatId: string): void {
+        this.chatService.sendMessage({ type: 'get_messages', chat_id: chatId });
     }
 }

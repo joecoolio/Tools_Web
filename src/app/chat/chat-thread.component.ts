@@ -21,11 +21,22 @@ interface ChatMessage {
 })
 export class ChatThreadComponent {
   @Input() chat?: Chat;
+  @Input() loadFunction?: (id: string) => void;
 
   // Is this chat thread collapsed or not
   collapsed: boolean = true;
 
+  // Are the messages loaded yet
+  messagesLoaded: boolean = false;
+
   toggleCollapsed() {
+    if (!this.messagesLoaded && this.chat) {
+      // Request the individual messages for this chat
+      if (this.loadFunction) {
+        this.loadFunction(this.chat?.id);
+        this.messagesLoaded = true;
+      }
+    }
     this.collapsed = !this.collapsed;
   }
 }
