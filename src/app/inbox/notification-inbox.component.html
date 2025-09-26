@@ -6,7 +6,7 @@
 </span>
 
 <mat-menu #mailMenu="matMenu" class="mailbox">
-  <div class="inbox-panel">
+  <div class="inbox-panel" (click)="$event.stopPropagation()">
     <h3>Notifications</h3>
     @for(notification of notifications; track notification.id) {
     <div class="message-card" [class.unread]="!notification.read">

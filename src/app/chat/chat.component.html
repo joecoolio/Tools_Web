@@ -1,0 +1,40 @@
+<!-- <br><br>
+<button (click)="send()">PUSH ME</button>
+Connected?  {{ chatService.connected() }}<br>
+@for(chat of chats; track chat.id; let i = $index) {
+    Chat: {{ chat.id }}<br>
+    @for(message of chat.messages; track message.id) {
+        >> Message: {{ message.id }}<br>
+    }
+} -->
+
+<span class="envelope-button" [matMenuTriggerFor]="mailMenu">
+  <fa-icon [icon]="faComments" class="mail-icon"></fa-icon>
+  @if( numNewMessages ) {
+    <span class="badge">{{ numNewMessages }}</span>
+  }
+</span>
+
+<mat-menu #mailMenu="matMenu" class="mailbox">
+  <div class="inbox-panel" (click)="$event.stopPropagation()">
+<button (click)="send()">PUSH ME</button>
+Connected?  {{ chatService.connected() }}<br>
+
+    <h3>Chats</h3>
+    @for(chat of chats; track chat.id; let i = $index) {
+        <div class="message-card">
+            Chat: {{ chat.id }} with {{ chat.neighbor?.name }}<br>
+            @for(message of chat.messages; track message.id) {
+                >> Message: {{ message.id }}<br>
+            }
+        </div>
+    }
+
+    @if (numNewMessages == 0) {
+      <span class="nomail">
+        <img src="/no_mail.png"/>
+        <h4>You have no notifications.</h4>
+      </span>
+    }
+  </div>
+</mat-menu>

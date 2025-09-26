@@ -14,6 +14,7 @@ import { NotifierService } from 'gramli-angular-notifier';
 import { Subscription } from 'rxjs';
 import { MessageService } from './services/message.service';
 import { environment } from '../environments/environment';
+import { ChatComponent } from './chat/chat.component';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +25,7 @@ import { environment } from '../environments/environment';
     MatIconModule,
     MatDividerModule,
     NotificationInboxComponent,
+    ChatComponent,
     NotifierModule,
 ],
   templateUrl: './app.component.html',

@@ -15,13 +15,13 @@ import { MatInputModule } from "@angular/material/input";
     templateUrl: './notification-inbox.component.html',
     styleUrls: ['./notification-inbox.component.scss'],
     imports: [
-    MatIconModule,
-    CommonModule,
-    FaIconComponent,
-    MatMenuModule,
-    ReactiveFormsModule,
-    MatInputModule
-]
+        MatIconModule,
+        CommonModule,
+        FaIconComponent,
+        MatMenuModule,
+        ReactiveFormsModule,
+        MatInputModule
+    ]
 })
 export class NotificationInboxComponent implements OnInit {
     @Input() buttonTarget!: ViewContainerRef;

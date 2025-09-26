@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { AuthInterceptor } from './services/auth.interceptor';
 import { NgxPicaService } from '@digitalascetic/ngx-pica';
+import { ChatService } from './services/chat.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,5 +20,6 @@ export const appConfig: ApplicationConfig = {
       multi: true,
     },
     NgxPicaService,
+    ChatService,
   ]
 };
