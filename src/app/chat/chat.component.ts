@@ -16,6 +16,7 @@ export interface Message {
     from_neighbor: Neighbor | undefined,
     send_ts: Date,
     message: string,
+    read: boolean,
 }
 export interface Chat {
     id: string,
@@ -87,6 +88,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                                     from_neighbor: undefined,
                                     message: msg['message'],
                                     sent_by_me: msg['sent_by_me'],
+                                    read: msg['read'],
                                 }
                                 // Get the neighbor
                                 this.dataService.getNeighbor(msg['from_neighbor']).subscribe(n => newMsg.from_neighbor = n);
@@ -107,9 +109,12 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     send(): void {
         this.chatService.sendMessage({
-            type: 'get_chats',
-            // chat_id: "fffc6f47-b30a-4d2f-92a9-5bc7e15865ad",
+            type: 'get_chats'
         });
+        // this.chatService.sendMessage({
+        //     type: 'mark_message_read',
+        //     id: "f32437b6-d7f0-4b20-9cf8-8a863f886f36",
+        // });
     }
 
     // Ask the server for a chat's messages

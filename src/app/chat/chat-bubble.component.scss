@@ -24,13 +24,21 @@
     background-color: #007aff;
     color: white;
     border-bottom-right-radius: 0;
+    font-weight: normal;
   }
 
   &.them {
     background-color: #f1f0f0;
     color: black;
     border-bottom-left-radius: 0;
+    font-weight: bold;
+
+    &.read {
+      background-color: #f9f9f9; /* light gray */
+      font-weight: normal;
+    }
   }
+
 }
 
 .timestamp {
