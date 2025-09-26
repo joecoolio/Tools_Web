@@ -47,6 +47,11 @@
   background-color: #d7d7d7;
   position: relative;
 
+  .chat {
+    display: flex;
+    flex-direction: column;
+  }
+
   .col {
     display: flex;
     flex-direction: column;

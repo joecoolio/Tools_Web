@@ -8,9 +8,11 @@ import { MatMenuModule } from "@angular/material/menu";
 import { ReactiveFormsModule } from "@angular/forms";
 import { MatInputModule } from "@angular/material/input";
 import { DataService, Neighbor } from "../services/data.service";
+import { ChatThreadComponent } from "./chat-thread.component";
 
 export interface Message {
     id: string,
+    sent_by_me: boolean,
     from_neighbor: Neighbor | undefined,
     send_ts: Date,
     message: string,
@@ -27,13 +29,14 @@ export interface Chat {
     templateUrl: './chat.component.html',
     styleUrls: ['./chat.component.scss'],
     imports: [
-        MatIconModule,
-        CommonModule,
-        FaIconComponent,
-        MatMenuModule,
-        ReactiveFormsModule,
-        MatInputModule,
-    ]
+    MatIconModule,
+    CommonModule,
+    FaIconComponent,
+    MatMenuModule,
+    ReactiveFormsModule,
+    MatInputModule,
+    ChatThreadComponent
+]
 })
 export class ChatComponent implements OnInit, OnDestroy {
     constructor(
@@ -82,6 +85,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                                     send_ts: msg['send_ts'],
                                     from_neighbor: undefined,
                                     message: msg['message'],
+                                    sent_by_me: msg['sent_by_me'],
                                 }
                                 // Get the neighbor
                                 this.dataService.getNeighbor(msg['from_neighbor']).subscribe(n => newMsg.from_neighbor = n);

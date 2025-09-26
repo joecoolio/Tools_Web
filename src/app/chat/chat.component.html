@@ -21,14 +21,11 @@ Connected?  {{ chatService.connected() }}<br>
 Connected?  {{ chatService.connected() }}<br>
 
     <h3>Chats</h3>
-    @for(chat of chats; track chat.id; let i = $index) {
-        <div class="message-card">
-            Chat: {{ chat.id }} with {{ chat.neighbor?.name }}<br>
-            @for(message of chat.messages; track message.id) {
-                >> Message: {{ message.id }}<br>
-            }
-        </div>
-    }
+    <div class="message-card">
+      @for(chat of chats; track chat.id; let i = $index) {
+            <app-chat-thread [chat]="chat"></app-chat-thread>
+      }
+    </div>
 
     @if (numNewMessages == 0) {
       <span class="nomail">

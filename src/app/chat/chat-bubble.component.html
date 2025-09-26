@@ -1,0 +1,9 @@
+<!-- chat-bubble.component.html -->
+<div class="bubble-wrapper" [ngClass]="{ 'me': message.sent_by_me , 'them': !message.sent_by_me }">
+  <div class="bubble" [ngClass]="{ 'me': message.sent_by_me , 'them': !message.sent_by_me }">
+    {{ message.message }}
+  </div>
+  <div class="timestamp">
+    {{ message.send_ts| date:'MM/dd/yyyy HH:mm' }}
+  </div>
+</div>

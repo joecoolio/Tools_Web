@@ -1,0 +1,59 @@
+/* chat-thread.component.scss */
+.thread-container {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  overflow-y: auto;
+  max-height: 100%;
+
+  margin: 20px auto;
+  background: #f9f9fb;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.chat-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.thread-container.collapsed .collapse-btn {
+  transform: rotate(180deg);
+}
+
+.chat-body {
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+  max-height: 1000px; /* enough to show full content */
+}
+
+.thread-container.collapsed .chat-body {
+  max-height: 0;
+}

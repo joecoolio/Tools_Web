@@ -1,0 +1,13 @@
+<div class="thread-container" [class.collapsed]="collapsed">
+    <div class="chat-header">
+        <img [src]="chat?.neighbor?.imageUrl" alt="User Avatar" class="avatar" />
+        <span class="chat-name">{{ chat?.neighbor?.name }}</span>
+        <button class="collapse-btn" (click)="toggleCollapsed()">▲</button>
+    </div>
+
+    <div class="chat-body">
+        @for(msg of chat?.messages; track msg.id) {
+            <app-chat-bubble [message]="msg"></app-chat-bubble>
+        }
+    </div>
+</div>
