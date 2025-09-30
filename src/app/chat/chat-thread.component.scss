@@ -1,4 +1,3 @@
-/* chat-thread.component.scss */
 .thread-container {
   display: flex;
   flex-direction: column;
@@ -52,9 +51,54 @@
 .chat-body {
   overflow: hidden;
   transition: max-height 0.4s ease;
-  max-height: 1000px; /* enough to show full content */
+  max-height: 600px;
 }
 
 .thread-container.collapsed .chat-body {
   max-height: 0;
+}
+
+.message-list {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.chat-reply {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  background-color: #f9f9f9;
+}
+
+.chat-reply input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.chat-reply button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.chat-reply button:disabled {
+  background-color: #ccc;         /* muted gray */
+  color: #666;                    /* dimmed text */
+  cursor: not-allowed;            /* visual cue */
+  opacity: 0.6;                   /* subtle fade */
+  border: 1px solid #aaa;         /* optional border */
+  box-shadow: none;              /* remove hover effects */
+  transition: none;              /* prevent animations */
+}
+
+.chat-reply button:not(:disabled):hover {
+  background-color: #0056b3;
 }

@@ -7,10 +7,9 @@
 
 <mat-menu #mailMenu="matMenu" class="mailbox">
   <div class="inbox-panel" (click)="$event.stopPropagation()">
-<button (click)="send()">PUSH ME</button>
-Connected?  {{ chatService.connected() }}<br>
-
-    <h3>Chats</h3>
+    <div class="header">
+      Realtime Chat <fa-icon [icon]="faRotate" (click)="reloadChats()"></fa-icon>
+    </div>
     <div class="chat-container">
       @for(chat of chats; track chat.id; let i = $index) {
             <app-chat-thread class="chat" [chat]="chat" [loadFunction]="getMessagesForChat.bind(this, chat.id)"></app-chat-thread>

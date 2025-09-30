@@ -2,7 +2,6 @@ import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, catchError, delayWhen, EMPTY, filter, interval, map, max, Observable, retry, retryWhen, Subject, Subscription, take, tap, timer } from 'rxjs';
 import { WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
 import { environment } from '../../environments/environment'
-import { ReactiveObservableWrapper } from '../shared/reactive_subject';
 import { TokenService } from './token.service';
 
 @Injectable({ providedIn: 'root' })
@@ -10,12 +9,14 @@ export class ChatService {
     private socket$?: WebSocketSubject<{ [key: string]: any }>; // The websocket, accepts (key, value) pairs
     private pingSubscription?: Subscription; // Heartbeat subscription
     private keepConnectionOpen?: boolean; // This is set to true when a client calls connect and false when they call disconnect.
-    private readonly _connected = signal(false); // Signal indicating if the websocket is currently connected
-    readonly connected = this._connected.asReadonly(); // Public version
+    private readonly _connected = signal(false); // Signal indicating if the websocket is currently connected (doesn't include identification)
+    private _identifyCompleted$ = new Subject<void>(); // Fires after successful identify (or re-identify) to server
+    private readonly _messages$ = new Subject<{ [key: string]: any }>();
 
-    // This is the observer shown to clients.
-    // It stays open even when reconnects happen under the covers
-    private publicObserver$ = new ReactiveObservableWrapper<{ [key: string]: any }>;
+    // Public exposed signals & observables
+    public readonly connected = this._connected.asReadonly(); // Signal indicating if the websocket is currently connected (doesn't include identification)
+    public identifyCompleted$ = this._identifyCompleted$.asObservable(); // Fires after successful identify (or re-identify) to server
+    // public messages$ = this._messages$.asObservable();
 
     // When you identify to the chat server, it tells you the last time it saw you.
     // This is stored so you can request chat messages and mark the new ones.
@@ -51,17 +52,21 @@ export class ChatService {
                         if (success) {
                             // Identification successful, messages will now flow.
                             console.log("Chat: identified to the chat server, messages will flow");
-                            if (this.socket$) this.publicObserver$.setInner(this.socket$.asObservable());
+                            // Register to receive messages from the socket
+                            this.socket$?.subscribe(msg => this._messages$.next(msg));
                         } else {
                             // Identification failed, do ... something?
                             console.log("Chat: failed to identify to the chat server");
                         }
                     });
                     // Send a ping over the socket periodically
+                    if (this.pingSubscription) {
+                        this.pingSubscription.unsubscribe();
+                    }
                     this.pingSubscription = interval(environment.websocketHeartbeat).subscribe(() => {
                         if (this.socket$) {
                             this.socket$.next({ type: 'ping', timestamp: new Date().toISOString() });
-                            console.log('Ping sent');
+                            // console.log('Ping sent');
                         }
                     });
                 }
@@ -69,7 +74,7 @@ export class ChatService {
             closeObserver: {
                 next: () => {
                     this._connected.set(false);
-                    if (this.socket$) this.publicObserver$.setInner(EMPTY);
+                    this.socket$?.unsubscribe();
 
                     // If not initiatied by this.disconnect(), reconnect
                     console.log('WebSocket connection closed!');
@@ -140,6 +145,9 @@ export class ChatService {
             
             subject$.next(msg["result"]);
             subject$.complete();
+
+            // Tell anybody that is listening that identification just completed
+            this._identifyCompleted$.next();
         });
 
         return subject$;
@@ -163,9 +171,9 @@ export class ChatService {
     // Exclude "pong" messages from the keepalive.
     // Subscribe to this whenever, it will adjust to the socket.
     getMessages(): Observable<{ [key: string]: any }> {
-        return this.publicObserver$.stream$.pipe(
-            filter(message => message["type"] !== 'pong')
-        );
+        return this._messages$.asObservable().pipe(
+            filter(message => message["type"] !== 'pong') //TODO this nukes if type isn't there (or the message isn't json)
+        )
     }
 
     // Send a message
@@ -173,7 +181,7 @@ export class ChatService {
         if (message['message_uuid'] === undefined) {
             message['message_uuid'] = crypto.randomUUID();
         }
-        console.log("Chat send: " + JSON.stringify(message));
+        // console.log("Chat send: " + JSON.stringify(message));
         if (this.socket$) {
             this.socket$.next(message);
         }

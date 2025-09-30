@@ -6,8 +6,15 @@
     </div>
 
     <div class="chat-body">
-        @for(msg of chat?.messages; track msg.id) {
-            <app-chat-bubble [message]="msg"></app-chat-bubble>
-        }
+        <div #chatBody class="message-list">
+            @for(msg of chat?.messages(); track msg.id) {
+                <app-chat-bubble [message]="msg"></app-chat-bubble>
+            }
+        </div>
+
+        <div class="chat-reply">
+            <input type="text" [(ngModel)]="replyText" placeholder="Type your reply..." />
+            <button (click)="sendReply()" [disabled]="!replyText.trim()">Send</button>
+        </div>
     </div>
 </div>
