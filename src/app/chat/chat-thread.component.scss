@@ -33,6 +33,10 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: #333;
+
+  &.read {
+    font-weight: 400;
+  }
 }
 
 .collapse-btn {
@@ -101,4 +105,21 @@
 
 .chat-reply button:not(:disabled):hover {
   background-color: #0056b3;
+}
+
+.ring {
+  color: gold;
+  // animation: ring 1s infinite;
+  animation: ring 1.5s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes ring {
+  0% { transform: rotate(0); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-10deg); }
+  30% { transform: rotate(5deg); }
+  40% { transform: rotate(-5deg); }
+  50% { transform: rotate(2deg); }
+  100% { transform: rotate(0); }
 }

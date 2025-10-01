@@ -1,5 +1,4 @@
-<!-- chat-bubble.component.html -->
-<div class="bubble-wrapper" [ngClass]="{ 'me': message.sent_by_me , 'them': !message.sent_by_me }" [class.read]="message.read">
+<div class="bubble-wrapper" [ngClass]="{ 'me': message.sent_by_me , 'them': !message.sent_by_me }" [class.read]="message.read" appInViewport (visible)="onVisibilityChanged($event)">
   <div class="bubble" [ngClass]="{ 'me': message.sent_by_me , 'them': !message.sent_by_me }" [class.read]="message.read">
     {{ message.message }}
   </div>

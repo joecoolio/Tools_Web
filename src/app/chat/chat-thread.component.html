@@ -1,7 +1,10 @@
 <div class="thread-container" [class.collapsed]="collapsed">
     <div class="chat-header">
         <img [src]="chat?.neighbor?.imageUrl" alt="User Avatar" class="avatar" />
-        <span class="chat-name">{{ chat?.neighbor?.name }}</span>
+        <span class="chat-name" [class.read]="chat?.read">{{ chat?.neighbor?.name }}</span>
+        @if (!chat?.read) {
+            <span class="ring"><fa-icon [icon]="faBell"></fa-icon></span>
+        }
         <button class="collapse-btn" (click)="toggleCollapsed()">▲</button>
     </div>
 

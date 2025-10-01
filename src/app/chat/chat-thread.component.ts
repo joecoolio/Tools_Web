@@ -4,6 +4,8 @@ import { ChatBubbleComponent } from "./chat-bubble.component";
 import { Chat } from './chat.component';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../services/chat.service';
+import { FaIconComponent } from "@fortawesome/angular-fontawesome";
+import { faBell } from '@fortawesome/free-solid-svg-icons';
 
 interface ChatMessage {
   text: string;
@@ -19,6 +21,7 @@ interface ChatMessage {
     CommonModule,
     ChatBubbleComponent,
     FormsModule,
+    FaIconComponent
   ]
 })
 export class ChatThreadComponent {
@@ -26,6 +29,7 @@ export class ChatThreadComponent {
   @Input() loadFunction?: (id: string) => void;
   @ViewChild('chatBody') chatBody!: ElementRef;
 
+  faBell = faBell;
 
   // Are the messages for this chat loaded already
   isLoaded = computed(() => this.chat?.messages().length !== 0);

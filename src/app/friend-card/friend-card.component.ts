@@ -3,6 +3,9 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { Neighbor } from '../services/data.service';
 import { DecimalPipe } from '@angular/common';
 import { ConfirmationService } from '../services/confirmation.service';
+import { faComment } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 export interface FriendCardDialogData {
   neighbor: Neighbor,
@@ -18,6 +21,8 @@ export interface FriendCardDialogData {
   imports: [
     MatDialogModule,
     DecimalPipe,
+    FaIconComponent,
+    MatTooltipModule,
   ],
   templateUrl: './friend-card.component.html',
   styleUrl: './friend-card.component.scss'
@@ -29,6 +34,8 @@ export class FriendCardComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) private dialogData: FriendCardDialogData,
   ) {
   }
+
+  faComment = faComment;
 
   // Stuff passed in the constructor
   neighbor!: Neighbor;

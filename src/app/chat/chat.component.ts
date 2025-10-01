@@ -25,6 +25,7 @@ export interface Chat {
     latest_message_ts: Date,
     neighbor: Neighbor | undefined,
     messages: WritableSignal<Message[]>,
+    read: boolean,
 }
 
 @Component({
@@ -51,7 +52,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     faRotate = faRotate;
 
     chats: Chat[] = [];
-    numNewMessages = 3;
+    numNewMessages: number = 0;
 
     // Subscriptions
     private identifyCompletedSubscription?: Subscription;
@@ -84,6 +85,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                                     ...chat,
                                     started_ts: new Date(ca['started_ts']),
                                     latest_message_ts: new Date(ca['latest_message_ts']),
+                                    read: ca['read'],
                                 };
                                 chat?.messages.set([]);
                             } else {
@@ -92,7 +94,8 @@ export class ChatComponent implements OnInit, OnDestroy {
                                     started_ts: new Date(ca['started_ts']),
                                     latest_message_ts: new Date(ca['latest_message_ts']),
                                     neighbor: undefined,
-                                    messages: signal([])
+                                    messages: signal([]),
+                                    read: ca['read'],
                                 }
                             }
                             if (!chat.neighbor) {
@@ -105,6 +108,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                         })
                         // Sort the chats by latest message received first
                         this.chats = newChats.sort((a, b) => { return b.latest_message_ts.getTime() - a.latest_message_ts.getTime() });
+                        this.numNewMessages = this.chats.filter(c => !c.read).length;
                         break;
                     }
                     case 'get_chat_result': {     // A single chat involving me - add this to the list
@@ -116,6 +120,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                                 ...chat,
                                 started_ts: new Date(ca['started_ts']),
                                 latest_message_ts: new Date(ca['latest_message_ts']),
+                                read: ca['read'],
                             };
                             chat?.messages.set([]);
                         } else {
@@ -124,7 +129,8 @@ export class ChatComponent implements OnInit, OnDestroy {
                                 started_ts: new Date(ca['started_ts']),
                                 latest_message_ts: new Date(ca['latest_message_ts']),
                                 neighbor: undefined,
-                                messages: signal([])
+                                messages: signal([]),
+                                read: ca['read'],
                             }
                             this.chats = [
                                 ... this.chats,
@@ -138,6 +144,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                         }
 
                         this.chats = this.chats.sort((a, b) => { return b.latest_message_ts.getTime() - a.latest_message_ts.getTime() });
+                        this.numNewMessages = this.chats.filter(c => !c.read).length;
                         break;
                     }
                     case 'get_messages_result': { // Get all messages in a chat
@@ -162,6 +169,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                             })
                             // Sort the chats by latest message received first
                             chat.messages.set(newMsgs.sort((a, b) => { return b.send_ts.getTime() - a.send_ts.getTime() }));
+                            chat.read = chat.messages().every(msg => msg.read);
                         }
                         break;
                     }
@@ -188,7 +196,25 @@ export class ChatComponent implements OnInit, OnDestroy {
                             this.dataService.getNeighbor(msg['from_neighbor']).subscribe(n => newMsg.from_neighbor = n);
                             // Sort the chats by latest message received first
                             chat.messages.set(newMsgs.sort((a, b) => { return b.send_ts.getTime() - a.send_ts.getTime() }));
-
+                            chat.read = chat.messages().every(msg => msg.read);
+                            this.numNewMessages = this.chats.filter(c => !c.read).length;
+                        } else {
+                            // Request the chat (the messages will come later)
+                            console.log("Chat:   ... do not have the chat, requesting it.");
+                            this.getChat(message['chat_id']);
+                        }
+                        break;
+                    }
+                    case 'mark_message_read_result': {  // A message was marked as read
+                        console.log("Chat: a message was marked read...");
+                        // Determine if we already have the chat
+                        const chat = this.chats.find(c => c.id == message['chat_id']);
+                        if (chat) {
+                            console.log("Chat:   ... already have the chat, updating the message in the list.");
+                            const msg = chat.messages().find(m => m.id == message['id']);
+                            if (msg) msg.read = true;
+                            chat.read = chat.messages().every(msg => msg.read);
+                            this.numNewMessages = this.chats.filter(c => !c.read).length;
                         } else {
                             // Request the chat (the messages will come later)
                             console.log("Chat:   ... do not have the chat, requesting it.");

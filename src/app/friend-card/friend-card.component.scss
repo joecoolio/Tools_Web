@@ -21,9 +21,30 @@
 }
 
 .neighbor-name {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   margin: 0;
+}
+
+.circle-wrapper {
+  width: 28px;
+  height: 28px;
+  background-color: black;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.circle-wrapper:hover {
+  background-color: #ce4d4d;
+}
+
+.circle-wrapper .chat {
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
 }
 
 .neighbor-type {
