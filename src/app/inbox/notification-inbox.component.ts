@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewContainerRef } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
 import { NotificationMessage, NotificationOption, NotificationService } from '../services/notification.service';
 import { MatIconModule } from "@angular/material/icon";
 import { CommonModule } from '@angular/common';
@@ -9,6 +9,7 @@ import { DataService } from '../services/data.service';
 import { NotifierService } from 'gramli-angular-notifier';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from "@angular/material/input";
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-notification-inbox',
@@ -23,13 +24,16 @@ import { MatInputModule } from "@angular/material/input";
         MatInputModule
     ]
 })
-export class NotificationInboxComponent implements OnInit {
+export class NotificationInboxComponent implements OnInit, OnDestroy {
     @Input() buttonTarget!: ViewContainerRef;
 
     faEnvelope = faEnvelope;
     notifications: NotificationMessage[] = [];
     responsesVisible: boolean = false; // When this is true, the response options will be shown
 
+    // Subscriptions
+    private notificationSubscription?: Subscription;
+    
     // This handle buttons that need extra inputs.
     // The resolution buttons aren't shown until you expand and fill in the form.
     showButtonsMap: Record<number, boolean> = {};
@@ -43,7 +47,7 @@ export class NotificationInboxComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
-        this.notificationService.pollNotifications().subscribe(notifications => {
+        this.notificationSubscription = this.notificationService.pollNotifications().subscribe(notifications => {
             // Wait for all of the notifications to be fully built (after db calls or whatever)
             this.notificationService.allLoaded$.subscribe(() => {
                 this.notifications = notifications;
@@ -66,6 +70,11 @@ export class NotificationInboxComponent implements OnInit {
             })
         });
     }
+
+    ngOnDestroy(): void {
+        this.notificationSubscription?.unsubscribe();
+    }
+
 
     // Toggle showing buttons for a given notification
     toggleShowButtons(id: number): void {

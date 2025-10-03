@@ -34,7 +34,7 @@ const URL_ACCEPT_BORROW_TOOL = API_URL + 'v1/acceptborrow';
 const URL_REJECT_BORROW_TOOL = API_URL + 'v1/rejectborrow';
 const URL_GET_NOTIFICATIONS = API_URL + 'v1/getnotifications';
 const URL_RESOLVE_NOTIFICATION = API_URL + 'v1/resolvenotification';
-
+const URL_NEWS = API_URL + 'v1/news';
 
 // Timeout for remote calls
 const HTTP_TIMEOUT: number = 5000;
@@ -145,6 +145,17 @@ export interface ToolCategory {
     name: string,
     icon: string,
 }
+
+// Data for news
+export interface NewsMessage {
+    id: number,
+    type: string,
+    occur_ts: Date,
+    neighbor_id: number | undefined,
+    tool_id: number | undefined,
+    distance_m: number,
+}
+
 
 @Injectable({
   providedIn: 'root'
@@ -807,6 +818,20 @@ export class DataService {
 
         return this.http.post<void>(
             URL_ACCEPT_BORROW_TOOL,
+            body,
+            {}
+        );
+    }
+
+    // Get news
+    getNews(radiusMiles: number, afterId: number): Observable<NewsMessage[]> {
+        const body = {
+            radius_miles: radiusMiles,
+            afterId: afterId,
+        };
+
+        return this.http.post<NewsMessage[]>(
+            URL_NEWS,
             body,
             {}
         );

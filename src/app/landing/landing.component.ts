@@ -3,14 +3,17 @@ import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
 import { GlobalValuesService } from "../shared/global-values";
 import { NavigationExtras, Router } from "@angular/router";
+import { NewsItemComponent } from "../news/news-item.component";
+import { NewsComponent } from "../news/news.component";
 
 @Component({
     standalone: true,
     selector: 'app-map',
     imports: [
-        MatIconModule,
-        MatCardModule,
-    ],
+    MatIconModule,
+    MatCardModule,
+    NewsComponent
+],
     templateUrl: './landing.component.html',
     styleUrl: './landing.component.scss',
 })
