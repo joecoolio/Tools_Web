@@ -9,7 +9,7 @@ import { DataService } from '../services/data.service';
 import { NotifierService } from 'gramli-angular-notifier';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatInputModule } from "@angular/material/input";
-import { Subscription } from 'rxjs';
+import { Subscription, timer } from 'rxjs';
 
 @Component({
     selector: 'app-notification-inbox',
@@ -47,27 +47,32 @@ export class NotificationInboxComponent implements OnInit, OnDestroy {
     ) { }
 
     ngOnInit(): void {
-        this.notificationSubscription = this.notificationService.pollNotifications().subscribe(notifications => {
-            // Wait for all of the notifications to be fully built (after db calls or whatever)
-            this.notificationService.allLoaded$.subscribe(() => {
-                this.notifications = notifications;
+        // Wait a couple of seconds (to let other stuff load)
+        // And then request notifications.
+        timer(3000).subscribe(() => {
+        
+            this.notificationSubscription = this.notificationService.pollNotifications().subscribe(notifications => {
+                // Wait for all of the notifications to be fully built (after db calls or whatever)
+                this.notificationService.allLoaded$.subscribe(() => {
+                    this.notifications = notifications;
 
-                // Default each notification's showButton flag
-                this.notifications.forEach(n => {
-                    if (! (n.id in this.showButtonsMap)) this.showButtonsMap[n.id] = n.dataRequirements === undefined;
+                    // Default each notification's showButton flag
+                    this.notifications.forEach(n => {
+                        if (! (n.id in this.showButtonsMap)) this.showButtonsMap[n.id] = n.dataRequirements === undefined;
 
-                    if (n.dataRequirements) {
-                        const form = this.fb.group({});
-                        n.dataRequirements.forEach(dr => {
-                            const control = this.fb.control(dr.default);
-                            form.addControl(dr.name, control);
-                        });
-                        if (! (n.id in this.formMap)) this.formMap[n.id] = form;
-                    } else {
-                        this.formMap[n.id] = undefined;
-                    }
+                        if (n.dataRequirements) {
+                            const form = this.fb.group({});
+                            n.dataRequirements.forEach(dr => {
+                                const control = this.fb.control(dr.default);
+                                form.addControl(dr.name, control);
+                            });
+                            if (! (n.id in this.formMap)) this.formMap[n.id] = form;
+                        } else {
+                            this.formMap[n.id] = undefined;
+                        }
+                    })
                 })
-            })
+            });
         });
     }
 

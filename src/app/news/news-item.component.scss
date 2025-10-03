@@ -67,3 +67,9 @@
     border-radius: 25%;
     margin-right: 0.5rem;
 }
+
+.blurred {
+  filter: blur(5px);
+  pointer-events: none;
+  user-select: none;
+}

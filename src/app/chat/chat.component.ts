@@ -9,7 +9,7 @@ import { ReactiveFormsModule } from "@angular/forms";
 import { MatInputModule } from "@angular/material/input";
 import { DataService, Neighbor } from "../services/data.service";
 import { ChatThreadComponent } from "./chat-thread.component";
-import { Observable, Subscription } from "rxjs";
+import { Observable, Subscription, timer } from "rxjs";
 
 export interface Message {
     id: string,
@@ -59,8 +59,6 @@ export class ChatComponent implements OnInit, OnDestroy {
     private getMessagesSubscription?: Subscription;
     
     ngOnInit(): void {
-        this.chatService.connect();
-
         // This fires when identification completes.
         // Reload all my chats when this happens
         this.identifyCompletedSubscription = this.chatService.identifyCompleted$.subscribe(() => {
@@ -226,6 +224,10 @@ export class ChatComponent implements OnInit, OnDestroy {
             },
             complete: () => console.log("ChatComponent: complete")
         });
+
+        // Wait a couple of seconds (to let other stuff load)
+        // And then connect to chat.
+        timer(3000).subscribe(() => this.chatService.connect());
     }
 
     ngOnDestroy(): void {

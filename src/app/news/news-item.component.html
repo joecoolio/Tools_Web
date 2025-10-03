@@ -1,41 +1,39 @@
-@if (newsItem?.neighbor?.loaded && newsItem?.neighbor?.imageLoaded) {
-    <!-- New Neighbor -->
-    @if (newsItem?.type == "new_neighbor") {
-        <mat-card class="news-card" (click)="popupNeighbor()">
-            <mat-card-header>
-                <mat-card-title>
-                    <span class="left">You Have A New Neighbor!</span>
-                    <span class="right"><img [src]="newsItem!.neighbor!.imageUrl || 'system_photo.png'" class="avatar" /></span>
-                </mat-card-title>
-                <mat-card-subtitle>{{ newsItem!.occur_ts | date:'short' }}</mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-content>
-                <p>
-                    <span class="name">{{ newsItem!.neighbor!.name }}</span> joined {{ (newsItem!.distance_m / 1609) | number:'1.1-1' }} miles from you.
-                </p>
-            </mat-card-content>
-        </mat-card>
+<!-- New Neighbor -->
+@if (newsItem?.type == "new_neighbor") {
+    <mat-card class="news-card" (click)="popupNeighbor()" [class.blurred]="!newsItem?.neighbor?.loaded">
+        <mat-card-header>
+            <mat-card-title>
+                <span class="left">You Have A New Neighbor!</span>
+                <span class="right" [class.blurred]="!newsItem?.neighbor?.imageLoaded"><img [src]="newsItem?.neighbor?.imageUrl || 'system_photo.png'" class="avatar" /></span>
+            </mat-card-title>
+            <mat-card-subtitle>{{ newsItem?.occur_ts | date:'short' }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+            <p>
+                <span class="name">{{ newsItem?.neighbor?.name }}</span> joined {{ ((newsItem ? newsItem.distance_m : 0)/ 1609) | number:'1.1-1' }} miles from you.
+            </p>
+        </mat-card-content>
+    </mat-card>
 
-    <!-- New Tool -->
-    } @else if (newsItem?.type == "new_tool" && newsItem?.tool?.loaded && newsItem?.tool?.imageLoaded) {
-        <mat-card class="news-card" (click)="popupTool()">
-            <mat-card-header>
-                <mat-card-title>
-                    <span class="left">Your friend shared a new tool!</span>
-                    <span class="right" (click)="popupNeighbor(); $event.stopPropagation()"><img [src]="newsItem!.neighbor!.imageUrl || 'system_photo.png'" class="avatar" /></span>
-                </mat-card-title>
-                <mat-card-subtitle>{{ newsItem!.occur_ts | date:'short' }}</mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-content>
-                <span class="tool_container">
-                    <span class="left"><img [src]="newsItem!.tool!.imageUrl || 'system_photo.png'" class="toolimg" /></span>
-                    <span class="toolright">
-                        <span class="name">{{ newsItem!.neighbor!.name }}</span><br>
-                        {{ (newsItem!.distance_m / 1609) | number:'1.1-1' }} miles from you.<br>
-                        Shared a new tool: {{ newsItem?.tool?.name }}!
-                    </span>
+<!-- New Tool -->
+} @else if (newsItem?.type == "new_tool") {
+    <mat-card class="news-card" (click)="popupTool()" [class.blurred]="(!newsItem?.neighbor?.loaded) || (!newsItem?.tool?.loaded)">
+        <mat-card-header>
+            <mat-card-title>
+                <span class="left">Your friend shared a new tool!</span>
+                <span class="right" [class.blurred]="!newsItem?.neighbor?.imageLoaded" (click)="popupNeighbor(); $event.stopPropagation()"><img [src]="newsItem?.neighbor?.imageUrl || 'system_photo.png'" class="avatar" /></span>
+            </mat-card-title>
+            <mat-card-subtitle>{{ newsItem?.occur_ts | date:'short' }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+            <span class="tool_container">
+                <span class="left" [class.blurred]="!newsItem?.tool?.imageLoaded"><img [src]="newsItem?.tool?.imageUrl || 'default_tool.png'" class="toolimg" /></span>
+                <span class="toolright">
+                    <span class="name">{{ newsItem?.neighbor?.name }}</span><br>
+                    {{ ((newsItem ? newsItem.distance_m : 0) / 1609) | number:'1.1-1' }} miles from you.<br>
+                    Shared a new tool: {{ newsItem?.tool?.name }}!
                 </span>
-            </mat-card-content>
-        </mat-card>
-    }
+            </span>
+        </mat-card-content>
+    </mat-card>
 }

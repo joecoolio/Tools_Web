@@ -40,7 +40,7 @@ export class AuthInterceptor implements HttpInterceptor {
                 catchError((error: HttpErrorResponse) => {
                     if (error instanceof HttpErrorResponse) {
                         console.log("Intercept error status: " + error.status);
-                        console.log("Intercept error text: " + error.statusText);
+                       console.log("Intercept error text: " + error.statusText);
 
                         // 400 is returned when an access token is no good
                         if (error.status === 400) {

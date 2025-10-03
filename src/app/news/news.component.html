@@ -1,15 +1,8 @@
 <section class="news">
-    <h2>Latest News</h2>
-    <div class="news-items">
-        @for (item of this.newsItems; track item.id) {
-            <app-news-item [newsItem]="item"></app-news-item>
-        }
-    </div>
-
-    
-    <!-- @if (this.newsItems.length == 0) { -->
-      <span class="nomail">
-        <img src="/waiting_for_news.png"/>
-      </span>
-    <!-- } -->
+  <h2>Latest News</h2>
+  <div class="news-items">
+      @for (item of this.newsItems; track item.id) {
+          <app-news-item [newsItem]="item"></app-news-item>
+      }
+  </div>
 </section>

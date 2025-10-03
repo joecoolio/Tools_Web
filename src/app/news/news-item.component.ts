@@ -28,12 +28,7 @@ export class NewsItemComponent implements OnInit {
     private chatService: ChatService,
   ) {  }
 
-  ngOnInit(): void {
-    if ((! this.newsItem?.neighbor?.loaded) || (! this.newsItem?.neighbor?.imageLoaded)) {
-      // If the neighbor or his picture isn't loaded, request that it's loaded
-      this.dataService.getNeighbor(this.newsItem?.neighbor?.id!).subscribe();
-    }
-  }
+  ngOnInit(): void {  }
 
   popupNeighbor() {
     const neighbor = this.newsItem!.neighbor;

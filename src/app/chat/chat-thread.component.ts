@@ -51,7 +51,7 @@ export class ChatThreadComponent {
 
   // Is this chat thread collapsed or not
   collapsed: boolean = true;
-
+  
   toggleCollapsed() {
     // If currently collapsed and we're about to open it, make sure data is loaded
     if (this.collapsed && !this.isLoaded()) {
