@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
   baseUrl: 'https://toolsapi.mikebillings.com/',
-  websocketUrl: 'ws://10.1.104.96:9502',
+  websocketUrl: 'wss://toolschat.mikebillings.com/chat',
   websocketHeartbeat: 30000,
 };
