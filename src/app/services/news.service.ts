@@ -66,17 +66,21 @@ export class NewsService {
 
     // Load older records onto the list.
     loadOlder(): Observable<NewsItem[]> {
+        let oldest: NewsItem | undefined = undefined;
+
         // Find the oldest (by occur_ts and ID as tie breaker) item in the news item list
-        const oldest = this.newsItems.reduce((oldestSoFar, current) => {
-                if (current.occur_ts < oldestSoFar.occur_ts) return current;
-                if (current.occur_ts.getTime() == oldestSoFar.occur_ts.getTime())
-                    return current.id < oldestSoFar.id ? current : oldestSoFar;
-                return oldestSoFar;
-            }
-        );
+        if (this.newsItems && this.newsItems.length > 0) {
+            oldest = this.newsItems.reduce((oldestSoFar, current) => {
+                    if (current.occur_ts < oldestSoFar.occur_ts) return current;
+                    if (current.occur_ts.getTime() == oldestSoFar.occur_ts.getTime())
+                        return current.id < oldestSoFar.id ? current : oldestSoFar;
+                    return oldestSoFar;
+                }
+            );
+        }
 
         // Ask for items older than the oldest found
-        return this.dataService.getNews(10, oldest.id, 0)
+        return this.dataService.getNews(10, oldest ? oldest.id : 0, 0)
         .pipe(
             map(rawNewsArray => {
                 const newArray = [ ... this.newsItems ];
@@ -105,5 +109,11 @@ export class NewsService {
                 return this.newsItems;
             })
         );
+    }
+
+    // Reset to default state
+    reset(): void {
+        this.newsItems = [];
+        this.maxNewsId = 0;
     }
 }

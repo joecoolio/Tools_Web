@@ -15,6 +15,7 @@ import { Subscription } from 'rxjs';
 import { MessageService } from './services/message.service';
 import { environment } from '../environments/environment';
 import { ChatComponent } from './chat/chat.component';
+import { NewsService } from './services/news.service';
 
 @Component({
   selector: 'app-root',
@@ -42,6 +43,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private dataService: DataService,
     private messageService: MessageService,
     private notifierService: NotifierService,
+    private newsService: NewsService,
   ) {
     if (environment.production) {
       enableProdMode();
@@ -98,6 +100,9 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   logout() {
+    // Remove news
+    this.newsService.reset();
+
     this.authService.logout();
 
     this.messageService.send('info', 'You have been logged out successfully!');
