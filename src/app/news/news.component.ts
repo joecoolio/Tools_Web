@@ -22,13 +22,17 @@ export class NewsComponent implements OnInit, OnDestroy {
 
   private newsSubscription?: Subscription;
   newsItems: NewsItem[] = [];
+  itemsLoaded: boolean = false; // Set to true after something comes back from the service
 
   ngOnInit(): void {
     // Bootstrap to whatever was already loaded
     this.newsItems = this.newsService.newsItems;
 
     // Start polling for changes
-    this.newsSubscription = this.newsService.pollNews().subscribe(a => this.newsItems = a);
+    this.newsSubscription = this.newsService.pollNews().subscribe(a => {
+      this.newsItems = a
+      this.itemsLoaded = true;
+    });
   }
 
   ngOnDestroy(): void {
