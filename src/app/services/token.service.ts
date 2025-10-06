@@ -1,6 +1,6 @@
 import { computed, Injectable, signal, Signal, WritableSignal, ɵunwrapWritableSignal } from '@angular/core';
 
-const TOKEN_KEY = 'auth-token';
+export const TOKEN_KEY = 'auth-token';
 const REFRESHTOKEN_KEY = 'auth-refreshtoken';
 const USER_KEY = 'auth-user';
 
@@ -8,9 +8,12 @@ const USER_KEY = 'auth-user';
   providedIn: 'root'
 })
 export class TokenService {
-    constructor() {}
+    constructor() {
+        let t = localStorage.getItem(TOKEN_KEY);
+        this._isLoggedIn = signal(typeof t === "string"); // Default signal value
+    }
 
-    public _isLoggedIn: WritableSignal<boolean> = signal(false);
+    public _isLoggedIn: WritableSignal<boolean>;
     public readonly isLoggedIn: Signal<boolean> = computed(() => this._isLoggedIn());
 
     public set token(value: string | null) {
