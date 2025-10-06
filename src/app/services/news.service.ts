@@ -25,12 +25,13 @@ export class NewsService {
     private maxNewsId: number = 0; // The highest id we've seen (to avoid re-requesting)
 
     // This polls peridically for new news.
+    // New is defined as anything with ID > maxNewsId.
     // Each new item is loaded into the newsItems.
     pollNews(): Observable<NewsItem[]> {
         return timer(0, POLL_INTERVAL).pipe(
             switchMap(() => {
                 // console.log("Polling for news > " + this.maxNewsId);
-                return this.dataService.getNews(100 /* 100 mile radius TODO make it smaller */, this.maxNewsId)
+                return this.dataService.getNews(100 /* 100 mile radius TODO make it smaller */, 999999999, this.maxNewsId)
                 .pipe(
                     map(rawNewsArray => {
                         const newArray = [ ... this.newsItems ];
@@ -59,6 +60,49 @@ export class NewsService {
                         return this.newsItems;
                     })
                 );
+            })
+        );
+    }
+
+    // Load older records onto the list.
+    loadOlder(): Observable<NewsItem[]> {
+        // Find the oldest (by occur_ts and ID as tie breaker) item in the news item list
+        const oldest = this.newsItems.reduce((oldestSoFar, current) => {
+                if (current.occur_ts < oldestSoFar.occur_ts) return current;
+                if (current.occur_ts.getTime() == oldestSoFar.occur_ts.getTime())
+                    return current.id < oldestSoFar.id ? current : oldestSoFar;
+                return oldestSoFar;
+            }
+        );
+
+        // Ask for items older than the oldest found
+        return this.dataService.getNews(100 /* 100 mile radius TODO make it smaller */, oldest.id, 0)
+        .pipe(
+            map(rawNewsArray => {
+                const newArray = [ ... this.newsItems ];
+
+                rawNewsArray.forEach(rawNewsItem => {
+                    // This is the core of the message
+                    const newsItem: NewsItem = {
+                        id: rawNewsItem.id,
+                        type: rawNewsItem.type,
+                        occur_ts: new Date(rawNewsItem.occur_ts),
+                        neighbor: undefined,
+                        tool: undefined,
+                        distance_m: rawNewsItem.distance_m,
+                    };
+
+                    // // Request the neighbor & tool objects
+                    if (rawNewsItem.neighbor_id) this.dataService.getNeighbor(rawNewsItem.neighbor_id).subscribe(n => newsItem.neighbor = n);
+                    if (rawNewsItem.tool_id) this.dataService.getTool(rawNewsItem.tool_id, false).subscribe(t => newsItem.tool = t);
+
+                    newArray.push(newsItem);
+
+                    this.maxNewsId = Math.max(this.maxNewsId, rawNewsItem.id);
+                });
+
+                this.newsItems = newArray.sort((a, b) => { return b.occur_ts.getTime() - a.occur_ts.getTime() });
+                return this.newsItems;
             })
         );
     }

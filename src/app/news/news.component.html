@@ -4,5 +4,15 @@
       @for (item of this.newsItems; track item.id) {
           <app-news-item [newsItem]="item"></app-news-item>
       }
+        
+    <!-- bottom load button -->
+    <div class="sticky-bottom">
+      <app-load-more-button
+        [buttonText]="'Load Older'"
+        [loading]="loadingMore"
+        (loadMore)="loadMore()"
+      ></app-load-more-button>
+    </div>
   </div>
+
 </section>

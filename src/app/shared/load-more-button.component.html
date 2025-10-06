@@ -1,0 +1,11 @@
+<button mat-stroked-button class="mat-full" (click)="onClick()" [disabled]="loading || disabled">
+    @if(!loading) {
+        <span>{{ buttonText }}</span>
+    }
+    @if(loading) {
+        <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+    }
+    @if(!loading) {
+        <mat-icon aria-hidden="true">expand_more</mat-icon>
+    }
+</button>

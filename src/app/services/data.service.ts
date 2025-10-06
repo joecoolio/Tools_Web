@@ -824,10 +824,12 @@ export class DataService {
     }
 
     // Get news
-    getNews(radiusMiles: number, afterId: number): Observable<NewsMessage[]> {
+    getNews(radiusMiles: number, beforeId: number = 999999999, afterId: number = 0, maxItems: number = 4): Observable<NewsMessage[]> {
         const body = {
             radius_miles: radiusMiles,
             afterId: afterId,
+            beforeId: beforeId,
+            max_items: 2
         };
 
         return this.http.post<NewsMessage[]>(
