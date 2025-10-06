@@ -829,7 +829,7 @@ export class DataService {
             radius_miles: radiusMiles,
             afterId: afterId,
             beforeId: beforeId,
-            max_items: 2
+            max_items: maxItems
         };
 
         return this.http.post<NewsMessage[]>(

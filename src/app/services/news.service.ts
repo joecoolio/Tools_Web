@@ -31,7 +31,7 @@ export class NewsService {
         return timer(0, POLL_INTERVAL).pipe(
             switchMap(() => {
                 // console.log("Polling for news > " + this.maxNewsId);
-                return this.dataService.getNews(100 /* 100 mile radius TODO make it smaller */, 999999999, this.maxNewsId)
+                return this.dataService.getNews(10, 999999999, this.maxNewsId)
                 .pipe(
                     map(rawNewsArray => {
                         const newArray = [ ... this.newsItems ];
@@ -76,7 +76,7 @@ export class NewsService {
         );
 
         // Ask for items older than the oldest found
-        return this.dataService.getNews(100 /* 100 mile radius TODO make it smaller */, oldest.id, 0)
+        return this.dataService.getNews(10, oldest.id, 0)
         .pipe(
             map(rawNewsArray => {
                 const newArray = [ ... this.newsItems ];
